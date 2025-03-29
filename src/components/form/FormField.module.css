@@ -1,0 +1,9 @@
+.formField {
+  margin-bottom: var(--spacing-md);
+}
+
+.error {
+  color: var(--error-color);
+  font-size: var(--font-size-small);
+  margin-top: var(--spacing-xs);
+}

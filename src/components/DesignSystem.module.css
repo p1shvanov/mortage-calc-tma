@@ -1,0 +1,73 @@
+.title {
+  font-size: var(--font-size-xlarge);
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-color);
+}
+
+.componentRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.heading1 {
+  font-size: 24px;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color);
+}
+
+.heading2 {
+  font-size: 20px;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color);
+}
+
+.heading3 {
+  font-size: 16px;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color);
+}
+
+.paragraph {
+  font-size: var(--font-size-normal);
+  line-height: 1.5;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color);
+}
+
+.small {
+  font-size: var(--font-size-small);
+  line-height: 1.5;
+  color: var(--hint-color);
+}
+
+.colorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.colorItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.colorSwatch {
+  width: 100%;
+  height: 80px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.colorName {
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  margin-bottom: var(--spacing-xs);
+  color: var(--text-color);
+}
+
+.colorValue {
+  font-size: var(--font-size-small);
+  color: var(--hint-color);
+}
