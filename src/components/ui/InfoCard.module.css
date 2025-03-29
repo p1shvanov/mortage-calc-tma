@@ -1,0 +1,25 @@
+.infoCard {
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.icon {
+  margin-right: var(--spacing-sm);
+}
+
+.title {
+  font-size: var(--font-size-normal);
+  color: var(--hint-color);
+}
+
+.value {
+  font-size: var(--font-size-xlarge);
+  font-weight: bold;
+  color: var(--text-color);
+}
