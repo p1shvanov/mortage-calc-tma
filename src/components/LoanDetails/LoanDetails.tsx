@@ -38,7 +38,16 @@ export function LoanDetails({ onValuesChange }: LoanDetailsProps) {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    const numValue = name === 'startDate' ? value : parseFloat(value) || 0;
+    
+    // Fix for empty input fields - don't convert empty string to 0
+    let numValue;
+    if (name === 'startDate') {
+      numValue = value;
+    } else if (value === '') {
+      numValue = '';
+    } else {
+      numValue = parseFloat(value) || 0;
+    }
 
     setValues((prev) => {
       const newValues = {
@@ -48,9 +57,11 @@ export function LoanDetails({ onValuesChange }: LoanDetailsProps) {
 
       // Auto-calculate loan amount if home value or down payment changes
       if (name === 'homeValue' || name === 'downPayment') {
-        const homeValue = name === 'homeValue' ? numValue : prev.homeValue;
+        const homeValue = name === 'homeValue' ? 
+          (numValue === '' ? 0 : numValue) : prev.homeValue;
         const downPayment =
-          name === 'downPayment' ? numValue : prev.downPayment;
+          name === 'downPayment' ? 
+          (numValue === '' ? 0 : numValue) : prev.downPayment;
 
         newValues.loanAmount = Number(homeValue) - Number(downPayment);
       }
@@ -77,23 +88,29 @@ export function LoanDetails({ onValuesChange }: LoanDetailsProps) {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (values.homeValue <= 0) {
+    // Convert empty strings to 0 for validation
+    const homeValue = typeof values.homeValue === 'string' ? 0 : Number(values.homeValue);
+    const downPayment = typeof values.downPayment === 'string' ? 0 : Number(values.downPayment);
+    const interestRate = typeof values.interestRate === 'string' ? 0 : Number(values.interestRate);
+    const loanTerm = typeof values.loanTerm === 'string' ? 0 : Number(values.loanTerm);
+
+    if (homeValue <= 0) {
       newErrors.homeValue = t('errorHomeValue');
     }
 
-    if (values.downPayment < 0) {
+    if (downPayment < 0) {
       newErrors.downPayment = t('errorDownPayment');
     }
 
-    if (values.downPayment >= values.homeValue) {
+    if (downPayment >= homeValue && homeValue > 0) {
       newErrors.downPayment = t('errorDownPaymentMax');
     }
 
-    if (values.interestRate <= 0) {
+    if (interestRate <= 0) {
       newErrors.interestRate = t('errorInterestRate');
     }
 
-    if (values.loanTerm <= 0) {
+    if (loanTerm <= 0) {
       newErrors.loanTerm = t('errorLoanTerm');
     }
 

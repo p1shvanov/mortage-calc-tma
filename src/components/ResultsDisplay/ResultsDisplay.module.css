@@ -1,0 +1,93 @@
+.resultsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (min-width: 768px) {
+  .resultsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.resultCard {
+  background-color: var(--card-bg-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  border: 1px solid var(--card-border-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.resultCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.resultIcon {
+  font-size: 24px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.resultTitle {
+  font-size: var(--font-size-small);
+  color: var(--hint-color);
+  margin-bottom: var(--spacing-xs);
+}
+
+.resultValue {
+  font-size: var(--font-size-xlarge);
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+.payoffDate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: var(--card-bg-color);
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--card-border-color);
+}
+
+.payoffDateLabel {
+  font-size: var(--font-size-normal);
+  color: var(--hint-color);
+}
+
+.payoffDateValue {
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  color: var(--text-color);
+}
+
+/* Animation for results */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultCard {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.resultCard:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.resultCard:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.resultCard:nth-child(3) {
+  animation-delay: 0.2s;
+}
