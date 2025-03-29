@@ -10,6 +10,8 @@ import { Container } from '@/components/layout/Container';
 import { calculateMortgage, MortgageResults } from '@/utils/mortgageCalculator';
 import { generateAmortizationSchedule, AmortizationScheduleResult } from '@/utils/amortizationSchedule';
 import { ChartsContainer } from '@/components/charts/ChartsContainer';
+import { PaymentSchedule } from '@/components/PaymentSchedule/PaymentSchedule';
+import { TabView, TabPanel } from '@/components/TabView/TabView';
 import { useState, useEffect } from 'react';
 
 export function App() {
@@ -58,7 +60,22 @@ export function App() {
           <Section header={t('appTitle')}>
             <LoanDetails onValuesChange={handleLoanDetailsChange} />
             <ResultsDisplay results={mortgageResults} />
-            <ChartsContainer amortizationResult={amortizationResult} />
+            
+            <TabView
+              tabs={[
+                { id: 'charts', label: t('graphicalView') },
+                { id: 'schedule', label: t('paymentSchedule') }
+              ]}
+              defaultTab="charts"
+            >
+              <TabPanel id="charts">
+                <ChartsContainer amortizationResult={amortizationResult} />
+              </TabPanel>
+              <TabPanel id="schedule">
+                <PaymentSchedule amortizationResult={amortizationResult} />
+              </TabPanel>
+            </TabView>
+            
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
               <LanguageSwitcher />
               <ThemeSwitcher />

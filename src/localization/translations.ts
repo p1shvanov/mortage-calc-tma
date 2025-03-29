@@ -29,12 +29,17 @@ export const translations = {
     
     // Payment Schedule
     amortization: "Amortization Schedule",
+    paymentSchedule: "Payment Schedule",
     month: "Month",
     date: "Date",
     payment: "Payment",
     principal: "Principal",
     interest: "Interest",
+    extraPayment: "Extra Payment",
     balance: "Balance",
+    previous: "Previous",
+    next: "Next",
+    showingPayments: "Showing payments {from}-{to} of {total}",
     
     // Charts
     graphicalView: "Graphical View",
@@ -84,12 +89,17 @@ export const translations = {
     
     // Payment Schedule
     amortization: "График платежей",
+    paymentSchedule: "График платежей",
     month: "Месяц",
     date: "Дата",
     payment: "Платеж",
     principal: "Основной долг",
     interest: "Проценты",
+    extraPayment: "Досрочный платеж",
     balance: "Остаток",
+    previous: "Назад",
+    next: "Вперед",
+    showingPayments: "Платежи {from}-{to} из {total}",
     
     // Charts
     graphicalView: "Графическое представление",
