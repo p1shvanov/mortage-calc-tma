@@ -23,9 +23,22 @@ export const translations = {
     earlyPayment: "Early Payment",
     earlyPaymentAmount: "Additional Amount",
     earlyPaymentMonth: "Month of Payment",
+    earlyPaymentType: "Payment Type",
+    typeReduceTerm: "Reduce Term",
+    typeReducePayment: "Reduce Payment",
     addEarlyPayment: "Add Early Payment",
+    earlyPaymentList: "Scheduled Early Payments",
+    remove: "Remove",
     paymentHistory: "Early Payments",
     totalEarlyPayments: "Total Early Payments",
+    errorPaymentAmount: "Payment amount must be greater than 0",
+    errorPaymentMonth: "Payment month must be within the loan term",
+    
+    // Results with Early Payments
+    finalPayment: "Final Payment",
+    savings: "Savings",
+    monthsSaved: "Months Saved",
+    totalSavings: "Total Savings",
     
     // Payment Schedule
     amortization: "Amortization Schedule",
@@ -83,9 +96,22 @@ export const translations = {
     earlyPayment: "Досрочное погашение",
     earlyPaymentAmount: "Дополнительная сумма",
     earlyPaymentMonth: "Месяц платежа",
+    earlyPaymentType: "Тип платежа",
+    typeReduceTerm: "Сократить срок",
+    typeReducePayment: "Уменьшить платеж",
     addEarlyPayment: "Добавить досрочный платеж",
+    earlyPaymentList: "Запланированные досрочные платежи",
+    remove: "Удалить",
     paymentHistory: "Досрочные платежи",
     totalEarlyPayments: "Всего досрочных платежей",
+    errorPaymentAmount: "Сумма платежа должна быть больше 0",
+    errorPaymentMonth: "Месяц платежа должен быть в пределах срока кредита",
+    
+    // Results with Early Payments
+    finalPayment: "Итоговый платеж",
+    savings: "Экономия",
+    monthsSaved: "Сэкономлено месяцев",
+    totalSavings: "Общая экономия",
     
     // Payment Schedule
     amortization: "График платежей",

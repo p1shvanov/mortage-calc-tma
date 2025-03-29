@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Section, Select, Slider } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
+import { useMortgage } from '@/providers/MortgageProvider';
 import { FormField } from '@/components/form/FormField';
 import styles from './LoanDetails.module.css';
-
-interface LoanDetailsProps {
-  onValuesChange: (values: LoanDetailsValues) => void;
-}
 
 export interface LoanDetailsValues {
   homeValue: number;
@@ -17,8 +14,9 @@ export interface LoanDetailsValues {
   startDate: string;
 }
 
-export function LoanDetails({ onValuesChange }: LoanDetailsProps) {
+export function LoanDetails() {
   const { t, formatNumber } = useLocalization();
+  const { setLoanDetails } = useMortgage();
 
   // Initialize form state
   const [values, setValues] = useState<LoanDetailsValues>({
@@ -118,12 +116,12 @@ export function LoanDetails({ onValuesChange }: LoanDetailsProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Notify parent component when values change
+  // Notify MortgageProvider when values change
   useEffect(() => {
     if (validateForm()) {
-      onValuesChange(values);
+      setLoanDetails(values);
     }
-  }, [values, onValuesChange]);
+  }, [values, setLoanDetails]);
 
   return (
     <Section header={t('loanDetails')}>

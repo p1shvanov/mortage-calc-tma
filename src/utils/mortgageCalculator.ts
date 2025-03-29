@@ -12,6 +12,7 @@ export interface MortgageResults {
   totalInterest: number;
   totalCost: number;
   payoffDate: string;
+  loanTerm: number;
 }
 
 /**
@@ -56,7 +57,8 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
     monthlyPayment,
     totalInterest,
     totalCost,
-    payoffDate
+    payoffDate,
+    loanTerm
   };
   
   console.log('Calculated results:', results);
