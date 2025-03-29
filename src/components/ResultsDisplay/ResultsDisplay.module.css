@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
 }
 
 @media (min-width: 768px) {
@@ -15,15 +15,11 @@
   background-color: var(--card-bg-color);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
-  text-align: center;
   border: 1px solid var(--card-border-color);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.resultCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .resultIcon {
@@ -38,18 +34,25 @@
 }
 
 .resultValue {
-  font-size: var(--font-size-xlarge);
+  font-size: var(--font-size-large);
   font-weight: bold;
   color: var(--text-color);
+}
+
+.resultDifference,
+.resultSavings {
+  font-size: var(--font-size-small);
+  color: var(--success-color);
+  margin-top: var(--spacing-xs);
 }
 
 .payoffDate {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md);
   background-color: var(--card-bg-color);
   border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
   border: 1px solid var(--card-border-color);
 }
 
@@ -64,30 +67,24 @@
   color: var(--text-color);
 }
 
-/* Animation for results */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.totalSavings {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--card-bg-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  border: 1px solid var(--card-border-color);
+  margin-bottom: var(--spacing-md);
 }
 
-.resultCard {
-  animation: fadeIn 0.3s ease-out;
+.totalSavingsLabel {
+  font-size: var(--font-size-normal);
+  color: var(--hint-color);
 }
 
-.resultCard:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.resultCard:nth-child(2) {
-  animation-delay: 0.1s;
-}
-
-.resultCard:nth-child(3) {
-  animation-delay: 0.2s;
+.totalSavingsValue {
+  font-size: var(--font-size-normal);
+  font-weight: bold;
+  color: var(--success-color);
 }

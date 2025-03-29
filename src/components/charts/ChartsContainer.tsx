@@ -1,15 +1,12 @@
 import { Section } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
+import { useMortgage } from '@/providers/MortgageProvider';
 import { PieChart } from './PieChart';
 import { LineChart } from './LineChart';
-import { AmortizationScheduleResult } from '@/utils/amortizationSchedule';
 
-interface ChartsContainerProps {
-  amortizationResult: AmortizationScheduleResult | null;
-}
-
-export function ChartsContainer({ amortizationResult }: ChartsContainerProps) {
+export function ChartsContainer() {
   const { t } = useLocalization();
+  const { amortizationResult } = useMortgage();
   
   if (!amortizationResult || amortizationResult.schedule.length === 0) {
     return null;

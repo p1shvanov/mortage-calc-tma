@@ -1,16 +1,13 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { Section, Button } from '@telegram-apps/telegram-ui';
 import { Table, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/Table';
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { AmortizationScheduleResult } from '@/utils/amortizationSchedule';
+import { useMortgage } from '@/providers/MortgageProvider';
 import styles from './PaymentSchedule.module.css';
 
-interface PaymentScheduleProps {
-  amortizationResult: AmortizationScheduleResult | null;
-}
-
-export function PaymentSchedule({ amortizationResult }: PaymentScheduleProps) {
+export function PaymentSchedule() {
   const { t, formatCurrency, formatDate, formatNumber } = useLocalization();
+  const { amortizationResult } = useMortgage();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12; // Show 12 months (1 year) per page
   
