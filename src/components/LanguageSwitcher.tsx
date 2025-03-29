@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
 
