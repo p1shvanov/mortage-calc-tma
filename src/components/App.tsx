@@ -10,7 +10,7 @@ export function App() {
       appearance={isDark ? 'dark' : 'light'}
       platform={['macos', 'ios'].includes(lp.tgWebAppPlatform) ? 'ios' : 'base'}
     >
-      hello, world
+        hi
     </AppRoot>
   );
 }
