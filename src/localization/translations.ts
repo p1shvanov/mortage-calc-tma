@@ -36,6 +36,11 @@ export const translations = {
     interest: "Interest",
     balance: "Balance",
     
+    // Charts
+    graphicalView: "Graphical View",
+    paymentBreakdown: "Payment Breakdown",
+    amortizationSchedule: "Amortization Schedule",
+    
     // Validation
     errorHomeValue: "Home value must be greater than 0",
     errorDownPayment: "Down payment must be greater than 0",
@@ -85,6 +90,11 @@ export const translations = {
     principal: "Основной долг",
     interest: "Проценты",
     balance: "Остаток",
+    
+    // Charts
+    graphicalView: "Графическое представление",
+    paymentBreakdown: "Структура платежа",
+    amortizationSchedule: "График погашения",
     
     // Validation
     errorHomeValue: "Стоимость жилья должна быть больше 0",

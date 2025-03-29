@@ -39,6 +39,19 @@ interface LineChartProps {
 }
 
 export function LineChart({ data, title }: LineChartProps) {
+  // Find the maximum values for scaling
+  // const maxPaymentValue = Math.max(
+  //   ...data.datasets
+  //     .filter(ds => ds.label !== 'balance')
+  //     .flatMap(ds => ds.data)
+  // );
+  
+  // const maxBalanceValue = Math.max(
+  //   ...data.datasets
+  //     .filter(ds => ds.label === 'balance')
+  //     .flatMap(ds => ds.data)
+  // );
+
   return (
     <div className={styles.chartContainer}>
       {title && <h3 className={styles.chartTitle}>{title}</h3>}
@@ -48,6 +61,10 @@ export function LineChart({ data, title }: LineChartProps) {
           options={{
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
             plugins: {
               legend: {
                 position: 'bottom',

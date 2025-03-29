@@ -8,6 +8,8 @@ import { LoanDetails, LoanDetailsValues } from '@/components/LoanDetails/LoanDet
 import { ResultsDisplay } from '@/components/ResultsDisplay/ResultsDisplay';
 import { Container } from '@/components/layout/Container';
 import { calculateMortgage, MortgageResults } from '@/utils/mortgageCalculator';
+import { generateAmortizationSchedule, AmortizationScheduleResult } from '@/utils/amortizationSchedule';
+import { ChartsContainer } from '@/components/charts/ChartsContainer';
 import { useState, useEffect } from 'react';
 
 export function App() {
@@ -16,17 +18,30 @@ export function App() {
   const { t } = useLocalization();
   const [loanValues, setLoanValues] = useState<LoanDetailsValues | null>(null);
   const [mortgageResults, setMortgageResults] = useState<MortgageResults | null>(null);
+  const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResult | null>(null);
   
   const handleLoanDetailsChange = (values: LoanDetailsValues) => {
     setLoanValues(values);
   };
   
-  // Calculate mortgage results when loan details change
+  // Calculate mortgage results and amortization schedule when loan details change
   useEffect(() => {
     if (loanValues) {
+      console.log('Loan values changed:', loanValues);
       try {
         const results = calculateMortgage(loanValues);
         setMortgageResults(results);
+        
+        // Generate amortization schedule
+        const amortization = generateAmortizationSchedule({
+          loanAmount: loanValues.loanAmount,
+          interestRate: loanValues.interestRate,
+          loanTerm: loanValues.loanTerm,
+          startDate: loanValues.startDate,
+          earlyPayments: []
+        });
+        console.log('Generated amortization schedule:', amortization);
+        setAmortizationResult(amortization);
       } catch (error) {
         console.error('Error calculating mortgage results:', error);
       }
@@ -43,6 +58,7 @@ export function App() {
           <Section header={t('appTitle')}>
             <LoanDetails onValuesChange={handleLoanDetailsChange} />
             <ResultsDisplay results={mortgageResults} />
+            <ChartsContainer amortizationResult={amortizationResult} />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
               <LanguageSwitcher />
               <ThemeSwitcher />
