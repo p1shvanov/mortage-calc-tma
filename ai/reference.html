@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Mortgage Calculator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --text-color: #2b2d42;
+            --background-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --success-color: #4caf50;
+            --error-color: #f44336;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #4895ef;
+            --secondary-color: #4361ee;
+            --accent-color: #3f37c9;
+            --text-color: #f8f9fa;
+            --background-color: #121212;
+            --card-bg: #1e1e1e;
+            --border-color: #333;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+
+        .theme-toggle, .language-toggle {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+
+        .theme-toggle:hover, .language-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .theme-toggle:hover, 
+        [data-theme="dark"] .language-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .controls {
+            display: flex;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="range"],
+        select,
+        input[type="date"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        input[type="range"] {
+            padding: 0;
+            height: 8px;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: var(--accent-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .result-summary {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .summary-item-title {
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            margin-bottom: 5px;
+        }
+
+        .summary-item-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .amortization-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .amortization-table th,
+        .amortization-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .amortization-table th {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--accent-color);
+            position: sticky;
+            top: 0;
+        }
+
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .error {
+            color: var(--error-color);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .month-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .month-page-info {
+            font-size: 0.9rem;
+            color: var(--accent-color);
+        }
+
+        .export-btn {
+            background-color: var(--accent-color);
+            margin-left: 10px;
+        }
+
+        .export-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .early-payment-form {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(67, 97, 238, 0.05);
+            border-radius: 5px;
+        }
+
+        .payment-history {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .payment-item:last-child {
+            border-bottom: none;
+        }
+
+        .early-payment-total {
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Translations for i18n
+        const translations = {
+            en: {
+                appTitle: "Mortgage Calculator",
+                loanDetails: "Loan Details",
+                homeValue: "Home Value",
+                downPayment: "Down Payment",
+                loanAmount: "Loan Amount",
+                interestRate: "Interest Rate",
+                loanTerm: "Loan Term (years)",
+                startDate: "Start Date",
+                additionalCosts: "Additional Costs",
+                propertyTax: "Annual Property Tax",
+                homeInsurance: "Annual Home Insurance",
+                pmi: "PMI (per month)",
+                requiredForLowDownPayment: "Required for down payments less than 20%",
+                paymentSummary: "Payment Summary",
+                monthlyPayment: "Monthly Payment",
+                totalInterest: "Total Interest",
+                totalCost: "Total Cost",
+                payoffDate: "Payoff Date",
+                summary: "Summary",
+                amortization: "Amortization",
+                calculating: "Calculating your mortgage details...",
+                viewFullSchedule: "View Full Amortization Schedule",
+                exportToCSV: "Export to CSV",
+                month: "Month",
+                date: "Date",
+                payment: "Payment",
+                principal: "Principal",
+                interest: "Interest",
+                balance: "Balance",
+                showingPayments: "Showing payments {from}-{to} of {total}",
+                previous: "Previous",
+                next: "Next",
+                errorHomeValue: "Home value must be greater than 0",
+                errorDownPayment: "Down payment must be greater than 0",
+                errorDownPaymentMax: "Down payment must be less than home value",
+                errorInterestRate: "Interest rate must be greater than 0",
+                errorLoanTerm: "Loan term must be greater than 0",
+                tenYears: "10 years",
+                fifteenYears: "15 years",
+                twentyYears: "20 years",
+                thirtyYears: "30 years",
+                earlyPayment: "Early Payment",
+                earlyPaymentAmount: "Additional Amount",
+                earlyPaymentMonth: "Month of Payment",
+                addEarlyPayment: "Add Early Payment",
+                paymentHistory: "Early Payments",
+                paymentMonth: "Month",
+                paymentAmount: "Amount",
+                remove: "Remove",
+                totalEarlyPayments: "Total Early Payments",
+                earlyPaymentType: "Payment Type",
+                typeReduceTerm: "Reduce Term",
+                typeReducePayment: "Reduce Payment",
+                paymentType: "Type",
+                chartPaymentBreakdown: "Payment Breakdown (First Month)",
+                chartAmortization: "Amortization Over Time",
+                chartPrincipal: "Principal",
+                chartInterest: "Interest",
+                chartBalance: "Loan Balance"
+            },
+            ru: {
+                appTitle: "Ипотечный калькулятор",
+                loanDetails: "Детали кредита",
+                homeValue: "Стоимость жилья",
+                downPayment: "Первый взнос",
+                loanAmount: "Сумма кредита",
+                interestRate: "Процентная ставка",
+                loanTerm: "Срок кредита (лет)",
+                startDate: "Дата начала",
+                additionalCosts: "Дополнительные расходы",
+                propertyTax: "Годовой налог на имущество",
+                homeInsurance: "Годовое страхование жилья",
+                pmi: "ИСЖ (в месяц)",
+                requiredForLowDownPayment: "Требуется при первом взносе менее 20%",
+                paymentSummary: "Сводка по платежам",
+                monthlyPayment: "Ежемесячный платеж",
+                totalInterest: "Общий процент",
+                totalCost: "Общая стоимость",
+                payoffDate: "Дата погашения",
+                summary: "Сводка",
+                amortization: "График платежей",
+                calculating: "Расчет деталей вашей ипотеки...",
+                viewFullSchedule: "Просмотреть полный график платежей",
+                exportToCSV: "Экспорт в CSV",
+                month: "Месяц",
+                date: "Дата",
+                payment: "Платеж",
+                principal: "Основной долг",
+                interest: "Проценты",
+                balance: "Остаток",
+                showingPayments: "Отображение платежей {from}-{to} из {total}",
+                previous: "Назад",
+                next: "Вперед",
+                errorHomeValue: "Стоимость жилья должна быть больше 0",
+                errorDownPayment: "Первый взнос должен быть больше 0",
+                errorDownPaymentMax: "Первый взнос должен быть меньше стоимости жилья",
+                errorInterestRate: "Процентная ставка должна быть больше 0",
+                errorLoanTerm: "Срок кредита должен быть больше 0",
+                tenYears: "10 лет",
+                fifteenYears: "15 лет",
+                twentyYears: "20 лет",
+                thirtyYears: "30 лет",
+                earlyPayment: "Досрочное погашение",
+                earlyPaymentAmount: "Дополнительная сумма",
+                earlyPaymentMonth: "Месяц платежа",
+                addEarlyPayment: "Добавить досрочный платеж",
+                paymentHistory: "Досрочные платежи",
+                paymentMonth: "Месяц",
+                paymentAmount: "Сумма",
+                remove: "Удалить",
+                totalEarlyPayments: "Всего досрочных платежей",
+                earlyPaymentType: "Тип платежа",
+                typeReduceTerm: "Сократить срок",
+                typeReducePayment: "Сократить платеж",
+                paymentType: "Тип",
+                chartPaymentBreakdown: "Распределение платежа (Первый месяц)",
+                chartAmortization: "График погашения",
+                chartPrincipal: "Основной долг",
+                chartInterest: "Проценты",
+                chartBalance: "Остаток кредита"
+            }
+        };
+
+        // Main App Component
+        const App = () => {
+            const [darkMode, setDarkMode] = React.useState(false);
+            const [language, setLanguage] = React.useState('en');
+            const [activeTab, setActiveTab] = React.useState('summary');
+            const [inputs, setInputs] = React.useState({
+                homeValue: 300000,
+                downPayment: 60000,
+                loanAmount: 240000,
+                interestRate: 3.5,
+                loanTerm: 30,
+                startDate: new Date().toISOString().split('T')[0],
+                propertyTax: 3000,
+                homeInsurance: 1200,
+                pmi: 0
+            });
+            const [results, setResults] = React.useState(null);
+            const [amortization, setAmortization] = React.useState([]);
+            const [errors, setErrors] = React.useState({});
+            const [charts, setCharts] = React.useState({ paymentChart: null, amortizationChart: null });
+            const [currentPage, setCurrentPage] = React.useState(1);
+            const [earlyPayments, setEarlyPayments] = React.useState([]);
+            const [newEarlyPayment, setNewEarlyPayment] = React.useState({
+                month: 12,
+                amount: 1000,
+                type: 'reduceTerm'
+            });
+            const itemsPerPage = 12;
+
+            // Toggle theme
+            const toggleTheme = () => {
+                setDarkMode(!darkMode);
+            };
+
+            // Toggle language
+            const toggleLanguage = () => {
+                setLanguage(language === 'en' ? 'ru' : 'en');
+            };
+
+            React.useEffect(() => {
+                document.body.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+            }, [darkMode]);
+
+            // Translate function
+            const t = (key, params = {}) => {
+                let translation = translations[language][key] || translations['en'][key] || key;
+                
+                // Replace placeholders with actual values
+                for (const param in params) {
+                    translation = translation.replace(`{${param}}`, params[param]);
+                }
+                
+                return translation;
+            };
+
+            // Format date based on language
+            const formatDate = (dateString) => {
+                const date = new Date(dateString);
+                if (language === 'ru') {
+                    return date.toLocaleDateString('ru-RU');
+                }
+                return date.toLocaleDateString('en-US');
+            };
+
+            // Handle input changes
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                let numValue = name === 'startDate' ? value : parseFloat(value) || 0;
+                
+                setInputs(prev => ({
+                    ...prev,
+                    [name]: numValue
+                }));
+
+                // Auto-calculate loan amount if home value or down payment changes
+                if (name === 'homeValue' || name === 'downPayment') {
+                    const homeValue = name === 'homeValue' ? numValue : prev.homeValue;
+                    const downPayment = name === 'downPayment' ? numValue : prev.downPayment;
+                    
+                    setInputs(prev => ({
+                        ...prev,
+                        loanAmount: homeValue - downPayment
+                    }));
+                }
+            };
+
+            // Handle early payment input changes
+            const handleEarlyPaymentChange = (e) => {
+                const { name, value } = e.target;
+                setNewEarlyPayment(prev => ({
+                    ...prev,
+                    [name]: name === 'month' || name === 'amount' ? parseFloat(value) || 0 : value
+                }));
+            };
+
+            // Add early payment
+            const addEarlyPayment = () => {
+                if (newEarlyPayment.amount <= 0 || newEarlyPayment.month <= 0) return;
+                
+                setEarlyPayments(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        ...newEarlyPayment
+                    }
+                ]);
+                
+                setNewEarlyPayment({
+                    month: 12,
+                    amount: 1000,
+                    type: 'reduceTerm'
+                });
+            };
+
+            // Remove early payment
+            const removeEarlyPayment = (id) => {
+                setEarlyPayments(prev => prev.filter(payment => payment.id !== id));
+            };
+
+            // Format currency based on language
+            const formatCurrency = (value) => {
+                if (language === 'ru') {
+                    return new Intl.NumberFormat('ru-RU', {
+                        style: 'currency',
+                        currency: 'RUB',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(value).replace('RUB', '₽');
+                }
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(value);
+            };
+
+            // Format percentage
+            const formatPercentage = (value) => {
+                return `${value.toFixed(2)}%`;
+            };
+
+            // Calculate mortgage with early payments
+            const calculateMortgage = () => {
+                // Validate inputs
+                const newErrors = {};
+                if (inputs.homeValue <= 0) newErrors.homeValue = t('errorHomeValue');
+                if (inputs.downPayment <= 0) newErrors.downPayment = t('errorDownPayment');
+                if (inputs.downPayment >= inputs.homeValue) newErrors.downPayment = t('errorDownPaymentMax');
+                if (inputs.interestRate <= 0) newErrors.interestRate = t('errorInterestRate');
+                if (inputs.loanTerm <= 0) newErrors.loanTerm = t('errorLoanTerm');
+
+                setErrors(newErrors);
+                if (Object.keys(newErrors).length > 0) return;
+
+                const monthlyRate = inputs.interestRate / 100 / 12;
+                const paymentsCount = inputs.loanTerm * 12;
+
+                // Calculate base monthly payment
+                const baseMonthlyPayment = 
+                    (inputs.loanAmount * monthlyRate) / 
+                    (1 - Math.pow(1 + monthlyRate, -paymentsCount));
+
+                // Sort early payments by month
+                const sortedEarlyPayments = [...earlyPayments].sort((a, b) => a.month - b.month);
+                let earlyPaymentIndex = 0;
+                let totalEarlyPayments = 0;
+
+                // Calculate amortization schedule
+                const amortizationSchedule = [];
+                let balance = inputs.loanAmount;
+                let totalInterest = 0;
+                let actualMonthlyPayment = baseMonthlyPayment;
+                const startDate = new Date(inputs.startDate);
+
+                for (let i = 1; i <= paymentsCount; i++) {
+                    // Check for early payment in this month
+                    let extraPayment = 0;
+                    let paymentType = 'none';
+                    
+                    if (earlyPaymentIndex < sortedEarlyPayments.length && 
+                        sortedEarlyPayments[earlyPaymentIndex].month === i) {
+                        extraPayment = sortedEarlyPayments[earlyPaymentIndex].amount;
+                        paymentType = sortedEarlyPayments[earlyPaymentIndex].type;
+                        totalEarlyPayments += extraPayment;
+                        earlyPaymentIndex++;
+                    }
+
+                    // Calculate interest and principal
+                    const interest = balance * monthlyRate;
+                    let principal = actualMonthlyPayment - interest;
+                    
+                    // Apply extra payment
+                    if (extraPayment > 0) {
+                        principal += extraPayment;
+                        
+                        // If payment type is to reduce payment, recalculate the schedule
+                        if (paymentType === 'reducePayment' && balance > principal) {
+                            const remainingTerm = paymentsCount - i;
+                            const newBalance = balance - principal;
+                            
+                            // Recalculate payment for remaining term
+                            actualMonthlyPayment = 
+                                (newBalance * monthlyRate) / 
+                                (1 - Math.pow(1 + monthlyRate, -remainingTerm));
+                        }
+                    }
+
+                    totalInterest += interest;
+                    balance -= principal;
+
+                    if (balance <= 0.01 || i === paymentsCount) {
+                        const paymentDate = new Date(startDate);
+                        paymentDate.setMonth(paymentDate.getMonth() + i);
+
+                        amortizationSchedule.push({
+                            month: i,
+                            date: paymentDate.toISOString().split('T')[0],
+                            payment: actualMonthlyPayment + (extraPayment > 0 && paymentType === 'reduceTerm' ? extraPayment : 0),
+                            principal: principal,
+                            interest: interest,
+                            totalInterest: totalInterest,
+                            balance: Math.max(0, balance),
+                            extraPayment: extraPayment,
+                            paymentType: paymentType
+                        });
+
+                        if (balance <= 0.01) break;
+                    } else {
+                        const paymentDate = new Date(startDate);
+                        paymentDate.setMonth(paymentDate.getMonth() + i);
+
+                        amortizationSchedule.push({
+                            month: i,
+                            date: paymentDate.toISOString().split('T')[0],
+                            payment: actualMonthlyPayment + (extraPayment > 0 && paymentType === 'reduceTerm' ? extraPayment : 0),
+                            principal: principal,
+                            interest: interest,
+                            totalInterest: totalInterest,
+                            balance: balance,
+                            extraPayment: extraPayment,
+                            paymentType: paymentType
+                        });
+                    }
+                }
+
+                // Calculate total cost
+                const totalCost = inputs.loanAmount + totalInterest + (inputs.propertyTax * inputs.loanTerm) + 
+                                 (inputs.homeInsurance * inputs.loanTerm) + (inputs.pmi * 12 * inputs.loanTerm) - totalEarlyPayments;
+
+                // Calculate payoff date
+                const lastPayment = amortizationSchedule[amortizationSchedule.length - 1];
+                const payOffDate = lastPayment ? lastPayment.date : 'N/A';
+
+                // Find actual loan term
+                const actualLoanTerm = lastPayment ? lastPayment.month / 12 : inputs.loanTerm;
+
+                // Update results
+                setResults({
+                    monthlyPayment: baseMonthlyPayment,
+                    totalInterest,
+                    totalCost,
+                    payOffDate,
+                    monthlyPaymentWithExtras: baseMonthlyPayment + (inputs.propertyTax + inputs.homeInsurance + (inputs.pmi * 12)) / 12,
+                    actualMonthlyPayment: amortizationSchedule[0]?.payment || baseMonthlyPayment,
+                    actualLoanTerm,
+                    totalSavings: (inputs.loanTerm * 12 * baseMonthlyPayment) - 
+                                 (amortizationSchedule.length * actualMonthlyPayment) - 
+                                 totalEarlyPayments
+                });
+
+                setAmortization(amortizationSchedule);
+                setCurrentPage(1);
+            };
+
+            // Initialize charts
+            const initCharts = () => {
+                if (!amortization.length) return;
+
+                // Payment breakdown chart (pie chart for first month)
+                const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+                
+                // Destroy previous chart if exists
+                if (charts.paymentChart) {
+                    charts.paymentChart.destroy();
+                }
+
+                // Amortization over time chart (line chart)
+                const amortizationCtx = document.getElementById('amortizationChart').getContext('2d');
+                
+                if (charts.amortizationChart) {
+                    charts.amortizationChart.destroy();
+                }
+
+                // Prepare data for amortization chart
+                const months = amortization.map(item => item.month);
+                const principals = amortization.map(item => item.principal);
+                const interests = amortization.map(item => item.interest);
+                const balances = amortization.map(item => item.balance);
+
+                const newPaymentChart = new Chart(paymentCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: [t('principal'), t('interest'), t('propertyTax'), t('homeInsurance'), 'PMI'],
+                        datasets: [{
+                            data: [
+                                amortization[0]?.principal || 0,
+                                amortization[0]?.interest || 0,
+                                inputs.propertyTax / 12,
+                                inputs.homeInsurance / 12,
+                                inputs.pmi
+                            ],
+                            backgroundColor: [
+                                'rgba(75, 192, 192, 0.6)',
+                                'rgba(255, 99, 132, 0.6)',
+                                'rgba(54, 162, 235, 0.6)',
+                                'rgba(255, 206, 86, 0.6)',
+                                'rgba(153, 102, 255, 0.6)'
+                            ],
+                            borderColor: [
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(153, 102, 255, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: t('chartPaymentBreakdown'),
+                                color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                            },
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        return `${label}: ${formatCurrency(value)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const newAmortizationChart = new Chart(amortizationCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: t('chartPrincipal'),
+                                data: principals,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: t('chartInterest'),
+                                data: interests,
+                                borderColor: 'rgba(255, 99, 132, 1)',
+                                backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                                borderWidth: 2,
+                                fill: true
+                            },
+                            {
+                                label: t('chartBalance'),
+                                data: balances,
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: t('chartAmortization'),
+                                color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                            },
+                            legend: {
+                                labels: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: t('month'),
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: `${t('principal')}/${t('interest')}`,
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            },
+                            y1: {
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: t('balance'),
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    color: getComputedStyle(document.body).getPropertyValue('--text-color')
+                                }
+                            }
+                        }
+                    }
+                });
+
+                setCharts({
+                    paymentChart: newPaymentChart,
+                    amortizationChart: newAmortizationChart
+                });
+            };
+
+            // Export amortization to CSV
+            const exportToCSV = () => {
+                if (!amortization.length) return;
+
+                const headers = [t('month'), t('date'), t('payment'), t('principal'), t('interest'), t('balance'), t('earlyPayment'), t('paymentType')];
+                const csvData = [
+                    headers.join(','),
+                    ...amortization.map(item => [
+                        item.month,
+                        formatDate(item.date),
+                        item.payment.toFixed(2),
+                        item.principal.toFixed(2),
+                        item.interest.toFixed(2),
+                        item.balance.toFixed(2),
+                        item.extraPayment ? item.extraPayment.toFixed(2) : '0.00',
+                        item.paymentType !== 'none' ? (item.paymentType === 'reduceTerm' ? t('typeReduceTerm') : t('typeReducePayment')) : ''
+                    ].join(','))
+                ].join('\n');
+
+                const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `amortization-schedule-${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            // Calculate pagination
+            const totalPages = Math.ceil(amortization.length / itemsPerPage);
+            const currentItems = amortization.slice(
+                (currentPage - 1) * itemsPerPage,
+                currentPage * itemsPerPage
+            );
+
+            // Calculate on initial load and when inputs change or early payments are updated
+            React.useEffect(() => {
+                calculateMortgage();
+            }, [inputs, earlyPayments]);
+
+            // Update charts when results or theme change
+            React.useEffect(() => {
+                if (results) {
+                    initCharts();
+                }
+            }, [results, darkMode, language]);
+
+            return (
+                <div className="container">
+                    <header>
+                        <h1>{t('appTitle')}</h1>
+                        <div className="controls">
+                            <button className="theme-toggle" onClick={toggleTheme}>
+                                {darkMode ? <i className="fas fa-sun"></i> : <i className="fas fa-moon"></i>}
+                            </button>
+                            <button className="language-toggle" onClick={toggleLanguage}>
+                                {language === 'en' ? 'RU' : 'EN'}
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="app-grid">
+                        <div className="left-column">
+                            <div className="card">
+                                <h2 className="card-title">{t('loanDetails')}</h2>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="homeValue">{t('homeValue')}</label>
+                                    <input
+                                        type="number"
+                                        id="homeValue"
+                                        name="homeValue"
+                                        value={inputs.homeValue}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="1000"
+                                    />
+                                    {errors.homeValue && <div className="error">{errors.homeValue}</div>}
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="downPayment">{t('downPayment')}</label>
+                                    <input
+                                        type="number"
+                                        id="downPayment"
+                                        name="downPayment"
+                                        value={inputs.downPayment}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="1000"
+                                    />
+                                    <div className="range-labels">
+                                        <span>{formatCurrency(inputs.homeValue * 0.05)}</span>
+                                        <span>{formatCurrency(inputs.homeValue * 0.1)}</span>
+                                        <span>{formatCurrency(inputs.homeValue * 0.2)}</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max={inputs.homeValue}
+                                        step="1000"
+                                        value={inputs.downPayment}
+                                        onChange={handleInputChange}
+                                        name="downPayment"
+                                    />
+                                    {errors.downPayment && <div className="error">{errors.downPayment}</div>}
+                                    <small>{t('downPayment')}: {formatPercentage((inputs.downPayment / inputs.homeValue) * 100)}</small>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="loanAmount">{t('loanAmount')}</label>
+                                    <input
+                                        type="number"
+                                        id="loanAmount"
+                                        name="loanAmount"
+                                        value={inputs.loanAmount}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="1000"
+                                        readOnly
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="interestRate">{t('interestRate')}</label>
+                                    <input
+                                        type="number"
+                                        id="interestRate"
+                                        name="interestRate"
+                                        value={inputs.interestRate}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                    <div className="range-labels">
+                                        <span>2%</span>
+                                        <span>4%</span>
+                                        <span>6%</span>
+                                        <span>8%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="10"
+                                        step="0.1"
+                                        value={inputs.interestRate}
+                                        onChange={handleInputChange}
+                                        name="interestRate"
+                                    />
+                                    {errors.interestRate && <div className="error">{errors.interestRate}</div>}
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="loanTerm">{t('loanTerm')}</label>
+                                    <select
+                                        id="loanTerm"
+                                        name="loanTerm"
+                                        value={inputs.loanTerm}
+                                        onChange={handleInputChange}
+                                    >
+                                        <option value="10">{t('tenYears')}</option>
+                                        <option value="15">{t('fifteenYears')}</option>
+                                        <option value="20">{t('twentyYears')}</option>
+                                        <option value="30">{t('thirtyYears')}</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="startDate">{t('startDate')}</label>
+                                    <input
+                                        type="date"
+                                        id="startDate"
+                                        name="startDate"
+                                        value={inputs.startDate}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <h2 className="card-title">{t('additionalCosts')}</h2>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="propertyTax">{t('propertyTax')}</label>
+                                    <input
+                                        type="number"
+                                        id="propertyTax"
+                                        name="propertyTax"
+                                        value={inputs.propertyTax}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="100"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="homeInsurance">{t('homeInsurance')}</label>
+                                    <input
+                                        type="number"
+                                        id="homeInsurance"
+                                        name="homeInsurance"
+                                        value={inputs.homeInsurance}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="100"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="pmi">{t('pmi')}</label>
+                                    <input
+                                        type="number"
+                                        id="pmi"
+                                        name="pmi"
+                                        value={inputs.pmi}
+                                        onChange={handleInputChange}
+                                        min="0"
+                                        step="10"
+                                    />
+                                    <small>{t('requiredForLowDownPayment')}</small>
+                                </div>
+                            </div>
+
+                            <div className="card">
+                                <h2 className="card-title">{t('earlyPayment')}</h2>
+                                
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label htmlFor="earlyPaymentMonth">{t('earlyPaymentMonth')}</label>
+                                        <input
+                                            type="number"
+                                            id="earlyPaymentMonth"
+                                            name="month"
+                                            value={newEarlyPayment.month}
+                                            onChange={handleEarlyPaymentChange}
+                                            min="1"
+                                            step="1"
+                                        />
+                                    </div>
+                                    
+                                    <div className="form-group">
+                                        <label htmlFor="earlyPaymentAmount">{t('earlyPaymentAmount')}</label>
+                                        <input
+                                            type="number"
+                                            id="earlyPaymentAmount"
+                                            name="amount"
+                                            value={newEarlyPayment.amount}
+                                            onChange={handleEarlyPaymentChange}
+                                            min="0"
+                                            step="100"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label htmlFor="earlyPaymentType">{t('earlyPaymentType')}</label>
+                                    <select
+                                        id="earlyPaymentType"
+                                        name="type"
+                                        value={newEarlyPayment.type}
+                                        onChange={handleEarlyPaymentChange}
+                                    >
+                                        <option value="reduceTerm">{t('typeReduceTerm')}</option>
+                                        <option value="reducePayment">{t('typeReducePayment')}</option>
+                                    </select>
+                                </div>
+                                
+                                <button className="btn btn-secondary" onClick={addEarlyPayment}>
+                                    <i className="fas fa-plus"></i> {t('addEarlyPayment')}
+                                </button>
+                                
+                                {earlyPayments.length > 0 && (
+                                    <div className="early-payment-total">
+                                        {t('totalEarlyPayments')}: {formatCurrency(earlyPayments.reduce((sum, payment) => sum + payment.amount, 0))}
+                                    </div>
+                                )}
+                                
+                                {earlyPayments.length > 0 && (
+                                    <div className="payment-history">
+                                        <h3>{t('paymentHistory')}</h3>
+                                        {earlyPayments.map(payment => (
+                                            <div key={payment.id} className="payment-item">
+                                                <div>
+                                                    {t('month')} {payment.month}: {formatCurrency(payment.amount)} 
+                                                    ({payment.type === 'reduceTerm' ? t('typeReduceTerm') : t('typeReducePayment')})
+                                                </div>
+                                                <button 
+                                                    onClick={() => removeEarlyPayment(payment.id)}
+                                                    style={{background: 'none', border: 'none', color: 'var(--error-color)', cursor: 'pointer'}}
+                                                >
+                                                    <i className="fas fa-times"></i> {t('remove')}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="right-column">
+                            <div className="card">
+                                <h2 className="card-title">{t('paymentSummary')}</h2>
+                                
+                                {results ? (
+                                    <>
+                                        <div className="result-summary">
+                                            <div className="summary-item">
+                                                <div className="summary-item-title">{t('monthlyPayment')}</div>
+                                                <div className="summary-item-value">{formatCurrency(results.monthlyPaymentWithExtras)}</div>
+                                                <small style={{marginTop: '5px'}}>
+                                                    {earlyPayments.length > 0 && results.actualMonthlyPayment !== results.monthlyPayment && (
+                                                        <span>(Adjusted: {formatCurrency(results.actualMonthlyPayment + (inputs.propertyTax + inputs.homeInsurance + (inputs.pmi * 12)) / 12)})</span>
+                                                    )}
+                                                </small>
+                                            </div>
+                                            <div className="summary-item">
+                                                <div className="summary-item-title">{t('totalInterest')}</div>
+                                                <div className="summary-item-value">{formatCurrency(results.totalInterest)}</div>
+                                            </div>
+                                            <div className="summary-item">
+                                                <div className="summary-item-title">{t('totalCost')}</div>
+                                                <div className="summary-item-value">{formatCurrency(results.totalCost)}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="tabs">
+                                            <div 
+                                                className={`tab ${activeTab === 'summary' ? 'active' : ''}`}
+                                                onClick={() => setActiveTab('summary')}
+                                            >
+                                                <i className="fas fa-chart-pie"></i> {t('summary')}
+                                            </div>
+                                            <div 
+                                                className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
+                                                onClick={() => setActiveTab('schedule')}
+                                            >
+                                                <i className="fas fa-table"></i> {t('amortization')}
+                                            </div>
+                                        </div>
+
+                                        <div className={`tab-content ${activeTab === 'summary' ? 'active' : ''}`}>
+                                            <div className="chart-container">
+                                                <canvas id="paymentChart"></canvas>
+                                            </div>
+                                            <div className="chart-container" style={{marginTop: '20px'}}>
+                                                <canvas id="amortizationChart"></canvas>
+                                            </div>
+                                            
+                                            <div style={{marginTop: '20px'}}>
+                                                <div className="form-group">
+                                                    <label>{t('payoffDate')}</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formatDate(results.payOffDate) + 
+                                                               (earlyPayments.length > 0 ? ` (${results.actualLoanTerm.toFixed(1)} ${t('loanTerm')})` : '')}
+                                                        readOnly
+                                                    />
+                                                </div>
+                                                
+                                                <button className="btn" onClick={() => setActiveTab('schedule')}>
+                                                    <i className="fas fa-file-alt"></i> {t('viewFullSchedule')}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className={`tab-content ${activeTab === 'schedule' ? 'active' : ''}`}>
+                                            {amortization.length > 0 && (
+                                                <>
+                                                    <div className="table-container">
+                                                        <table className="amortization-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>{t('month')}</th>
+                                                                    <th>{t('date')}</th>
+                                                                    <th>{t('payment')}</th>
+                                                                    <th>{t('principal')}</th>
+                                                                    <th>{t('interest')}</th>
+                                                                    <th>{t('balance')}</th>
+                                                                    <th>{t('earlyPayment')}</th>
+                                                                    <th>{t('paymentType')}</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {currentItems.map((item, index) => (
+                                                                    <tr key={index}>
+                                                                        <td>{item.month}</td>
+                                                                        <td>{formatDate(item.date)}</td>
+                                                                        <td>{formatCurrency(item.payment)}</td>
+                                                                        <td>{formatCurrency(item.principal)}</td>
+                                                                        <td>{formatCurrency(item.interest)}</td>
+                                                                        <td>{formatCurrency(item.balance)}</td>
+                                                                        <td>{item.extraPayment > 0 ? formatCurrency(item.extraPayment) : '-'}</td>
+                                                                        <td>{item.paymentType !== 'none' ? 
+                                                                            (item.paymentType === 'reduceTerm' ? t('typeReduceTerm') : t('typeReducePayment')) : '-'}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                    
+                                                    <div className="month-pagination">
+                                                        <button 
+                                                            className="btn"
+                                                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                                            disabled={currentPage === 1}
+                                                        >
+                                                            <i className="fas fa-arrow-left"></i> {t('previous')}
+                                                        </button>
+                                                        
+                                                        <div className="month-page-info">
+                                                            {t('showingPayments', {
+                                                                from: (currentPage - 1) * itemsPerPage + 1,
+                                                                to: Math.min(currentPage * itemsPerPage, amortization.length),
+                                                                total: amortization.length
+                                                            })}
+                                                        </div>
+                                                        
+                                                        <button 
+                                                            className="btn"
+                                                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                                            disabled={currentPage === totalPages}
+                                                        >
+                                                            {t('next')} <i className="fas fa-arrow-right"></i>
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    <button className="btn export-btn" onClick={exportToCSV}>
+                                                        <i className="fas fa-file-export"></i> {t('exportToCSV')}
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p>{t('calculating')}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
