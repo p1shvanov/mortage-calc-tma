@@ -4,6 +4,7 @@ import { Cell, Section, Text } from '@telegram-apps/telegram-ui';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
+import { PAYMENT_TYPE } from '@/utils/financialMath';
 
 
 const ResultsDisplay = () => {
@@ -15,15 +16,10 @@ const ResultsDisplay = () => {
   }
 
   const hasEarlyPayments = useMemo(() => {
-    if (amortizationResult) {
-      return (
-        // Check if term was reduced
-        amortizationResult.summary.newTerm < amortizationResult.summary.originalTerm ||
-        // Check if monthly payment was reduced
-        amortizationResult.summary.finalMonthlyPayment < amortizationResult.summary.originalMonthlyPayment
-      );
+    if (amortizationResult && amortizationResult.schedule) {
+      // Check if there are any early payments in the schedule
+      return amortizationResult.schedule.some(item => item.extraPayment !== undefined && item.extraPayment > 0);
     }
-
     return false;
   }, [amortizationResult]);
 
@@ -129,6 +125,17 @@ const ResultsDisplay = () => {
         readOnly
       >
         <Text>{formatDate(payoffDate)}</Text>
+      </Cell>
+      <Cell
+        subhead={t('paymentType')}
+        before={'💵'}
+        readOnly
+      >
+        <Text>
+          {mortgageResults.paymentType === PAYMENT_TYPE.ANNUITY 
+            ? t('annuityPayment') 
+            : t('differentiatedPayment')}
+        </Text>
       </Cell>
     </Section>
   );

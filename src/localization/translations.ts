@@ -11,6 +11,12 @@ export const translations = {
     interestRate: "Interest Rate",
     loanTerm: "Loan Term (years)",
     startDate: "Start Date",
+    paymentType: "Payment Type",
+    annuityPayment: "Annuity",
+    differentiatedPayment: "Differentiated",
+    paymentDay: "Payment Day",
+    paymentDayMonthly: "Same day as start date",
+    paymentDaySpecific: "Specific day of month",
     
     // Results
     paymentSummary: "Payment Summary",
@@ -88,6 +94,12 @@ export const translations = {
     interestRate: "Процентная ставка",
     loanTerm: "Срок кредита (лет)",
     startDate: "Дата начала",
+    paymentType: "Тип платежа",
+    annuityPayment: "Аннуитетный",
+    differentiatedPayment: "Дифференцированный",
+    paymentDay: "День платежа",
+    paymentDayMonthly: "В тот же день, что и дата начала",
+    paymentDaySpecific: "Конкретный день месяца",
     
     // Results
     paymentSummary: "Сводка по платежам",

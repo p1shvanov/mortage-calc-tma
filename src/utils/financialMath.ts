@@ -12,19 +12,48 @@ export enum InterestCalculationMethod {
  * Types of loan payments
  * Preparation for future functionality expansion
  */
-export enum PaymentType {
-  ANNUITY = 'ANNUITY', // Annuity payments (current method)
-  DIFFERENTIATED = 'DIFFERENTIATED', // Differentiated payments
+export type PaymentType = 'ANNUITY' | 'DIFFERENTIATED';
+
+// Constants for payment types
+export const PAYMENT_TYPE = {
+  ANNUITY: 'ANNUITY' as PaymentType, // Annuity payments (current method)
+  DIFFERENTIATED: 'DIFFERENTIATED' as PaymentType, // Differentiated payments
+};
+
+/**
+ * Calculate monthly payment for a differentiated loan
+ * In differentiated payments, the principal portion is fixed, and the interest portion decreases over time
+ */
+export function calculateDifferentiatedMonthlyPayment(
+  principal: number,
+  annualInterestRate: number,
+  termInYears: number,
+  paymentNumber: number = 1 // 1-based payment number
+): number {
+  const monthlyRate = annualInterestRate / 100 / 12;
+  const numberOfPayments = termInYears * 12;
+  const fixedPrincipalPortion = principal / numberOfPayments;
+  const remainingPrincipal = principal - (fixedPrincipalPortion * (paymentNumber - 1));
+  const interestPortion = remainingPrincipal * monthlyRate;
+  
+  return fixedPrincipalPortion + interestPortion;
 }
 
 /**
- * Calculate monthly payment for an annuity loan
+ * Calculate monthly payment for a loan
  */
 export function calculateMonthlyPayment(
   principal: number,
   annualInterestRate: number,
-  termInYears: number
+  termInYears: number,
+  paymentType: PaymentType = PAYMENT_TYPE.ANNUITY,
+  paymentNumber: number = 1
 ): number {
+  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+    return calculateDifferentiatedMonthlyPayment(principal, annualInterestRate, termInYears, paymentNumber);
+  }
+  
+  // Annuity payment calculation
   // Monthly interest rate (annual rate divided by 12 and converted to decimal)
   const monthlyRate = annualInterestRate / 100 / 12;
   
@@ -93,4 +122,31 @@ export function calculatePayoffDate(startDate: string, loanTermYears: number): s
   const date = new Date(startDate);
   date.setFullYear(date.getFullYear() + loanTermYears);
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Get the last day of a month
+ */
+export function getLastDayOfMonth(year: number, month: number): number {
+  // month is 0-based in JavaScript Date (0 = January, 11 = December)
+  // Create a date for the first day of the next month, then subtract one day
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/**
+ * Adjust payment day to handle months with fewer days
+ * If the specified day is greater than the number of days in the month,
+ * return the last day of the month
+ */
+export function adjustPaymentDay(date: Date, paymentDay: number): Date {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const lastDay = getLastDayOfMonth(year, month);
+  
+  // If payment day is greater than the last day of the month, use the last day
+  const adjustedDay = Math.min(paymentDay, lastDay);
+  
+  const result = new Date(date);
+  result.setDate(adjustedDay);
+  return result;
 }

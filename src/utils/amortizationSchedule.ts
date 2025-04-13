@@ -2,6 +2,7 @@ import {
   calculateInterestForPeriod,
   InterestCalculationMethod,
   PaymentType,
+  PAYMENT_TYPE,
 } from './financialMath';
 
 export interface AmortizationScheduleItem {
@@ -58,19 +59,28 @@ export function generateAmortizationSchedule(
     loanTerm, 
     startDate, 
     earlyPayments = [],
-    paymentType = PaymentType.ANNUITY, // Default to annuity payments
+    paymentType = PAYMENT_TYPE.ANNUITY, // Default to annuity payments
     interestCalculationMethod = InterestCalculationMethod.ACTUAL_365 // Default to current method
   } = params;
   
   // Total number of payments (years * 12 months)
   const numberOfPayments = loanTerm * 12;
   
-  // Calculate original monthly payment using the amortization formula
-  // Monthly interest rate (annual rate divided by 12 and converted to decimal)
+  // Calculate original monthly payment based on payment type
   const monthlyRate = interestRate / 100 / 12;
-  const originalMonthlyPayment = 
-    (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-    (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  let originalMonthlyPayment: number;
+  
+  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+    // For differentiated payments, calculate the first payment (which will be the highest)
+    const fixedPrincipalPortion = loanAmount / numberOfPayments;
+    const firstInterestPortion = loanAmount * monthlyRate;
+    originalMonthlyPayment = fixedPrincipalPortion + firstInterestPortion;
+  } else {
+    // For annuity payments, use the amortization formula
+    originalMonthlyPayment = 
+      (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
+      (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  }
   
   // Map early payments to their corresponding payment dates
   // Sort early payments by date first to ensure they're processed in chronological order
@@ -98,7 +108,25 @@ export function generateAmortizationSchedule(
   const startDateObj = new Date(startDate);
   
   // Calculate original total interest (without early payments)
-  const originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
+  let originalTotalInterest: number;
+  
+  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+    // For differentiated payments, calculate the sum of all interest payments
+    let totalPayments = 0;
+    let remainingBalance = loanAmount;
+    const fixedPrincipalPortion = loanAmount / numberOfPayments;
+    
+    for (let i = 0; i < numberOfPayments; i++) {
+      const interestPortion = remainingBalance * monthlyRate;
+      totalPayments += fixedPrincipalPortion + interestPortion;
+      remainingBalance -= fixedPrincipalPortion;
+    }
+    
+    originalTotalInterest = totalPayments - loanAmount;
+  } else {
+    // For annuity payments, all payments are the same
+    originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
+  }
   
   // Track if we've had a reducePayment type early payment
   let hadReducePaymentType = false;
@@ -108,9 +136,19 @@ export function generateAmortizationSchedule(
   let remainingTerm = numberOfPayments; // Track remaining term separately
   
   while (month <= remainingTerm && balance > 0.01) {
-    // Calculate payment date (same day of month as start date)
-    const paymentDate = new Date(currentDate);
-    paymentDate.setMonth(currentDate.getMonth() + 1);
+  // Calculate payment date based on payment day setting
+  const paymentDate = new Date(currentDate);
+  paymentDate.setMonth(currentDate.getMonth() + 1);
+  
+  // If a specific payment day is set, adjust the payment date
+  if (params.paymentDay !== undefined) {
+    const year = paymentDate.getFullYear();
+    const month = paymentDate.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    // If payment day is greater than the last day of the month, use the last day
+    const adjustedDay = Math.min(params.paymentDay, lastDay);
+    paymentDate.setDate(adjustedDay);
+  }
     
     // Calculate interest for this period using the selected calculation method
     const interest = calculateInterestForPeriod(
@@ -121,8 +159,24 @@ export function generateAmortizationSchedule(
       interestCalculationMethod
     );
     
-    // Calculate principal for this month
-    const principal = currentMonthlyPayment - interest;
+    // Calculate principal and payment based on payment type
+    let principal: number;
+    let payment: number;
+    
+    if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+      // For differentiated payments, recalculate the payment for each month
+      // The principal portion is fixed, and the interest portion decreases over time
+      const numberOfPayments = loanTerm * 12;
+      const fixedPrincipalPortion = loanAmount / numberOfPayments;
+      principal = fixedPrincipalPortion;
+      payment = principal + interest;
+      currentMonthlyPayment = payment; // Update for this month
+    } else {
+      // For annuity payments, the total payment is fixed
+      // The principal portion increases over time, and the interest portion decreases
+      principal = currentMonthlyPayment - interest;
+      payment = currentMonthlyPayment;
+    }
     
     // Update the balance
     let newBalance = balance - principal;
