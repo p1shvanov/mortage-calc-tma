@@ -37,7 +37,7 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
     loanTerm, 
     startDate,
     paymentType = PAYMENT_TYPE.ANNUITY, // Default to annuity payments
-    paymentDay
+    // paymentDay
   } = params;
   
   // Calculate monthly payment
