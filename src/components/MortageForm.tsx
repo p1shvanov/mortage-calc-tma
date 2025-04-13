@@ -40,6 +40,8 @@ const MortageForm: React.FC<MortageFormPropsType> = ({ setIsModalOpened }) => {
           interestRate: loanDetails.interestRate,
           loanTerm: loanDetails.loanTerm,
           startDate: loanDetails.startDate,
+          paymentType: loanDetails.paymentType,
+          paymentDay: loanDetails.paymentDay,
           earlyPayments,
         });
         setAmortizationResult(amortization);

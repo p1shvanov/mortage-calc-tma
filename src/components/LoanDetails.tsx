@@ -13,6 +13,8 @@ import { useMortgage } from '@/providers/MortgageProvider';
 
 import FormField from '@/components/FormField';
 
+import { PaymentType, PAYMENT_TYPE } from '@/utils/financialMath';
+
 export interface LoanDetailsValues {
   homeValue: number;
   downPayment: number;
@@ -20,6 +22,8 @@ export interface LoanDetailsValues {
   interestRate: number;
   loanTerm: number;
   startDate: string;
+  paymentType: PaymentType;
+  paymentDay: number;
 }
 
 const LoanDetails = () => {
@@ -34,6 +38,8 @@ const LoanDetails = () => {
     interestRate: 18.75,
     loanTerm: 20,
     startDate: new Date().toISOString().split('T')[0],
+    paymentType: PAYMENT_TYPE.ANNUITY,
+    paymentDay: new Date().getDate(), // Default to the current day of month
   });
 
   // Initialize validation errors
@@ -44,6 +50,16 @@ const LoanDetails = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+
+    // Special handling for payment type
+    if (name === 'paymentType') {
+      console.log('Payment type changed:', name, value);
+      setValues((prev) => ({
+        ...prev,
+        [name]: value as PaymentType
+      }));
+      return;
+    }
 
     // Fix for empty input fields - don't convert empty string to 0
     let numValue;
@@ -219,6 +235,29 @@ const LoanDetails = () => {
           value={values.startDate}
           onChange={handleInputChange}
         />
+        <Select
+          id='paymentType'
+          name='paymentType'
+          header={t('paymentType')}
+          value={String(values.paymentType)}
+          onChange={handleInputChange}
+        >
+          <option value={PAYMENT_TYPE.ANNUITY}>{t('annuityPayment')}</option>
+          <option value={PAYMENT_TYPE.DIFFERENTIATED}>{t('differentiatedPayment')}</option>
+        </Select>
+        <Select
+          id='paymentDay'
+          name='paymentDay'
+          header={t('paymentDay')}
+          value={String(values.paymentDay)}
+          onChange={handleInputChange}
+        >
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+            <option key={day} value={String(day)}>
+              {day}
+            </option>
+          ))}
+        </Select>
       </List>
     </Section>
   );
