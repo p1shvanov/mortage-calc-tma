@@ -1,3 +1,9 @@
+import {
+  calculateInterestForPeriod,
+  InterestCalculationMethod,
+  PaymentType,
+} from './financialMath';
+
 export interface AmortizationScheduleItem {
   month: number;
   date: string;
@@ -15,6 +21,9 @@ export interface AmortizationScheduleParams {
   interestRate: number;
   loanTerm: number; // in years
   startDate: string;
+  paymentType?: PaymentType; // Preparation for future extension
+  paymentDay?: number; // Preparation for future extension - day of monthly payment
+  interestCalculationMethod?: InterestCalculationMethod; // Interest calculation method
   earlyPayments?: Array<{
     id: string;
     date: string; // ISO date string format YYYY-MM-DD
@@ -33,24 +42,8 @@ export interface AmortizationScheduleResult {
     originalMonthlyPayment: number;
     finalMonthlyPayment: number;
     totalSavings: number;
+    paymentType: PaymentType; // Payment type
   };
-}
-
-/**
- * Calculate the number of days between two dates
- */
-function daysBetween(startDate: Date, endDate: Date): number {
-  const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-  return Math.round(diffTime / oneDay);
-}
-
-/**
- * Calculate the number of days in a year (accounts for leap years)
- */
-function daysInYear(date: Date): number {
-  const year = date.getFullYear();
-  return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365;
 }
 
 /**
@@ -59,9 +52,15 @@ function daysInYear(date: Date): number {
 export function generateAmortizationSchedule(
   params: AmortizationScheduleParams
 ): AmortizationScheduleResult {
-  const { loanAmount, interestRate, loanTerm, startDate, earlyPayments = [] } = params;
-  
-  // We'll calculate the daily rate for each period based on the actual days in that year
+  const { 
+    loanAmount, 
+    interestRate, 
+    loanTerm, 
+    startDate, 
+    earlyPayments = [],
+    paymentType = PaymentType.ANNUITY, // Default to annuity payments
+    interestCalculationMethod = InterestCalculationMethod.ACTUAL_365 // Default to current method
+  } = params;
   
   // Total number of payments (years * 12 months)
   const numberOfPayments = loanTerm * 12;
@@ -113,14 +112,14 @@ export function generateAmortizationSchedule(
     const paymentDate = new Date(currentDate);
     paymentDate.setMonth(currentDate.getMonth() + 1);
     
-    // Calculate days in this payment period
-    const daysInPeriod = daysBetween(currentDate, paymentDate);
-    
-    // Calculate interest for this period using daily interest
-    // This is more accurate as it accounts for different days in each month
-    const yearDays = daysInYear(currentDate);
-    const dailyRateForPeriod = interestRate / 100 / yearDays;
-    const interest = balance * dailyRateForPeriod * daysInPeriod;
+    // Calculate interest for this period using the selected calculation method
+    const interest = calculateInterestForPeriod(
+      balance,
+      interestRate,
+      currentDate,
+      paymentDate,
+      interestCalculationMethod
+    );
     
     // Calculate principal for this month
     const principal = currentMonthlyPayment - interest;
@@ -233,7 +232,8 @@ export function generateAmortizationSchedule(
       newTotalInterest,
       originalMonthlyPayment,
       finalMonthlyPayment,
-      totalSavings
+      totalSavings,
+      paymentType
     }
   };
 }
