@@ -1,9 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Section, Select, Slider } from '@telegram-apps/telegram-ui';
+import { useState, useEffect, memo } from 'react';
+
+import {
+  List,
+  Section,
+  Select,
+  Slider,
+  Text,
+} from '@telegram-apps/telegram-ui';
+
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
-import { FormField } from '@/components/form/FormField';
-import styles from './LoanDetails.module.css';
+
+import FormField from '@/components/FormField';
 
 export interface LoanDetailsValues {
   homeValue: number;
@@ -14,17 +22,17 @@ export interface LoanDetailsValues {
   startDate: string;
 }
 
-export function LoanDetails() {
-  const { t, formatNumber } = useLocalization();
+const LoanDetails = () => {
+  const { t } = useLocalization();
   const { setLoanDetails } = useMortgage();
 
   // Initialize form state
   const [values, setValues] = useState<LoanDetailsValues>({
-    homeValue: 300000,
-    downPayment: 60000,
-    loanAmount: 240000,
-    interestRate: 3.5,
-    loanTerm: 30,
+    homeValue: 7900000,
+    downPayment: 2500000,
+    loanAmount: 5400000,
+    interestRate: 18.75,
+    loanTerm: 20,
     startDate: new Date().toISOString().split('T')[0],
   });
 
@@ -36,7 +44,7 @@ export function LoanDetails() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    
+
     // Fix for empty input fields - don't convert empty string to 0
     let numValue;
     if (name === 'startDate') {
@@ -55,11 +63,18 @@ export function LoanDetails() {
 
       // Auto-calculate loan amount if home value or down payment changes
       if (name === 'homeValue' || name === 'downPayment') {
-        const homeValue = name === 'homeValue' ? 
-          (numValue === '' ? 0 : numValue) : prev.homeValue;
+        const homeValue =
+          name === 'homeValue'
+            ? numValue === ''
+              ? 0
+              : numValue
+            : prev.homeValue;
         const downPayment =
-          name === 'downPayment' ? 
-          (numValue === '' ? 0 : numValue) : prev.downPayment;
+          name === 'downPayment'
+            ? numValue === ''
+              ? 0
+              : numValue
+            : prev.downPayment;
 
         newValues.loanAmount = Number(homeValue) - Number(downPayment);
       }
@@ -87,10 +102,14 @@ export function LoanDetails() {
     const newErrors: Record<string, string> = {};
 
     // Convert empty strings to 0 for validation
-    const homeValue = typeof values.homeValue === 'string' ? 0 : Number(values.homeValue);
-    const downPayment = typeof values.downPayment === 'string' ? 0 : Number(values.downPayment);
-    const interestRate = typeof values.interestRate === 'string' ? 0 : Number(values.interestRate);
-    const loanTerm = typeof values.loanTerm === 'string' ? 0 : Number(values.loanTerm);
+    const homeValue =
+      typeof values.homeValue === 'string' ? 0 : Number(values.homeValue);
+    const downPayment =
+      typeof values.downPayment === 'string' ? 0 : Number(values.downPayment);
+    const interestRate =
+      typeof values.interestRate === 'string' ? 0 : Number(values.interestRate);
+    const loanTerm =
+      typeof values.loanTerm === 'string' ? 0 : Number(values.loanTerm);
 
     if (homeValue <= 0) {
       newErrors.homeValue = t('errorHomeValue');
@@ -125,69 +144,59 @@ export function LoanDetails() {
 
   return (
     <Section header={t('loanDetails')}>
-      <div className={styles.formGrid}>
+      <List>
         <FormField
           label={t('homeValue')}
           name='homeValue'
           type='number'
           value={values.homeValue}
           onChange={handleInputChange}
-          placeholder='300000'
+          placeholder={t('homeValue')}
           error={errors.homeValue}
           min={0}
           step={1000}
         />
-
         <FormField
           label={t('downPayment')}
           name='downPayment'
           type='number'
           value={values.downPayment}
           onChange={handleInputChange}
-          placeholder='60000'
+          placeholder={t('downPayment')}
           error={errors.downPayment}
           min={0}
           step={1000}
         />
-
-        <div className={styles.rangeSlider}>
-          <Slider
-            value={values.downPayment}
-            min={0}
-            max={values.homeValue}
-            step={1000}
-            onChange={handleSliderChange}
-          />
-          <div className={styles.rangeLabels}>
-            <span>0%</span>
-            <span>10%</span>
-            <span>20%</span>
-            <span>30%</span>
-          </div>
-        </div>
-
+        <Slider
+          value={values.downPayment}
+          min={0}
+          max={values.homeValue}
+          step={1000}
+          onChange={handleSliderChange}
+          before={<Text>0%</Text>}
+          after={<Text>100%</Text>}
+        />
         <FormField
           label={t('loanAmount')}
           name='loanAmount'
           type='number'
           value={values.loanAmount}
           onChange={() => {}} // Read-only
-          placeholder='240000'
+          placeholder={t('loanAmount')}
           min={0}
         />
-
         <FormField
           label={t('interestRate')}
           name='interestRate'
           type='number'
           value={values.interestRate}
           onChange={handleInputChange}
-          placeholder='3.5'
+          placeholder={t('interestRate')}
           error={errors.interestRate}
           min={0}
           max={20}
           step={0.1}
-          after={<div className={styles.percentSign}>%</div>}
+          after={<Text>%</Text>}
         />
         <Select
           id='loanTerm'
@@ -206,28 +215,13 @@ export function LoanDetails() {
           label={t('startDate')}
           name='startDate'
           type='date'
+          placeholder={t('startDate')}
           value={values.startDate}
           onChange={handleInputChange}
         />
-      </div>
-
-      <div className={styles.summary}>
-        <div className={styles.summaryItem}>
-          <div className={styles.summaryLabel}>
-            {t('downPaymentPercentage')}
-          </div>
-          <div className={styles.summaryValue}>
-            {(() => {
-              // Use type assertion to ensure TypeScript recognizes these as numbers
-              const downPayment = Number(values.downPayment);
-              const homeValue = Number(values.homeValue);
-              const percentage =
-                homeValue > 0 ? Math.round((downPayment / homeValue) * 100) : 0;
-              return `${formatNumber(percentage)}%`;
-            })()}
-          </div>
-        </div>
-      </div>
+      </List>
     </Section>
   );
-}
+};
+
+export default memo(LoanDetails);

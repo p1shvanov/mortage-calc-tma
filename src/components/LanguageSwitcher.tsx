@@ -1,7 +1,10 @@
-import { Button } from '@telegram-apps/telegram-ui';
+import { memo } from 'react';
+
+import { IconButton } from '@telegram-apps/telegram-ui';
+
 import { useLocalization } from '@/providers/LocalizationProvider';
 
-export function LanguageSwitcher() {
+const LanguageSwitcher = () => {
   const { language, setLanguage } = useLocalization();
   
   const toggleLanguage = () => {
@@ -9,8 +12,10 @@ export function LanguageSwitcher() {
   };
   
   return (
-    <Button onClick={toggleLanguage}>
-      {language === 'en' ? 'RU' : 'EN'}
-    </Button>
+    <IconButton onClick={toggleLanguage}>
+      {language === 'en' ? '🇷🇺' : '🇬🇧'}
+    </IconButton>
   );
 }
+
+export default memo(LanguageSwitcher);

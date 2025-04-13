@@ -1,10 +1,11 @@
-import { Placeholder, AppRoot } from '@telegram-apps/telegram-ui';
-import { retrieveLaunchParams, useSignal, miniApp } from '@telegram-apps/sdk-react';
+import { memo } from 'react';
 
-export function EnvUnsupported() {
+import { retrieveLaunchParams, useSignal, miniApp } from '@telegram-apps/sdk-react';
+import { Placeholder, AppRoot } from '@telegram-apps/telegram-ui';
+
+const EnvUnsupported = () => {
   const platform = retrieveLaunchParams().tgWebAppPlatform;
   const isDark = useSignal(miniApp.isDark)
-
 
   return (
     <AppRoot
@@ -23,4 +24,6 @@ export function EnvUnsupported() {
       </Placeholder>
     </AppRoot>
   );
-}
+};
+
+export default memo(EnvUnsupported);

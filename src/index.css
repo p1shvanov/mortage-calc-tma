@@ -1,22 +1,4 @@
-/* Import theme variables */
-@import './styles/theme.css';
-
 body {
-  background: var(--bg-color);
-  color: var(--text-color);
-  font-family: var(--font-family);
-  padding: 0;
   margin: 0;
-  transition: background-color var(--transition-normal), color var(--transition-normal);
-}
-
-html, body, #root {
-  /* width: 100%; */
-  /* height: 100%; */
-  /* overflow: hidden; */
-  /* overscroll-behavior: none; */
-}
-#root {
-  /* Preserve scrolling behavior */
-  /* overflow-y: auto; */
+  padding: 0;
 }

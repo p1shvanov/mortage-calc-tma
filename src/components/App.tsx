@@ -1,57 +1,37 @@
-import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
-import { AppRoot, Section } from '@telegram-apps/telegram-ui';
-import { useLocalization } from '@/providers/LocalizationProvider';
-import { useTheme } from '@/providers/ThemeProvider';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { ThemeSwitcher } from '@/components/ThemeSwitcher';
-import { LoanDetails } from '@/components/LoanDetails/LoanDetails';
-import { ResultsDisplay } from '@/components/ResultsDisplay/ResultsDisplay';
-import { Container } from '@/components/layout/Container';
-import { ChartsContainer } from '@/components/charts/ChartsContainer';
-import { PaymentSchedule } from '@/components/PaymentSchedule/PaymentSchedule';
-import { TabView, TabPanel } from '@/components/TabView/TabView';
-import { EarlyPaymentContainer } from '@/components/EarlyPayment/EarlyPaymentContainer';
-import { MortgageProvider } from '@/providers/MortgageProvider';
+import { lazy, memo, Suspense, useMemo, useState } from 'react';
+import {
+  isMiniAppDark,
+  retrieveLaunchParams,
+  useSignal,
+} from '@telegram-apps/sdk-react';
+import { AppRoot, Modal, Spinner } from '@telegram-apps/telegram-ui';
 
-export function App() {
-  const lp = retrieveLaunchParams();
-  const { themeMode } = useTheme();
-  const { t } = useLocalization();
+import MortageForm from '@/components/MortageForm';
+
+const MortageResult = lazy(() => import('@/components/MortageResult'));
+
+const App = () => {
+  const [isModalOpened, setIsModalOpened] = useState<boolean>(false);
+  const isDark = useSignal(isMiniAppDark);
+  const lp = useMemo(() => retrieveLaunchParams(), []);
+
 
   return (
     <AppRoot
-      appearance={themeMode}
+      appearance={isDark ? 'dark' : 'light'}
       platform={['macos', 'ios'].includes(lp.tgWebAppPlatform) ? 'ios' : 'base'}
     >
-      <MortgageProvider>
-        <Container>
-          <Section header={t('appTitle')}>
-            <LoanDetails />
-            <EarlyPaymentContainer />
-            <ResultsDisplay />
-            
-            <TabView
-              tabs={[
-                { id: 'charts', label: t('graphicalView') },
-                { id: 'schedule', label: t('paymentSchedule') }
-              ]}
-              defaultTab="charts"
-            >
-              <TabPanel id="charts">
-                <ChartsContainer />
-              </TabPanel>
-              <TabPanel id="schedule">
-                <PaymentSchedule />
-              </TabPanel>
-            </TabView>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
-              <LanguageSwitcher />
-              <ThemeSwitcher />
-            </div>
-          </Section>
-        </Container>
-      </MortgageProvider>
+      <MortageForm setIsModalOpened={setIsModalOpened} />
+      <Modal
+        open={isModalOpened}
+        onOpenChange={(open: boolean) => setIsModalOpened(open)}
+      >
+        <Suspense fallback={<Spinner size='l' />}>
+          <MortageResult />
+        </Suspense>
+      </Modal>
     </AppRoot>
   );
-}
+};
+
+export default memo(App);

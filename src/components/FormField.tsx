@@ -1,6 +1,6 @@
-import React from 'react';
-import { Input } from '@telegram-apps/telegram-ui';
-import styles from './FormField.module.css';
+import React, { memo } from 'react';
+
+import { Caption, Input } from '@telegram-apps/telegram-ui';
 
 interface FormFieldProps {
   label: string;
@@ -16,7 +16,7 @@ interface FormFieldProps {
   after?: React.ReactNode;
 }
 
-export function FormField({
+const FormField = ({
   label,
   name,
   type = 'text',
@@ -27,10 +27,10 @@ export function FormField({
   min,
   max,
   step,
-  after
-}: FormFieldProps) {
+  after,
+}: FormFieldProps) => {
   return (
-    <div className={styles.formField}>
+    <>
       <Input
         header={label}
         name={name}
@@ -44,7 +44,18 @@ export function FormField({
         max={max}
         step={step}
       />
-      {error && <div className={styles.error}>{error}</div>}
-    </div>
+      {error && (
+        <Caption
+          style={{
+            color: 'var(--tg-theme-destructive-text-color)',
+            padding: '0 24px',
+          }}
+        >
+          {error}
+        </Caption>
+      )}
+    </>
   );
-}
+};
+
+export default memo(FormField);
