@@ -17,7 +17,8 @@ export const translations = {
     monthlyPayment: "Monthly Payment",
     totalInterest: "Total Interest",
     totalCost: "Total Cost",
-    payoffDate: "Payoff Date",
+    planPayoffDate: "Plan Payoff Date",
+    actualPayoffDate: 'Actual Payoff Date',
     
     // Early Payment
     earlyPayment: "Early Payment",
@@ -78,8 +79,8 @@ export const translations = {
     
     // Loan Details
     loanDetails: "Детали кредита",
-    homeValue: "Стоимость жилья",
-    downPayment: "Первый взнос",
+    homeValue: "Стоимость недвижимости",
+    downPayment: "Первоначальный взнос",
     loanAmount: "Сумма кредита",
     interestRate: "Процентная ставка",
     loanTerm: "Срок кредита (лет)",
@@ -90,7 +91,8 @@ export const translations = {
     monthlyPayment: "Ежемесячный платеж",
     totalInterest: "Общий процент",
     totalCost: "Общая стоимость",
-    payoffDate: "Дата погашения",
+    planPayoffDate: "Плановая дата погашения",
+    actualPayoffDate: 'Фактическая дата погашения',
     
     // Early Payment
     earlyPayment: "Досрочное погашение",
@@ -133,9 +135,9 @@ export const translations = {
     amortizationSchedule: "График погашения",
     
     // Validation
-    errorHomeValue: "Стоимость жилья должна быть больше 0",
-    errorDownPayment: "Первый взнос должен быть больше 0",
-    errorDownPaymentMax: "Первый взнос должен быть меньше стоимости жилья",
+    errorHomeValue: "Стоимость недвижимости должна быть больше 0",
+    errorDownPayment: "Первоначальный взнос должен быть больше 0",
+    errorDownPaymentMax: "Первоначальный взнос должен быть меньше стоимости жилья",
     errorInterestRate: "Процентная ставка должна быть больше 0",
     errorLoanTerm: "Срок кредита должен быть больше 0",
     

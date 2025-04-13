@@ -19,19 +19,13 @@ export interface MortgageResults {
  * Calculate mortgage results based on input parameters
  */
 export function calculateMortgage(params: MortgageParams): MortgageResults {
-  console.log('calculateMortgage called with params:', params);
-  
   const { loanAmount, interestRate, loanTerm, startDate } = params;
-  
-  console.log('Destructured values:', { loanAmount, interestRate, loanTerm, startDate });
   
   // Monthly interest rate (annual rate divided by 12 and converted to decimal)
   const monthlyRate = interestRate / 100 / 12;
   
   // Total number of payments (years * 12 months)
   const numberOfPayments = loanTerm * 12;
-  
-  console.log('Calculated values:', { monthlyRate, numberOfPayments });
   
   // Calculate monthly payment using the amortization formula
   // M = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
@@ -60,8 +54,6 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
     payoffDate,
     loanTerm
   };
-  
-  console.log('Calculated results:', results);
   
   return results;
 }

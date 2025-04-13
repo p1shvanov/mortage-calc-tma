@@ -202,8 +202,8 @@ export const translations = {
     
     // Loan Details
     loanDetails: "Детали кредита",
-    homeValue: "Стоимость жилья",
-    downPayment: "Первый взнос",
+    homeValue: "Стоимость недвижимости",
+    downPayment: "Первоначальный взнос",
     loanAmount: "Сумма кредита",
     interestRate: "Процентная ставка",
     loanTerm: "Срок кредита (лет)",
@@ -234,9 +234,9 @@ export const translations = {
     balance: "Остаток",
     
     // Validation
-    errorHomeValue: "Стоимость жилья должна быть больше 0",
-    errorDownPayment: "Первый взнос должен быть больше 0",
-    errorDownPaymentMax: "Первый взнос должен быть меньше стоимости жилья",
+    errorHomeValue: "Стоимость недвижимости должна быть больше 0",
+    errorDownPayment: "Первоначальный взнос должен быть больше 0",
+    errorDownPaymentMax: "Первоначальный взнос должен быть меньше стоимости жилья",
     errorInterestRate: "Процентная ставка должна быть больше 0",
     errorLoanTerm: "Срок кредита должен быть больше 0",
     

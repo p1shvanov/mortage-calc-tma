@@ -1,0 +1,53 @@
+.tableContainer {
+    width: 100%;
+    overflow-x: auto;
+    border-color: var(--tgui--outline);
+    border-width: var(--tgui--border--width);
+    border-radius: 4px;
+  }
+  
+  .table {
+    border-collapse: collapse;
+  }
+  
+  .tableHead {
+    background-color: var(--tgui--bg_color);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .tableHeader {
+    padding: 4px 8px;
+    text-align: left;
+    border-color: var(--tgui--outline);
+    border-width: var(--tgui--border--width);
+  }
+  
+  .tableCell {
+    padding: 4px 8px;
+    text-align: center;
+    border-color: var(--tgui--outline);
+    border-width: var(--tgui--border--width);
+  }
+  
+  .tableRow:last-child .tableCell {
+    border-bottom: none;
+  }
+  
+  .tableRow.highlight {
+    background-color: var(--tgui--secondary_bg_color);
+  }
+  
+  .tabPanel {
+    animation: fadeIn 1s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }

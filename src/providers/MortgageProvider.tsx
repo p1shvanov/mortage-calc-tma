@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { LoanDetailsValues } from '@/components/LoanDetails/LoanDetails';
-import { MortgageResults, calculateMortgage } from '@/utils/mortgageCalculator';
-import { AmortizationScheduleResult, generateAmortizationSchedule } from '@/utils/amortizationSchedule';
+import React, { createContext, useContext, useState } from 'react';
+import { LoanDetailsValues } from '@/components/LoanDetails';
+import { MortgageResults } from '@/utils/mortgageCalculator';
+import { AmortizationScheduleResult } from '@/utils/amortizationSchedule';
 
 export interface EarlyPayment {
   id: string;
@@ -17,6 +17,9 @@ interface MortgageContextType {
   setEarlyPayments: (payments: EarlyPayment[]) => void;
   mortgageResults: MortgageResults | null;
   amortizationResult: AmortizationScheduleResult | null;
+  setMortgageResults: (mortage: MortgageResults) => void;
+  setAmortizationResult: (amortization: AmortizationScheduleResult) => void;
+
 }
 
 const MortgageContext = createContext<MortgageContextType | undefined>(undefined);
@@ -27,36 +30,6 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [mortgageResults, setMortgageResults] = useState<MortgageResults | null>(null);
   const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResult | null>(null);
 
-  // Calculate mortgage results when loan details change
-  useEffect(() => {
-    if (loanDetails) {
-      try {
-        const results = calculateMortgage(loanDetails);
-        setMortgageResults(results);
-      } catch (error) {
-        console.error('Error calculating mortgage results:', error);
-      }
-    }
-  }, [loanDetails]);
-  
-  // Generate amortization schedule when loan details or early payments change
-  useEffect(() => {
-    if (loanDetails) {
-      try {
-        const result = generateAmortizationSchedule({
-          loanAmount: loanDetails.loanAmount,
-          interestRate: loanDetails.interestRate,
-          loanTerm: loanDetails.loanTerm,
-          startDate: loanDetails.startDate,
-          earlyPayments
-        });
-        setAmortizationResult(result);
-      } catch (error) {
-        console.error('Error generating amortization schedule:', error);
-      }
-    }
-  }, [loanDetails, earlyPayments]);
-
   return (
     <MortgageContext.Provider
       value={{
@@ -65,7 +38,10 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
         earlyPayments,
         setEarlyPayments,
         mortgageResults,
-        amortizationResult
+        amortizationResult,
+        setMortgageResults,
+        setAmortizationResult
+
       }}
     >
       {children}
