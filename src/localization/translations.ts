@@ -68,6 +68,16 @@ export const translations = {
     graphicalView: "Graphical View",
     paymentBreakdown: "Payment Breakdown",
     amortizationSchedule: "Amortization Schedule",
+    paymentAmount: "Payment Amount",
+    paymentDistribution: "Payment Distribution",
+    interestSavings: "Interest Savings",
+    newTotalInterest: "New Total Interest",
+    interestSaved: "Interest Saved",
+    monthlyPaymentBreakdown: "Monthly Payment Breakdown",
+    totalPaymentBreakdown: "Total Payment Breakdown",
+    mortgageComparison: "Mortgage Comparison",
+    original: "Original Mortgage",
+    withEarlyPayments: "With Early Payments",
     
     // Validation
     errorHomeValue: "Home value must be greater than 0",
@@ -151,6 +161,16 @@ export const translations = {
     graphicalView: "Графическое представление",
     paymentBreakdown: "Структура платежа",
     amortizationSchedule: "График погашения",
+    paymentAmount: "Сумма платежа",
+    paymentDistribution: "Распределение платежей",
+    interestSavings: "Экономия на процентах",
+    newTotalInterest: "Новая общая сумма процентов",
+    interestSaved: "Сэкономленные проценты",
+    monthlyPaymentBreakdown: "Ежемесячная структура платежей",
+    totalPaymentBreakdown: "Общая структура платежей",
+    mortgageComparison: "Сравнение ипотеки",
+    original: "Первоначальная ипотека",
+    withEarlyPayments: "С досрочными платежами",
     
     // Validation
     errorHomeValue: "Стоимость недвижимости должна быть больше 0",

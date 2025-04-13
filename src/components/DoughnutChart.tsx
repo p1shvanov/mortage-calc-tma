@@ -2,36 +2,38 @@ import { memo } from 'react';
 
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Section } from '@telegram-apps/telegram-ui';
-import { Pie } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import { useLocalization } from '@/providers/LocalizationProvider';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-interface PieChartProps {
+interface DoughnutChartProps {
   data: {
     labels: string[];
     datasets: {
       data: number[];
       backgroundColor: string[];
-      borderColor: string[];
-      borderWidth: number;
+      borderColor?: string[];
+      borderWidth?: number;
+      hoverOffset?: number;
     }[];
   };
   title?: string;
+  centerText?: string;
 }
 
-const PieChart = ({ data, title }: PieChartProps) => {
-  const { formatCurrency } = useLocalization();
+const DoughnutChart = ({ data, title }: DoughnutChartProps) => {
+  const { formatCurrency} = useLocalization();
   
   return (
     <Section header={title}>
-      <Pie
+      <Doughnut
         data={data}
         options={{
           responsive: true,
           maintainAspectRatio: true,
-          // aspectRatio: width / height,
+          cutout: '50%',
           plugins: {
             legend: {
               position: 'bottom',
@@ -57,4 +59,4 @@ const PieChart = ({ data, title }: PieChartProps) => {
   );
 };
 
-export default memo(PieChart);
+export default memo(DoughnutChart);
