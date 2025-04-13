@@ -20,7 +20,20 @@ const EarlyPaymentContainer = () => {
         id: Date.now().toString(),
       };
 
-      setEarlyPayments([...earlyPayments, newPayment]);
+      // Check if there's already a payment on this date
+      const existingPaymentIndex = earlyPayments.findIndex(
+        (p) => p.date === payment.date
+      );
+
+      if (existingPaymentIndex !== -1) {
+        // Replace the existing payment
+        const updatedPayments = [...earlyPayments];
+        updatedPayments[existingPaymentIndex] = newPayment;
+        setEarlyPayments(updatedPayments);
+      } else {
+        // Add new payment
+        setEarlyPayments([...earlyPayments, newPayment]);
+      }
     },
     [earlyPayments]
   );

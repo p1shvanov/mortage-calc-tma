@@ -17,7 +17,7 @@ export interface AmortizationScheduleParams {
   startDate: string;
   earlyPayments?: Array<{
     id: string;
-    month: number;
+    date: string; // ISO date string format YYYY-MM-DD
     amount: number;
     type: 'reduceTerm' | 'reducePayment';
   }>;
@@ -37,6 +37,23 @@ export interface AmortizationScheduleResult {
 }
 
 /**
+ * Calculate the number of days between two dates
+ */
+function daysBetween(startDate: Date, endDate: Date): number {
+  const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  return Math.round(diffTime / oneDay);
+}
+
+/**
+ * Calculate the number of days in a year (accounts for leap years)
+ */
+function daysInYear(date: Date): number {
+  const year = date.getFullYear();
+  return ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 366 : 365;
+}
+
+/**
  * Generate an amortization schedule for a loan, including early payments
  */
 export function generateAmortizationSchedule(
@@ -44,52 +61,76 @@ export function generateAmortizationSchedule(
 ): AmortizationScheduleResult {
   const { loanAmount, interestRate, loanTerm, startDate, earlyPayments = [] } = params;
   
-  // Monthly interest rate (annual rate divided by 12 and converted to decimal)
-  const monthlyRate = interestRate / 100 / 12;
+  // We'll calculate the daily rate for each period based on the actual days in that year
   
   // Total number of payments (years * 12 months)
   const numberOfPayments = loanTerm * 12;
   
   // Calculate original monthly payment using the amortization formula
+  // Monthly interest rate (annual rate divided by 12 and converted to decimal)
+  const monthlyRate = interestRate / 100 / 12;
   const originalMonthlyPayment = 
     (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
     (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
   
-  // Sort early payments by month
-  const sortedEarlyPayments = [...earlyPayments].sort((a, b) => a.month - b.month);
+  // Map early payments to their corresponding payment dates
+  const earlyPaymentsByDate = new Map<string, {
+    amount: number;
+    type: 'reduceTerm' | 'reducePayment';
+  }>();
+  
+  earlyPayments.forEach(payment => {
+    earlyPaymentsByDate.set(payment.date, {
+      amount: payment.amount,
+      type: payment.type
+    });
+  });
   
   // Generate the amortization schedule
   const schedule: AmortizationScheduleItem[] = [];
   let balance = loanAmount;
   let totalInterest = 0;
   let currentMonthlyPayment = originalMonthlyPayment;
-  let earlyPaymentIndex = 0;
   const startDateObj = new Date(startDate);
   
   // Calculate original total interest (without early payments)
   const originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
   
-  for (let month = 1; month <= numberOfPayments; month++) {
-    // Check if there's an early payment for this month
-    let extraPayment = 0;
-    let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+  let currentDate = new Date(startDateObj);
+  let month = 1;
+  
+  while (month <= numberOfPayments && balance > 0.01) {
+    // Calculate payment date (same day of month as start date)
+    const paymentDate = new Date(currentDate);
+    paymentDate.setMonth(currentDate.getMonth() + 1);
     
-    if (earlyPaymentIndex < sortedEarlyPayments.length && 
-        sortedEarlyPayments[earlyPaymentIndex].month === month) {
-      const earlyPayment = sortedEarlyPayments[earlyPaymentIndex];
-      extraPayment = earlyPayment.amount;
-      extraPaymentType = earlyPayment.type;
-      earlyPaymentIndex++;
-    }
+    // Calculate days in this payment period
+    const daysInPeriod = daysBetween(currentDate, paymentDate);
     
-    // Calculate interest for this month
-    const interest = balance * monthlyRate;
+    // Calculate interest for this period using daily interest
+    // This is more accurate as it accounts for different days in each month
+    const yearDays = daysInYear(currentDate);
+    const dailyRateForPeriod = interestRate / 100 / yearDays;
+    const interest = balance * dailyRateForPeriod * daysInPeriod;
     
     // Calculate principal for this month
     const principal = currentMonthlyPayment - interest;
     
     // Update the balance
     let newBalance = balance - principal;
+    
+    // Format the date as ISO string (YYYY-MM-DD)
+    const dateStr = paymentDate.toISOString().split('T')[0];
+    
+    // Check if there's an early payment for this date
+    let extraPayment = 0;
+    let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+    
+    if (earlyPaymentsByDate.has(dateStr)) {
+      const earlyPayment = earlyPaymentsByDate.get(dateStr)!;
+      extraPayment = earlyPayment.amount;
+      extraPaymentType = earlyPayment.type;
+    }
     
     // Apply extra payment
     if (extraPayment > 0) {
@@ -109,14 +150,10 @@ export function generateAmortizationSchedule(
     // Update total interest
     totalInterest += interest;
     
-    // Calculate the date for this payment
-    const date = new Date(startDateObj);
-    date.setMonth(startDateObj.getMonth() + month - 1);
-    
     // Add this month to the schedule
     schedule.push({
       month,
-      date: date.toISOString().split('T')[0],
+      date: dateStr,
       payment: currentMonthlyPayment,
       principal,
       interest,
@@ -129,18 +166,20 @@ export function generateAmortizationSchedule(
     // Update balance for next iteration
     balance = newBalance;
     
-    // If balance is effectively zero, we're done
-    if (balance <= 0.01) {
-      break;
-    }
+    // Move to next month
+    currentDate = paymentDate;
+    month++;
   }
   
   // Calculate summary statistics
   const newTerm = schedule.length;
   const newTotalInterest = totalInterest;
   const finalMonthlyPayment = schedule[schedule.length - 1].payment;
-  const totalSavings = (originalTotalInterest - newTotalInterest) + 
-                       (numberOfPayments - newTerm) * originalMonthlyPayment;
+  
+  // Calculate total savings - this should only include interest savings
+  // The true savings is the difference between the total interest that would have been paid
+  // without early payments and the total interest actually paid
+  const totalSavings = originalTotalInterest - newTotalInterest;
   
   return {
     schedule,

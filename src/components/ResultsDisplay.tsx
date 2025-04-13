@@ -17,8 +17,10 @@ const ResultsDisplay = () => {
   const hasEarlyPayments = useMemo(() => {
     if (amortizationResult) {
       return (
-        amortizationResult.summary.newTerm <
-        amortizationResult.summary.originalTerm
+        // Check if term was reduced
+        amortizationResult.summary.newTerm < amortizationResult.summary.originalTerm ||
+        // Check if monthly payment was reduced
+        amortizationResult.summary.finalMonthlyPayment < amortizationResult.summary.originalMonthlyPayment
       );
     }
 
@@ -46,8 +48,8 @@ const ResultsDisplay = () => {
           amortizationResult?.summary.finalMonthlyPayment !==
             monthlyPayment && (
             <Text style={{ color: 'var(--tgui--green)' }}>
-              {t('finalPayment')}:
-              {formatCurrency(amortizationResult!.summary.finalMonthlyPayment)}
+              {t('originalPayment')}:
+              {formatCurrency(monthlyPayment)}
             </Text>
           )
         }
@@ -55,7 +57,13 @@ const ResultsDisplay = () => {
         before={'💰'}
         readOnly
       >
-        <Text>{formatCurrency(monthlyPayment)}</Text>
+        <Text>
+          {formatCurrency(
+            hasEarlyPayments && amortizationResult?.summary.finalMonthlyPayment !== monthlyPayment
+              ? amortizationResult!.summary.finalMonthlyPayment
+              : monthlyPayment
+          )}
+        </Text>
       </Cell>
       <Cell
         subtitle={
