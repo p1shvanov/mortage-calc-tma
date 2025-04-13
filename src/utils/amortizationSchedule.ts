@@ -74,12 +74,17 @@ export function generateAmortizationSchedule(
     (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
   
   // Map early payments to their corresponding payment dates
+  // Sort early payments by date first to ensure they're processed in chronological order
+  const sortedEarlyPayments = [...earlyPayments].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  
   const earlyPaymentsByDate = new Map<string, {
     amount: number;
     type: 'reduceTerm' | 'reducePayment';
   }>();
   
-  earlyPayments.forEach(payment => {
+  sortedEarlyPayments.forEach(payment => {
     earlyPaymentsByDate.set(payment.date, {
       amount: payment.amount,
       type: payment.type
@@ -96,10 +101,14 @@ export function generateAmortizationSchedule(
   // Calculate original total interest (without early payments)
   const originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
   
+  // Track if we've had a reducePayment type early payment
+  let hadReducePaymentType = false;
+  
   let currentDate = new Date(startDateObj);
   let month = 1;
+  let remainingTerm = numberOfPayments; // Track remaining term separately
   
-  while (month <= numberOfPayments && balance > 0.01) {
+  while (month <= remainingTerm && balance > 0.01) {
     // Calculate payment date (same day of month as start date)
     const paymentDate = new Date(currentDate);
     paymentDate.setMonth(currentDate.getMonth() + 1);
@@ -136,14 +145,48 @@ export function generateAmortizationSchedule(
     if (extraPayment > 0) {
       newBalance -= extraPayment;
       
-      // If payment type is to reduce payment, recalculate the monthly payment
-      if (extraPaymentType === 'reducePayment' && newBalance > 0) {
-        const remainingPayments = numberOfPayments - month;
-        
-        // Recalculate monthly payment for the remaining term
-        currentMonthlyPayment = 
-          (newBalance * monthlyRate * Math.pow(1 + monthlyRate, remainingPayments)) / 
-          (Math.pow(1 + monthlyRate, remainingPayments) - 1);
+      if (newBalance > 0) {
+        // If payment type is to reduce payment, recalculate the monthly payment
+        // but keep the original term
+        if (extraPaymentType === 'reducePayment') {
+          // Mark that we've had a reducePayment type
+          hadReducePaymentType = true;
+          
+          // For reducePayment, we need to calculate the remaining term from the current month
+          const remainingMonths = numberOfPayments - month + 1;
+          
+          // Update the remaining term
+          remainingTerm = remainingMonths;
+          
+          // Recalculate monthly payment for the remaining term
+          currentMonthlyPayment = 
+            (newBalance * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths)) / 
+            (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+        }
+        // If payment type is to reduce term, keep the same monthly payment
+        // which will naturally reduce the term as the balance decreases faster
+        else if (extraPaymentType === 'reduceTerm') {
+          // Keep the current monthly payment the same
+          // This will result in paying off the loan faster (reducing the term)
+          
+          // Estimate the new remaining term based on the new balance and current payment
+          // This is an approximation to help with the loop termination condition
+          const estimatedRemainingPayments = Math.ceil(
+            Math.log(currentMonthlyPayment / (currentMonthlyPayment - newBalance * monthlyRate)) / 
+            Math.log(1 + monthlyRate)
+          );
+          
+          // Update the remaining term (reduce it)
+          // If we've had a reducePayment type before, we need to make sure we're using
+          // the correct remaining term calculation
+          if (hadReducePaymentType) {
+            // We've already reduced the payment, now we're reducing the term
+            remainingTerm = Math.min(remainingTerm, estimatedRemainingPayments);
+          } else {
+            // We're just reducing the term
+            remainingTerm = Math.min(remainingTerm, month + estimatedRemainingPayments);
+          }
+        }
       }
     }
     
