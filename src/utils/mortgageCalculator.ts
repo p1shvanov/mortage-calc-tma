@@ -1,3 +1,9 @@
+import {
+  calculateMonthlyPayment,
+  calculatePayoffDate,
+  PaymentType,
+} from './financialMath';
+
 export interface MortgageParams {
   homeValue: number;
   downPayment: number;
@@ -5,6 +11,8 @@ export interface MortgageParams {
   interestRate: number;
   loanTerm: number; // in years
   startDate: string;
+  paymentType?: PaymentType; // Preparation for future extension
+  paymentDay?: number; // Preparation for future extension - day of monthly payment
 }
 
 export interface MortgageResults {
@@ -13,33 +21,28 @@ export interface MortgageResults {
   totalCost: number;
   payoffDate: string;
   loanTerm: number;
+  // Additional fields for future extensions
+  effectiveInterestRate?: number; // Effective interest rate
+  paymentType: PaymentType;
 }
 
 /**
  * Calculate mortgage results based on input parameters
  */
 export function calculateMortgage(params: MortgageParams): MortgageResults {
-  const { loanAmount, interestRate, loanTerm, startDate } = params;
+  const { 
+    loanAmount, 
+    interestRate, 
+    loanTerm, 
+    startDate,
+    paymentType = PaymentType.ANNUITY // Default to annuity payments
+  } = params;
   
-  // Monthly interest rate (annual rate divided by 12 and converted to decimal)
-  const monthlyRate = interestRate / 100 / 12;
-  
-  // Total number of payments (years * 12 months)
-  const numberOfPayments = loanTerm * 12;
-  
-  // Calculate monthly payment using the amortization formula
-  // M = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
-  // Where:
-  // M = monthly payment
-  // P = principal (loan amount)
-  // r = monthly interest rate (in decimal)
-  // n = number of payments
-  const monthlyPayment = 
-    (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / 
-    (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+  // Calculate monthly payment
+  const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanTerm);
   
   // Calculate total cost (monthly payment * number of payments)
-  const totalCost = monthlyPayment * numberOfPayments;
+  const totalCost = monthlyPayment * loanTerm * 12;
   
   // Calculate total interest (total cost - loan amount)
   const totalInterest = totalCost - loanAmount;
@@ -47,22 +50,12 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
   // Calculate payoff date
   const payoffDate = calculatePayoffDate(startDate, loanTerm);
   
-  const results = {
+  return {
     monthlyPayment,
     totalInterest,
     totalCost,
     payoffDate,
-    loanTerm
+    loanTerm,
+    paymentType
   };
-  
-  return results;
-}
-
-/**
- * Calculate the payoff date based on start date and loan term
- */
-function calculatePayoffDate(startDate: string, loanTerm: number): string {
-  const date = new Date(startDate);
-  date.setFullYear(date.getFullYear() + loanTerm);
-  return date.toISOString().split('T')[0];
 }
