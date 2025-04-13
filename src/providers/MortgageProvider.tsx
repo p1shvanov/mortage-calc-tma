@@ -5,7 +5,7 @@ import { AmortizationScheduleResult } from '@/utils/amortizationSchedule';
 
 export interface EarlyPayment {
   id: string;
-  month: number;
+  date: string; // ISO date string format YYYY-MM-DD
   amount: number;
   type: 'reduceTerm' | 'reducePayment';
 }

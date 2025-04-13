@@ -24,6 +24,7 @@ export const translations = {
     earlyPayment: "Early Payment",
     earlyPaymentAmount: "Additional Amount",
     earlyPaymentMonth: "Month of Payment",
+    earlyPaymentDate: "Date of Payment",
     earlyPaymentType: "Payment Type",
     typeReduceTerm: "Reduce Term",
     typeReducePayment: "Reduce Payment",
@@ -34,12 +35,14 @@ export const translations = {
     totalEarlyPayments: "Total Early Payments",
     errorPaymentAmount: "Payment amount must be greater than 0",
     errorPaymentMonth: "Payment month must be within the loan term",
+    errorPaymentDate: "Payment date must be within the loan term",
     
     // Results with Early Payments
     finalPayment: "Final Payment",
-    savings: "Savings",
+    originalPayment: "Original Payment",
+    savings: "Interest Savings",
     monthsSaved: "Months Saved",
-    totalSavings: "Total Savings",
+    totalSavings: "Total Interest Savings",
     
     // Payment Schedule
     amortization: "Amortization Schedule",
@@ -98,6 +101,7 @@ export const translations = {
     earlyPayment: "Досрочное погашение",
     earlyPaymentAmount: "Дополнительная сумма",
     earlyPaymentMonth: "Месяц платежа",
+    earlyPaymentDate: "Дата платежа",
     earlyPaymentType: "Тип платежа",
     typeReduceTerm: "Сократить срок",
     typeReducePayment: "Уменьшить платеж",
@@ -108,12 +112,14 @@ export const translations = {
     totalEarlyPayments: "Всего досрочных платежей",
     errorPaymentAmount: "Сумма платежа должна быть больше 0",
     errorPaymentMonth: "Месяц платежа должен быть в пределах срока кредита",
+    errorPaymentDate: "Дата платежа должна быть в пределах срока кредита",
     
     // Results with Early Payments
     finalPayment: "Итоговый платеж",
-    savings: "Экономия",
+    originalPayment: "Первоначальный платеж",
+    savings: "Экономия на процентах",
     monthsSaved: "Сэкономлено месяцев",
-    totalSavings: "Общая экономия",
+    totalSavings: "Общая экономия на процентах",
     
     // Payment Schedule
     amortization: "График платежей",

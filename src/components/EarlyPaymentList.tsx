@@ -21,7 +21,7 @@ const EarlyPaymentList = ({
   payments,
   onRemovePayment,
 }: EarlyPaymentListProps) => {
-  const { t, formatCurrency, formatNumber } = useLocalization();
+  const { t, formatCurrency, formatDate } = useLocalization();
 
   const totalAmount = useMemo(() => {
     return payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -30,6 +30,11 @@ const EarlyPaymentList = ({
   if (payments.length === 0) {
     return null;
   }
+
+  // Sort payments by date
+  const sortedPayments = [...payments].sort((a, b) => 
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
 
   return (
     <Section
@@ -41,12 +46,12 @@ const EarlyPaymentList = ({
       }
     >
       <List>
-        {payments.map((payment) => (
+        {sortedPayments.map((payment) => (
           <Cell
             readOnly
             before={
               <Text>
-                {t('month')} {formatNumber(payment.month)}
+                {formatDate(payment.date)}
               </Text>
             }
             after={

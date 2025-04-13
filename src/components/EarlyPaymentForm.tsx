@@ -1,9 +1,9 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 
 import { Select, Button, List, Section } from '@telegram-apps/telegram-ui';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { EarlyPayment } from '@/providers/MortgageProvider';
+import { EarlyPayment, useMortgage } from '@/providers/MortgageProvider';
 
 import FormField from '@/components/FormField';
 
@@ -17,12 +17,25 @@ const EarlyPaymentForm = ({
   loanTerm,
 }: EarlyPaymentFormProps) => {
   const { t } = useLocalization();
+  const { loanDetails } = useMortgage();
   const [payment, setPayment] = useState({
-    month: 2,
+    date: '',
     amount: 1000000,
     type: 'reduceTerm' as const,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Set default date to 2 months from start date when loan details change
+  useEffect(() => {
+    if (loanDetails?.startDate) {
+      const startDate = new Date(loanDetails.startDate);
+      startDate.setMonth(startDate.getMonth() + 2);
+      setPayment(prev => ({
+        ...prev,
+        date: startDate.toISOString().split('T')[0]
+      }));
+    }
+  }, [loanDetails?.startDate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -30,18 +43,18 @@ const EarlyPaymentForm = ({
     const { name, value } = e.target;
 
     // Fix for empty input fields - don't convert empty string to 0
-    let numValue;
-    if (name === 'type') {
-      numValue = value;
+    let processedValue;
+    if (name === 'type' || name === 'date') {
+      processedValue = value;
     } else if (value === '') {
-      numValue = '';
+      processedValue = '';
     } else {
-      numValue = parseFloat(value) || 0;
+      processedValue = parseFloat(value) || 0;
     }
 
     setPayment((prev) => ({
       ...prev,
-      [name]: numValue,
+      [name]: processedValue,
     }));
   };
 
@@ -51,14 +64,24 @@ const EarlyPaymentForm = ({
     // Convert empty strings to 0 for validation
     const amount =
       typeof payment.amount === 'string' ? 0 : Number(payment.amount);
-    const month = typeof payment.month === 'string' ? 0 : Number(payment.month);
 
     if (amount <= 0) {
       newErrors.amount = t('errorPaymentAmount');
     }
 
-    if (month <= 0 || month > loanTerm * 12) {
-      newErrors.month = t('errorPaymentMonth');
+    if (!payment.date) {
+      newErrors.date = t('errorPaymentDate');
+    } else {
+      // Validate date is within loan term
+      const paymentDate = new Date(payment.date);
+      const startDate = new Date(loanDetails?.startDate || '');
+      
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + loanTerm);
+      
+      if (paymentDate < startDate || paymentDate > endDate) {
+        newErrors.date = t('errorPaymentDate');
+      }
     }
 
     setErrors(newErrors);
@@ -70,12 +93,12 @@ const EarlyPaymentForm = ({
 
     if (validateForm()) {
       onAddPayment({
-        month: Number(payment.month),
+        date: payment.date,
         amount: Number(payment.amount),
         type: payment.type as 'reduceTerm' | 'reducePayment',
       });
 
-      // Reset amount but keep the month and type
+      // Reset amount but keep the date and type
       setPayment((prev) => ({
         ...prev,
         amount: 1000,
@@ -98,16 +121,12 @@ const EarlyPaymentForm = ({
           step={100}
         />
         <FormField
-          label={t('earlyPaymentMonth')}
-          name='month'
-          type='number'
-          value={payment.month}
+          label={t('earlyPaymentDate')}
+          name='date'
+          type='date'
+          value={payment.date}
           onChange={handleInputChange}
-          placeholder='12'
-          error={errors.month}
-          min={1}
-          max={loanTerm * 12}
-          step={1}
+          error={errors.date}
         />
         <Select
           name='type'
