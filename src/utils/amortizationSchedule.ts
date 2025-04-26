@@ -14,6 +14,7 @@ export interface AmortizationScheduleItem {
   balance: number;
   extraPayment?: number;
   extraPaymentType?: 'reduceTerm' | 'reducePayment';
+  isRegularPayment?: boolean; // Flag to indicate if this is a regular early payment
 }
 
 export interface AmortizationScheduleParams {
@@ -29,6 +30,13 @@ export interface AmortizationScheduleParams {
     date: string; // ISO date string format YYYY-MM-DD
     amount: number;
     type: 'reduceTerm' | 'reducePayment';
+  }>;
+  regularPayments?: Array<{
+    id: string;
+    amount: number;
+    startMonth: string; // Month to start regular payments
+    endMonth?: string;  // Month to end regular payments (optional)
+    type: 'reduceTerm' | 'reducePayment'; // Recalculation type
   }>;
 }
 
@@ -58,6 +66,7 @@ export function generateAmortizationSchedule(
     loanTerm, 
     startDate, 
     earlyPayments = [],
+    regularPayments = [],
     paymentType = 'annuity', // Default to annuity payments
     interestCalculationMethod = InterestCalculationMethod.ACTUAL_365 // Default to current method
   } = params;
@@ -186,11 +195,38 @@ export function generateAmortizationSchedule(
     // Check if there's an early payment for this date
     let extraPayment = 0;
     let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+    let isRegularPayment = false;
     
     if (earlyPaymentsByDate.has(dateStr)) {
       const earlyPayment = earlyPaymentsByDate.get(dateStr)!;
       extraPayment = earlyPayment.amount;
       extraPaymentType = earlyPayment.type;
+    }
+    
+    // Check if this date falls within any regular payment ranges
+    const currentPaymentDate = new Date(dateStr);
+    
+    // Process all regular payments
+    for (const regularPayment of regularPayments) {
+      const startMonth = new Date(regularPayment.startMonth);
+      const endMonth = regularPayment.endMonth ? new Date(regularPayment.endMonth) : null;
+      
+      // Check if the current date is within the regular payment range
+      const isAfterStart = currentPaymentDate >= startMonth;
+      const isBeforeEnd = !endMonth || currentPaymentDate <= endMonth;
+      
+      if (isAfterStart && isBeforeEnd) {
+        // If there's already an early payment for this date, add the regular payment amount
+        if (extraPayment > 0) {
+          extraPayment += regularPayment.amount;
+          // Use the regular payment type as it takes precedence
+          extraPaymentType = regularPayment.type;
+        } else {
+          extraPayment = regularPayment.amount;
+          extraPaymentType = regularPayment.type;
+        }
+        isRegularPayment = true;
+      }
     }
     
     // Apply extra payment
@@ -255,7 +291,8 @@ export function generateAmortizationSchedule(
       totalInterest,
       balance: Math.max(0, newBalance),
       extraPayment: extraPayment > 0 ? extraPayment : undefined,
-      extraPaymentType: extraPayment > 0 ? extraPaymentType : undefined
+      extraPaymentType: extraPayment > 0 ? extraPaymentType : undefined,
+      isRegularPayment: isRegularPayment
     });
     
     // Update balance for next iteration

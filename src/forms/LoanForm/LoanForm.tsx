@@ -4,6 +4,7 @@ import { List, Section, Button } from '@telegram-apps/telegram-ui';
 
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
 import EarlyPaymentsForm from '@/components/form/EarlyPaymentsForm';
+import RegularPaymentsForm from '@/components/form/RegularPaymentsForm';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useLoanForm } from '@/hooks/useLoanForm';
@@ -25,6 +26,7 @@ const LoanForm: FC = () => {
       >
         <LoanDetailsForm form={form} />
         <EarlyPaymentsForm form={form} />
+        <RegularPaymentsForm form={form} />
         <Section>
           <form.Subscribe
             selector={(state) => [state.canSubmit, state.isSubmitting]}

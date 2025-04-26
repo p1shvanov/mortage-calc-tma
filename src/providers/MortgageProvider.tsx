@@ -10,6 +10,14 @@ export interface EarlyPayment {
   type: 'reduceTerm' | 'reducePayment';
 }
 
+export interface RegularPayment {
+  id: string;
+  amount: number;
+  startMonth: string; // Month to start regular payments
+  endMonth?: string;  // Month to end regular payments (optional)
+  type: 'reduceTerm' | 'reducePayment'; // Recalculation type
+}
+
 export interface LoanDetailsValues {
   homeValue: number;
   downPayment: number;
@@ -26,11 +34,12 @@ interface MortgageContextType {
   setLoanDetails: (values: LoanDetailsValues) => void;
   earlyPayments: EarlyPayment[];
   setEarlyPayments: (payments: EarlyPayment[]) => void;
+  regularPayments: RegularPayment[];
+  setRegularPayments: (payments: RegularPayment[]) => void;
   mortgageResults: MortgageResults | null;
   amortizationResult: AmortizationScheduleResult | null;
   setMortgageResults: (mortage: MortgageResults) => void;
   setAmortizationResult: (amortization: AmortizationScheduleResult) => void;
-
 }
 
 const MortgageContext = createContext<MortgageContextType | undefined>(undefined);
@@ -38,6 +47,7 @@ const MortgageContext = createContext<MortgageContextType | undefined>(undefined
 export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [loanDetails, setLoanDetails] = useState<LoanDetailsValues | null>(null);
   const [earlyPayments, setEarlyPayments] = useState<EarlyPayment[]>([]);
+  const [regularPayments, setRegularPayments] = useState<RegularPayment[]>([]);
   const [mortgageResults, setMortgageResults] = useState<MortgageResults | null>(null);
   const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResult | null>(null);
 
@@ -52,7 +62,7 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loanDetails]);
   
-  // Generate amortization schedule when loan details or early payments change
+  // Generate amortization schedule when loan details, early payments, or regular payments change
   useEffect(() => {
     if (loanDetails) {
       try {
@@ -61,14 +71,15 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
           interestRate: loanDetails.interestRate,
           loanTerm: loanDetails.loanTerm,
           startDate: loanDetails.startDate,
-          earlyPayments
+          earlyPayments,
+          regularPayments
         });
         setAmortizationResult(result);
       } catch (error) {
         console.error('Error generating amortization schedule:', error);
       }
     }
-  }, [loanDetails, earlyPayments]);
+  }, [loanDetails, earlyPayments, regularPayments]);
 
   return (
     <MortgageContext.Provider
@@ -77,11 +88,12 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
         setLoanDetails,
         earlyPayments,
         setEarlyPayments,
+        regularPayments,
+        setRegularPayments,
         mortgageResults,
         amortizationResult,
         setMortgageResults,
         setAmortizationResult
-
       }}
     >
       {children}

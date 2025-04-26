@@ -43,6 +43,14 @@ export const translations = {
     errorPaymentMonth: "Payment month must be within the loan term",
     errorPaymentDate: "Payment date must be within the loan term",
     
+    // Regular Payment
+    regularPayment: "Regular Payment",
+    regularPaymentAmount: "Regular Payment Amount",
+    startMonth: "Start Month",
+    endMonth: "End Month (Optional)",
+    addRegularPayment: "Add Regular Payment",
+    yes: "Yes",
+    
     // Results with Early Payments
     finalPayment: "Final Payment",
     originalPayment: "Original Payment",
@@ -135,6 +143,14 @@ export const translations = {
     errorPaymentAmount: "Сумма платежа должна быть больше 0",
     errorPaymentMonth: "Месяц платежа должен быть в пределах срока кредита",
     errorPaymentDate: "Дата платежа должна быть в пределах срока кредита",
+    
+    // Regular Payment
+    regularPayment: "Регулярный платеж",
+    regularPaymentAmount: "Сумма регулярного платежа",
+    startMonth: "Месяц начала",
+    endMonth: "Месяц окончания (Опционально)",
+    addRegularPayment: "Добавить регулярный платеж",
+    yes: "Да",
     
     // Results with Early Payments
     finalPayment: "Итоговый платеж",

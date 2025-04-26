@@ -1,13 +1,14 @@
-import { memo, useMemo } from 'react';
+import { lazy, memo, Suspense, useMemo } from 'react';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
+import { Skeleton } from '@telegram-apps/telegram-ui';
 
-import LineChart from '@/components/charts/LineChart';
-import PieChart from '@/components/charts/PieChart';
-import BarChart from '@/components/charts/BarChart';
-import DoughnutChart from '@/components/charts/DoughnutChart';
-import RadarChart from '@/components/charts/RadarChart';
+const LineChart = lazy(() => import('@/components/charts/LineChart'));
+const PieChart = lazy(() => import('@/components/charts/PieChart'));
+const BarChart = lazy(() => import('@/components/charts/BarChart'));
+const DoughnutChart = lazy(() => import('@/components/charts/DoughnutChart'));
+const RadarChart = lazy(() => import('@/components/charts/RadarChart'));
 
 const ChartsContainer = () => {
   const { t } = useLocalization();
@@ -20,7 +21,10 @@ const ChartsContainer = () => {
   const months = useMemo(() => {
     return amortizationResult.schedule.map((item) => {
       const date = new Date(item.date);
-      return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString().slice(2)}`;
+      return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date
+        .getFullYear()
+        .toString()
+        .slice(2)}`;
     });
   }, [amortizationResult.schedule.length]);
 
@@ -33,13 +37,14 @@ const ChartsContainer = () => {
   const balances = useMemo(() => {
     return amortizationResult.schedule.map((item) => item.balance);
   }, [amortizationResult.schedule.length]);
-  
+
   // Extract early payment information for tooltips
   const extraPaymentInfo = useMemo(() => {
     return amortizationResult.schedule.map((item) => ({
       hasExtraPayment: !!item.extraPayment && item.extraPayment > 0,
       amount: item.extraPayment || 0,
-      type: item.extraPaymentType || ''
+      type: item.extraPaymentType || '',
+      isRegular: item.isRegularPayment || false, // Add flag for regular payments
     }));
   }, [amortizationResult.schedule]);
 
@@ -83,7 +88,7 @@ const ChartsContainer = () => {
   const pieChartData = useMemo(() => {
     const totalPrincipal = principals.reduce((sum, value) => sum + value, 0);
     const totalInterest = amortizationResult.summary.newTotalInterest;
-    
+
     return {
       labels: [t('principal'), t('interest')],
       datasets: [
@@ -100,14 +105,18 @@ const ChartsContainer = () => {
   // Add comparison pie chart for early payments impact
   const comparisonPieChartData = useMemo(() => {
     // Only show comparison if there are early payments
-    if (!amortizationResult.schedule.some(item => item.extraPayment && item.extraPayment > 0)) {
+    if (
+      !amortizationResult.schedule.some(
+        (item) => item.extraPayment && item.extraPayment > 0
+      )
+    ) {
       return null;
     }
-    
+
     const originalInterest = amortizationResult.summary.originalTotalInterest;
     const newInterest = amortizationResult.summary.newTotalInterest;
     const interestSaved = originalInterest - newInterest;
-    
+
     return {
       labels: [t('newTotalInterest'), t('interestSaved')],
       datasets: [
@@ -128,7 +137,7 @@ const ChartsContainer = () => {
     const filteredMonths = months.filter((_, i) => i % interval === 0);
     const filteredPrincipals = principals.filter((_, i) => i % interval === 0);
     const filteredInterests = interests.filter((_, i) => i % interval === 0);
-    
+
     return {
       labels: filteredMonths,
       datasets: [
@@ -151,10 +160,10 @@ const ChartsContainer = () => {
     const totalPrincipal = principals.reduce((sum, value) => sum + value, 0);
     const totalInterest = amortizationResult.summary.newTotalInterest;
     const totalExtraPayments = amortizationResult.schedule.reduce(
-      (sum, item) => sum + (item.extraPayment || 0), 
+      (sum, item) => sum + (item.extraPayment || 0),
       0
     );
-    
+
     return {
       labels: [t('principal'), t('interest'), t('extraPayment')],
       datasets: [
@@ -172,7 +181,11 @@ const ChartsContainer = () => {
   // Radar chart data for comparing mortgage metrics before and after early payments
   const radarChartData = useMemo(() => {
     // Only show if there are early payments
-    if (!amortizationResult.schedule.some(item => item.extraPayment && item.extraPayment > 0)) {
+    if (
+      !amortizationResult.schedule.some(
+        (item) => item.extraPayment && item.extraPayment > 0
+      )
+    ) {
       return null;
     }
 
@@ -183,18 +196,14 @@ const ChartsContainer = () => {
     const newInterest = amortizationResult.summary.newTotalInterest;
     const originalPayment = amortizationResult.summary.originalMonthlyPayment;
     const finalPayment = amortizationResult.summary.finalMonthlyPayment;
-    
+
     // Normalize values to percentages of the original values
     const normalizedNewTerm = (newTerm / originalTerm) * 100;
     const normalizedNewInterest = (newInterest / originalInterest) * 100;
     const normalizedFinalPayment = (finalPayment / originalPayment) * 100;
-    
+
     return {
-      labels: [
-        t('loanTerm'), 
-        t('totalInterest'), 
-        t('monthlyPayment')
-      ],
+      labels: [t('loanTerm'), t('totalInterest'), t('monthlyPayment')],
       datasets: [
         {
           label: t('original'),
@@ -206,9 +215,9 @@ const ChartsContainer = () => {
         {
           label: t('withEarlyPayments'),
           data: [
-            normalizedNewTerm, 
-            normalizedNewInterest, 
-            normalizedFinalPayment
+            normalizedNewTerm,
+            normalizedNewInterest,
+            normalizedFinalPayment,
           ],
           backgroundColor: 'rgba(54, 162, 235, 0.2)',
           borderColor: 'rgb(54, 162, 235)',
@@ -221,43 +230,46 @@ const ChartsContainer = () => {
   return (
     <>
       {/* Line chart showing amortization schedule */}
-      <LineChart 
-        data={lineChartData} 
-        title={t('amortizationSchedule')} 
-        extraPaymentInfo={extraPaymentInfo}
-      />
-      
+      <Suspense fallback={<Skeleton visible />}>
+        <LineChart
+          data={lineChartData}
+          title={t('amortizationSchedule')}
+          extraPaymentInfo={extraPaymentInfo}
+        />
+      </Suspense>
+
       {/* Bar chart showing principal vs interest over time */}
-      <BarChart 
-        data={barChartData} 
-        title={t('monthlyPaymentBreakdown')} 
-      />
-      
+      <Suspense fallback={<Skeleton visible />}>
+        <BarChart data={barChartData} title={t('monthlyPaymentBreakdown')} />
+      </Suspense>
+
       {/* Pie chart showing payment distribution */}
-      <PieChart 
-        data={pieChartData} 
-        title={t('paymentDistribution')} 
-      />
-      
+      <Suspense fallback={<Skeleton visible />}>
+        <PieChart data={pieChartData} title={t('paymentDistribution')} />
+      </Suspense>
+
       {/* Doughnut chart showing total payment breakdown including extra payments */}
-      <DoughnutChart 
-        data={doughnutChartData} 
-        title={t('totalPaymentBreakdown')} 
-      />
-      
+      <Suspense fallback={<Skeleton visible />}>
+        <DoughnutChart
+          data={doughnutChartData}
+          title={t('totalPaymentBreakdown')}
+        />
+      </Suspense>
+
       {/* Conditional charts that only appear when early payments exist */}
       {comparisonPieChartData && (
-        <PieChart 
-          data={comparisonPieChartData} 
-          title={t('interestSavings')} 
-        />
+        <Suspense fallback={<Skeleton visible />}>
+          <PieChart
+            data={comparisonPieChartData}
+            title={t('interestSavings')}
+          />
+        </Suspense>
       )}
-      
+
       {radarChartData && (
-        <RadarChart 
-          data={radarChartData} 
-          title={t('mortgageComparison')} 
-        />
+        <Suspense fallback={<Skeleton visible />}>
+          <RadarChart data={radarChartData} title={t('mortgageComparison')} />
+        </Suspense>
       )}
     </>
   );

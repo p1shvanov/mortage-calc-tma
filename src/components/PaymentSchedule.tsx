@@ -122,7 +122,11 @@ const PaymentSchedule = () => {
         </TableHead>
         <TableBody>
           {currentItems.map((item, index) => (
-            <TableRow key={item.month} highlight={Boolean(item.extraPayment)}>
+            <TableRow 
+              key={item.month} 
+              highlight={Boolean(item.extraPayment)}
+              style={item.isRegularPayment ? { backgroundColor: 'rgba(75, 192, 192, 0.1)' } : undefined}
+            >
               <TableCell>
                 <IconButton
                   size='s'
@@ -137,7 +141,16 @@ const PaymentSchedule = () => {
               <TableCell>{formatCurrency(item.principal)}</TableCell>
               <TableCell>{formatCurrency(item.interest)}</TableCell>
               <TableCell>
-                {item.extraPayment ? formatCurrency(item.extraPayment) : '-'}
+                {item.extraPayment ? (
+                  <span>
+                    {formatCurrency(item.extraPayment)}
+                    {item.isRegularPayment && (
+                      <span title={t('regularPayment')} style={{ marginLeft: '4px', color: 'rgba(75, 192, 192, 1)' }}>
+                        *
+                      </span>
+                    )}
+                  </span>
+                ) : '-'}
               </TableCell>
               <TableCell>{formatCurrency(item.balance)}</TableCell>
             </TableRow>
