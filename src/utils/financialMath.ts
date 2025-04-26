@@ -10,15 +10,8 @@ export enum InterestCalculationMethod {
 
 /**
  * Types of loan payments
- * Preparation for future functionality expansion
  */
-export type PaymentType = 'ANNUITY' | 'DIFFERENTIATED';
-
-// Constants for payment types
-export const PAYMENT_TYPE = {
-  ANNUITY: 'ANNUITY' as PaymentType, // Annuity payments (current method)
-  DIFFERENTIATED: 'DIFFERENTIATED' as PaymentType, // Differentiated payments
-};
+export type PaymentType = 'annuity' | 'differentiated';
 
 /**
  * Calculate monthly payment for a differentiated loan
@@ -46,10 +39,10 @@ export function calculateMonthlyPayment(
   principal: number,
   annualInterestRate: number,
   termInYears: number,
-  paymentType: PaymentType = PAYMENT_TYPE.ANNUITY,
+  paymentType: PaymentType = 'annuity',
   paymentNumber: number = 1
 ): number {
-  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+  if (paymentType === 'differentiated') {
     return calculateDifferentiatedMonthlyPayment(principal, annualInterestRate, termInYears, paymentNumber);
   }
   
