@@ -3,6 +3,18 @@ export const translations = {
     // App
     appTitle: "Mortgage Calculator",
     
+    // Validation
+    validation: {
+      mustBeNumber: "{field} must be a number",
+      mustBeGreaterThan: "{field} must be greater than {value}",
+      mustBeLessThan: "{field} must be less than or equal to {value}",
+      invalidDate: "{field} has an invalid date format",
+      endDateAfterStart: "{endField} must be after {startField}",
+      invalidNumber: "Must be a valid number",
+      mustBePositive: "Must be a positive number",
+      dayOfMonth: "Day must be between 1 and 31"
+    },
+    
     // Loan Details
     loanDetails: "Loan Details",
     homeValue: "Home Value",
@@ -103,6 +115,18 @@ export const translations = {
   ru: {
     // App
     appTitle: "Ипотечный калькулятор",
+    
+    // Validation
+    validation: {
+      mustBeNumber: "{field} должен быть числом",
+      mustBeGreaterThan: "{field} должен быть больше {value}",
+      mustBeLessThan: "{field} должен быть меньше или равен {value}",
+      invalidDate: "{field} имеет неверный формат даты",
+      endDateAfterStart: "{endField} должен быть после {startField}",
+      invalidNumber: "Должно быть действительным числом",
+      mustBePositive: "Должно быть положительным числом",
+      dayOfMonth: "День должен быть между 1 и 31"
+    },
     
     // Loan Details
     loanDetails: "Детали кредита",

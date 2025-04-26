@@ -3,7 +3,7 @@ import { defaultLoanDetails } from '@/types/form';
 import { unformatFormValues } from '@/utils/unformatFormValues';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { useNavigate } from 'react-router-dom';
-import { formSchema } from '@/schemas/formSchema';
+import { useLocalizedFormSchemas } from '@/schemas/localizedSchemas';
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -21,6 +21,8 @@ export const formOpts = formOptions({
 export const useLoanForm = () => {
   const { setLoanDetails, setEarlyPayments, setRegularPayments } = useMortgage();
   const navigate = useNavigate();
+  const { formSchema } = useLocalizedFormSchemas();
+  
   return useAppForm({
     ...formOpts,
   validators: {
