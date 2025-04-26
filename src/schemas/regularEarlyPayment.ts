@@ -1,7 +1,14 @@
 import { z } from 'zod';
+import { unformat } from '@react-input/number-format';
 
 export const regularEarlyPaymentSchema = z.object({
-  amount: z.number().positive('Amount must be greater than 0'),
+  amount: z.string()
+    .transform((val) => {
+      const unformatted = unformat(val);
+      return parseFloat(unformatted);
+    })
+    .refine((val) => !isNaN(val), 'Amount must be a number')
+    .refine((val) => val > 0, 'Amount must be greater than 0'),
   startMonth: z.string().refine((date) => {
     const paymentDate = new Date(date);
     return !isNaN(paymentDate.getTime());
