@@ -118,15 +118,19 @@ const RegularPaymentsForm = withForm({
                         <Button
                           disabled={!isFieldsValid || !isValid}
                           stretched
-                          onClick={() =>
+                          onClick={() => {
+                            const today = new Date();
+                            const nextMonth = new Date(today);
+                            nextMonth.setMonth(today.getMonth() + 1);
+                            
                             field.pushValue({
                               amount: '',
-                              startMonth: new Date().toISOString().split('T')[0],
-                              endMonth: '',
+                              startMonth: today.toISOString().split('T')[0],
+                              endMonth: nextMonth.toISOString().split('T')[0],
                               id: Date.now().toString(),
                               type: 'reduceTerm',
-                            })
-                          }
+                            });
+                          }}
                         >
                           {t('addRegularPayment')}
                         </Button>

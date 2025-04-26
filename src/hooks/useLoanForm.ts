@@ -3,6 +3,7 @@ import { defaultLoanDetails } from '@/types/form';
 import { unformatFormValues } from '@/utils/unformatFormValues';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { useNavigate } from 'react-router-dom';
+import { formSchema } from '@/schemas/formSchema';
 
 export const { fieldContext, formContext, useFieldContext, useFormContext } = createFormHookContexts();
 
@@ -22,6 +23,9 @@ export const useLoanForm = () => {
   const navigate = useNavigate();
   return useAppForm({
     ...formOpts,
+  validators: {
+    onChange: formSchema,
+  },
     onSubmit: async ({ value }) => {
       try {
         const loanDetails = unformatFormValues(value);
@@ -29,9 +33,9 @@ export const useLoanForm = () => {
         setLoanDetails(rest);
         setEarlyPayments(earlyPayments);
         setRegularPayments(regularPayments);
-        navigate('result')
+        navigate('result');
       } catch (error) {
-        console.log(error);
+        console.error('Form submission error:', error);
       }
     },
   });
