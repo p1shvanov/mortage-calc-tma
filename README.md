@@ -1,212 +1,93 @@
-# Telegram Mini Apps React Template
+# Mortgage Calculator
 
-This template demonstrates how developers can implement a single-page
-application on the Telegram Mini Apps platform using the following technologies
-and libraries:
+A Telegram Mini App for calculating mortgage payments and generating amortization schedules.
 
-- [React](https://react.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [TON Connect](https://docs.ton.org/develop/dapps/ton-connect/overview)
-- [@telegram-apps SDK](https://docs.telegram-mini-apps.com/packages/telegram-apps-sdk/2-x)
-- [Telegram UI](https://github.com/Telegram-Mini-Apps/TelegramUI)
-- [Vite](https://vitejs.dev/)
+## Features
 
-> The template was created using [npm](https://www.npmjs.com/). Therefore, it is
-> required to use it for this project as well. Using other package managers, you
-> will receive a corresponding error.
+- Calculate monthly mortgage payments
+- Generate amortization schedules
+- Support for early payments (one-time and regular)
+- Support for different payment types (annuity and differentiated)
+- Visualize payment data with charts
+- View detailed payment schedule
 
-## Install Dependencies
+## Architecture
 
-If you have just cloned this template, you should install the project
-dependencies using the command:
+The application follows a modular architecture with clear separation of concerns:
 
-```Bash
-npm install
+```
+src/
+├── components/     # UI components
+├── config/         # Configuration files
+├── forms/          # Form components
+├── hooks/          # Custom React hooks
+├── localization/   # Translations and localization utilities
+├── navigation/     # Routing and navigation
+├── providers/      # Context providers
+├── schemas/        # Form validation schemas
+├── services/       # Business logic services
+├── types/          # TypeScript type definitions
+└── utils/          # Utility functions
 ```
 
-## Scripts
+### Key Components
 
-This project contains the following scripts:
+- **MortgageProvider**: Manages the mortgage data and calculations
+- **MortgageService**: Handles the mortgage calculations (local or server-based)
+- **LoanForm**: Collects loan details, early payments, and regular payments
+- **MortageResult**: Displays the calculation results with charts and payment schedule
 
-- `dev`. Runs the application in development mode.
-- `dev:https`. Runs the application in development mode using locally created valid SSL-certificates.
-- `build`. Builds the application for production.
-- `lint`. Runs [eslint](https://eslint.org/) to ensure the code quality meets
-  the required standards.
-- `deploy`. Deploys the application to GitHub Pages.
+## Financial Core
 
-To run a script, use the `npm run` command:
+The financial core is designed to be modular and extensible, following SOLID principles:
 
-```Bash
-npm run {script}
-# Example: npm run build
-```
+- **Single Responsibility**: Each class has a single responsibility
+- **Open/Closed**: The system is open for extension but closed for modification
+- **Liskov Substitution**: All implementations of interfaces can be used interchangeably
+- **Interface Segregation**: Interfaces define only the methods needed by clients
+- **Dependency Inversion**: High-level modules depend on abstractions, not concrete implementations
 
-## Create Bot and Mini App
+The financial core can be used either locally (in the browser) or remotely (on a server), making it easy to scale the application as needed.
 
-Before you start, make sure you have already created a Telegram Bot. Here is
-a [comprehensive guide](https://docs.telegram-mini-apps.com/platform/creating-new-app)
-on how to do it.
+## Getting Started
 
-## Run
+### Prerequisites
 
-Although Mini Apps are designed to be opened
-within [Telegram applications](https://docs.telegram-mini-apps.com/platform/about#supported-applications),
-you can still develop and test them outside of Telegram during the development
-process.
+- Node.js (v14 or later)
+- npm or yarn
 
-To run the application in the development mode, use the `dev` script:
+### Installation
 
-```bash
-npm run dev:https
-```
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Start the development server:
+   ```
+   npm run dev
+   ```
 
-> [!NOTE]
-> As long as we use [vite-plugin-mkcert](https://www.npmjs.com/package/vite-plugin-mkcert),
-> launching the dev mode for the first time, you may see sudo password request.
-> The plugin requires it to properly configure SSL-certificates. To disable the plugin, use the `npm run dev` command.
+## Configuration
 
-After this, you will see a similar message in your terminal:
+The application can be configured in the `src/config` directory:
 
-```bash
-VITE v5.2.12  ready in 237 ms
+- `mortgage.ts`: Configure the mortgage service (local or server-based)
 
-➜  Local:   https://localhost:5173/mortage-calc-tma
-➜  Network: https://172.18.16.1:5173/mortage-calc-tma
-➜  Network: https://172.19.32.1:5173/mortage-calc-tma
-➜  Network: https://192.168.0.171:5173/mortage-calc-tma
-➜  press h + enter to show help
-```
+## Recent Refactoring
 
-Here, you can see the `Local` link, available locally, and `Network` links
-accessible to all devices in the same network with the current device.
+The codebase has recently undergone refactoring to improve its architecture and maintainability:
 
-To view the application, you need to open the `Local`
-link (`https://localhost:5173/mortage-calc-tma` in this example) in your
-browser:
+1. **Removed Dead Code**: Removed unused `homeValue` and `downPayment` fields
+2. **Service Layer**: Added a service layer for mortgage calculations
+3. **SOLID Principles**: Restructured the financial core to follow SOLID principles
+4. **Preparation for Server-Side**: Added infrastructure for server-side calculations
+5. **Configuration**: Added configuration options for easy switching between local and server implementations
 
-![Application](assets/application.png)
+## Future Improvements
 
-It is important to note that some libraries in this template, such as
-`@telegram-apps/sdk`, are not intended for use outside of Telegram.
-
-Nevertheless, they appear to function properly. This is because the
-`src/mockEnv.ts` file, which is imported in the application's entry point (
-`src/index.ts`), employs the `mockTelegramEnv` function to simulate the Telegram
-environment. This trick convinces the application that it is running in a
-Telegram-based environment. Therefore, be cautious not to use this function in
-production mode unless you fully understand its implications.
-
-> [!WARNING]
-> Because we are using self-signed SSL certificates, the Android and iOS
-> Telegram applications will not be able to display the application. These
-> operating systems enforce stricter security measures, preventing the Mini App
-> from loading. To address this issue, refer to
-> [this guide](https://docs.telegram-mini-apps.com/platform/getting-app-link#remote).
-
-## Deploy
-
-This boilerplate uses GitHub Pages as the way to host the application
-externally. GitHub Pages provides a CDN which will let your users receive the
-application rapidly. Alternatively, you could use such services
-as [Heroku](https://www.heroku.com/) or [Vercel](https://vercel.com).
-
-### Manual Deployment
-
-This boilerplate uses the [gh-pages](https://www.npmjs.com/package/gh-pages)
-tool, which allows deploying your application right from your PC.
-
-#### Configuring
-
-Before running the deployment process, ensure that you have done the following:
-
-1. Replaced the `homepage` value in `package.json`. The GitHub Pages deploy tool
-   uses this value to
-   determine the related GitHub project.
-2. Replaced the `base` value in `vite.config.ts` and have set it to the name of
-   your GitHub
-   repository. Vite will use this value when creating paths to static assets.
-
-For instance, if your GitHub username is `telegram-mini-apps` and the repository
-name is `is-awesome`, the value in the `homepage` field should be the following:
-
-```json
-{
-  "homepage": "https://telegram-mini-apps.github.io/is-awesome"
-}
-```
-
-And `vite.config.ts` should have this content:
-
-```ts
-export default defineConfig({
-  base: '/is-awesome/',
-  // ...
-});
-```
-
-You can find more information on configuring the deployment in the `gh-pages`
-[docs](https://github.com/tschaub/gh-pages?tab=readme-ov-file#github-pages-project-sites).
-
-#### Before Deploying
-
-Before deploying the application, make sure that you've built it and going to
-deploy the fresh static files:
-
-```bash
-npm run build
-```
-
-Then, run the deployment process, using the `deploy` script:
-
-```Bash
-npm run deploy
-```
-
-After the deployment completed successfully, visit the page with data according
-to your username and repository name. Here is the page link example using the
-data mentioned above:
-https://telegram-mini-apps.github.io/is-awesome
-
-### GitHub Workflow
-
-To simplify the deployment process, this template includes a
-pre-configured [GitHub workflow](.github/workflows/github-pages-deploy.yml) that
-automatically deploys the project when changes are pushed to the `master`
-branch.
-
-To enable this workflow, create a new environment (or edit the existing one) in
-the GitHub repository settings and name it `github-pages`. Then, add the
-`master` branch to the list of deployment branches.
-
-You can find the environment settings using this
-URL: `https://github.com/{username}/{repository}/settings/environments`.
-
-![img.png](.github/deployment-branches.png)
-
-In case, you don't want to do it automatically, or you don't use GitHub as the
-project codebase, remove the `.github` directory.
-
-### GitHub Web Interface
-
-Alternatively, developers can configure automatic deployment using the GitHub
-web interface. To do this, follow the link:
-`https://github.com/{username}/{repository}/settings/pages`.
-
-## TON Connect
-
-This boilerplate utilizes
-the [TON Connect](https://docs.ton.org/develop/dapps/ton-connect/overview)
-project to demonstrate how developers can integrate functionality related to TON
-cryptocurrency.
-
-The TON Connect manifest used in this boilerplate is stored in the `public`
-folder, where all publicly accessible static files are located. Remember
-to [configure](https://docs.ton.org/develop/dapps/ton-connect/manifest) this
-file according to your project's information.
-
-## Useful Links
-
-- [Platform documentation](https://docs.telegram-mini-apps.com/)
-- [@telegram-apps/sdk-react documentation](https://docs.telegram-mini-apps.com/packages/telegram-apps-sdk-react)
-- [Telegram developers community chat](https://t.me/devs)
+- Add server-side implementation for mortgage calculations
+- Implement caching for calculation results
+- Add export functionality for payment schedules
+- Improve mobile UI/UX
+- Add comparison feature for different mortgage scenarios
