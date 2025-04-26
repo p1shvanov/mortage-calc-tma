@@ -46,6 +46,7 @@ interface LineChartProps {
     hasExtraPayment: boolean;
     amount: number;
     type: string;
+    isRegular?: boolean;
   }[];
 }
 
@@ -90,10 +91,17 @@ const LineChart = ({ data, title, extraPaymentInfo }: LineChartProps) => {
                   
                   if (info && info.hasExtraPayment) {
                     const typeLabel = info.type === 'reduceTerm' ? t('typeReduceTerm') : t('typeReducePayment');
-                    return [
+                    const tooltipLines = [
                       `${t('extraPayment')}: ${formatCurrency(info.amount)}`,
                       `${t('earlyPaymentType')}: ${typeLabel}`
                     ];
+                    
+                    // Add indicator for regular payments
+                    if (info.isRegular) {
+                      tooltipLines.push(`${t('regularPayment')}: ${t('yes')}`);
+                    }
+                    
+                    return tooltipLines;
                   }
                   return [];
                 }

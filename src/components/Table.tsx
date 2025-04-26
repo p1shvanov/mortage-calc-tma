@@ -32,12 +32,17 @@ export const TableBody = ({ children }: { children: React.ReactNode }) => {
 export const TableRow = ({
   children,
   highlight,
+  style,
 }: {
   children: React.ReactNode;
   highlight?: boolean;
+  style?: React.CSSProperties;
 }) => {
   return (
-    <tr className={`${styles.tableRow} ${highlight ? styles.highlight : ''}`}>
+    <tr 
+      className={`${styles.tableRow} ${highlight ? styles.highlight : ''}`}
+      style={style}
+    >
       {children}
     </tr>
   );

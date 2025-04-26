@@ -18,24 +18,25 @@ export const formOpts = formOptions({
 });
 
 export const useLoanForm = () => {
-  const { setLoanDetails, setEarlyPayments } = useMortgage();
+  const { setLoanDetails, setEarlyPayments, setRegularPayments } = useMortgage();
   const navigate = useNavigate();
   return useAppForm({
     ...formOpts,
     onSubmit: async ({ value }) => {
       try {
         const loanDetails = unformatFormValues(value);
-        const { earlyPayments, ...rest } = loanDetails;
+        const { earlyPayments, regularPayments, ...rest } = loanDetails;
         setLoanDetails({
           homeValue: 10,
           downPayment: 10,
           ...rest,
         });
         setEarlyPayments(earlyPayments);
+        setRegularPayments(regularPayments);
         navigate('result')
       } catch (error) {
         console.log(error);
       }
     },
   });
-}; 
+};

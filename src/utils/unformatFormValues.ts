@@ -18,5 +18,9 @@ export function unformatFormValues(values: LoanDetailsType) {
       ...earlyPayment,
       amount: parseFloat(unformat(earlyPayment.amount))
     })),
+    regularPayments: values.regularPayments.map((regularPayment) => ({
+      ...regularPayment,
+      amount: parseFloat(unformat(regularPayment.amount))
+    })),
   }
-} 
+}
