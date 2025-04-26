@@ -1,9 +1,12 @@
-import { memo } from 'react';
+import { memo, lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import Layout from '@/components/Layout.tsx';
-import LoanForm from '@/forms/LoanForm/LoanForm';
-import MortageResult from '@/components/MortageResult';
+import LoadingFallback from '@/components/LoadingFallback';
+
+// Lazy load route components
+const LoanForm = lazy(() => import('@/forms/LoanForm/LoanForm'));
+const MortageResult = lazy(() => import('@/components/MortageResult'));
 
 const Router = () => {
   const router = createBrowserRouter(
@@ -12,8 +15,22 @@ const Router = () => {
         path: '/',
         element: <Layout />,
         children: [
-          { index: true, element: <LoanForm /> },
-          { path: '/result', element: <MortageResult /> },
+          { 
+            index: true, 
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <LoanForm />
+              </Suspense>
+            ) 
+          },
+          { 
+            path: '/result', 
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <MortageResult />
+              </Suspense>
+            ) 
+          },
         ],
       },
     ],

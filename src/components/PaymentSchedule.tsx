@@ -1,10 +1,11 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useState, lazy, Suspense } from 'react';
 
 import {
   Section,
   Pagination,
   IconButton,
   Modal,
+  Skeleton,
 } from '@telegram-apps/telegram-ui';
 import { Icon28Stats } from '@telegram-apps/telegram-ui/dist/icons/28/stats';
 import { useSignal, viewportState } from '@telegram-apps/sdk-react';
@@ -19,7 +20,9 @@ import {
   TableRow,
   TableCell,
 } from '@/components/Table';
-import PieChart from '@/components/charts/PieChart';
+
+// Lazy load chart component
+const PieChart = lazy(() => import('@/components/charts/PieChart'));
 
 const itemsPerPage = 12; // Show 12 months (1 year) per page
 
@@ -97,7 +100,9 @@ const PaymentSchedule = () => {
           nested
           style={{ height: height * 0.6 }}
         >
-          <PieChart data={pieChartData} title={t('paymentBreakdown')} />
+          <Suspense fallback={<Skeleton visible />}>
+            <PieChart data={pieChartData} title={t('paymentBreakdown')} />
+          </Suspense>
         </Modal>
       )}
       <Section.Header large>
