@@ -11,7 +11,7 @@ export const useLocalizedSchemas = () => {
   
   // Create localized schemas using the current language
   const schemas = useMemo(() => {
-    return createLocalizedSchemas(t, language);
+    return createLocalizedSchemas(t);
   }, [t, language]);
   
   return schemas;

@@ -155,6 +155,10 @@ const PaymentSchedule = () => {
                       </span>
                     )}
                   </span>
+                ) : item.isRegularPayment && item.regularPaymentMessage ? (
+                  <span title={item.regularPaymentMessage} style={{ color: 'rgba(255, 99, 132, 0.8)' }}>
+                    {t('insufficientPayment')}
+                  </span>
                 ) : '-'}
               </TableCell>
               <TableCell>{formatCurrency(item.balance)}</TableCell>
