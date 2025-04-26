@@ -19,7 +19,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/Table';
-import PieChart from '@/components/PieChart';
+import PieChart from '@/components/charts/PieChart';
 
 const itemsPerPage = 12; // Show 12 months (1 year) per page
 

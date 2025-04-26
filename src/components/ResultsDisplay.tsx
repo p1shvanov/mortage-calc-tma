@@ -4,7 +4,6 @@ import { Cell, Section, Text } from '@telegram-apps/telegram-ui';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
-import { PAYMENT_TYPE } from '@/utils/financialMath';
 
 
 const ResultsDisplay = () => {
@@ -132,7 +131,7 @@ const ResultsDisplay = () => {
         readOnly
       >
         <Text>
-          {mortgageResults.paymentType === PAYMENT_TYPE.ANNUITY 
+          {mortgageResults.paymentType === 'annuity' 
             ? t('annuityPayment') 
             : t('differentiatedPayment')}
         </Text>

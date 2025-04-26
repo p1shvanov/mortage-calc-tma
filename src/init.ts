@@ -15,6 +15,7 @@ import {
   enableClosingConfirmation,
   swipeBehavior,
   closingBehavior,
+  backButton,
 } from '@telegram-apps/sdk-react';
 
 /**
@@ -67,6 +68,7 @@ export async function init(options: {
   miniApp.mountSync()
   await Promise.all([
     viewport.mount().then(() => {
+      backButton.isSupported() && backButton.mount();
       bindViewportCssVars();
       bindMiniAppCssVars();
       bindThemeParamsCssVars();

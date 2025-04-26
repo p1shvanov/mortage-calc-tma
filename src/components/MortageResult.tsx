@@ -5,7 +5,7 @@ import PaymentSchedule from '@/components/PaymentSchedule';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import TabPanel from '@/components/TabPanel';
 import TabView from '@/components/TabView';
-
+import Page from './Page';
 
 const tabs = [
   {
@@ -20,17 +20,19 @@ const tabs = [
 
 const MortageResult = () => {
   return (
-    <List>
-      <ResultsDisplay />
-      <TabView tabs={tabs} defaultTab='charts'>
-        <TabPanel id='charts'>
-          <ChartsContainer />
-        </TabPanel>
-        <TabPanel id='schedule'>
-          <PaymentSchedule />
-        </TabPanel>
-      </TabView>
-    </List>
+    <Page>
+      <List>
+        <ResultsDisplay />
+        <TabView tabs={tabs} defaultTab='charts'>
+          <TabPanel id='charts'>
+            <ChartsContainer />
+          </TabPanel>
+          <TabPanel id='schedule'>
+            <PaymentSchedule />
+          </TabPanel>
+        </TabView>
+      </List>
+    </Page>
   );
 };
 

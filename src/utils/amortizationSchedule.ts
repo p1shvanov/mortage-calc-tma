@@ -2,7 +2,6 @@ import {
   calculateInterestForPeriod,
   InterestCalculationMethod,
   PaymentType,
-  PAYMENT_TYPE,
 } from './financialMath';
 
 export interface AmortizationScheduleItem {
@@ -59,7 +58,7 @@ export function generateAmortizationSchedule(
     loanTerm, 
     startDate, 
     earlyPayments = [],
-    paymentType = PAYMENT_TYPE.ANNUITY, // Default to annuity payments
+    paymentType = 'annuity', // Default to annuity payments
     interestCalculationMethod = InterestCalculationMethod.ACTUAL_365 // Default to current method
   } = params;
   
@@ -70,7 +69,7 @@ export function generateAmortizationSchedule(
   const monthlyRate = interestRate / 100 / 12;
   let originalMonthlyPayment: number;
   
-  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+  if (paymentType === 'differentiated') {
     // For differentiated payments, calculate the first payment (which will be the highest)
     const fixedPrincipalPortion = loanAmount / numberOfPayments;
     const firstInterestPortion = loanAmount * monthlyRate;
@@ -110,7 +109,7 @@ export function generateAmortizationSchedule(
   // Calculate original total interest (without early payments)
   let originalTotalInterest: number;
   
-  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+  if (paymentType === 'differentiated') {
     // For differentiated payments, calculate the sum of all interest payments
     let totalPayments = 0;
     let remainingBalance = loanAmount;
@@ -163,7 +162,7 @@ export function generateAmortizationSchedule(
     let principal: number;
     let payment: number;
     
-    if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+    if (paymentType === 'differentiated') {
       // For differentiated payments, recalculate the payment for each month
       // The principal portion is fixed, and the interest portion decreases over time
       const numberOfPayments = loanTerm * 12;

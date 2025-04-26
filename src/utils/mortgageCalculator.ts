@@ -2,12 +2,9 @@ import {
   calculateMonthlyPayment,
   calculatePayoffDate,
   PaymentType,
-  PAYMENT_TYPE,
 } from './financialMath';
 
 export interface MortgageParams {
-  homeValue: number;
-  downPayment: number;
   loanAmount: number;
   interestRate: number;
   loanTerm: number; // in years
@@ -36,7 +33,7 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
     interestRate, 
     loanTerm, 
     startDate,
-    paymentType = PAYMENT_TYPE.ANNUITY, // Default to annuity payments
+    paymentType = 'annuity', // Default to annuity payments
     // paymentDay
   } = params;
   
@@ -46,7 +43,7 @@ export function calculateMortgage(params: MortgageParams): MortgageResults {
   // Calculate total cost based on payment type
   let totalCost: number;
   
-  if (paymentType === PAYMENT_TYPE.DIFFERENTIATED) {
+  if (paymentType === 'differentiated') {
     // For differentiated payments, we need to calculate each payment separately
     // and sum them up, since they decrease over time
     let totalPayments = 0;

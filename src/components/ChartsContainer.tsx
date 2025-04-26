@@ -3,11 +3,11 @@ import { memo, useMemo } from 'react';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
 
-import LineChart from '@/components/LineChart';
-import PieChart from '@/components/PieChart';
-import BarChart from '@/components/BarChart';
-import DoughnutChart from '@/components/DoughnutChart';
-import RadarChart from '@/components/RadarChart';
+import LineChart from '@/components/charts/LineChart';
+import PieChart from '@/components/charts/PieChart';
+import BarChart from '@/components/charts/BarChart';
+import DoughnutChart from '@/components/charts/DoughnutChart';
+import RadarChart from '@/components/charts/RadarChart';
 
 const ChartsContainer = () => {
   const { t } = useLocalization();
