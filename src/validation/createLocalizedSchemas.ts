@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { unformat } from '@react-input/number-format';
-import { SupportedLanguage } from '@/providers/LocalizationProvider';
 
 // Type for the localization function
 type TranslationFunction = (key: string, params?: Record<string, string | number>) => string;
@@ -10,7 +9,7 @@ type TranslationFunction = (key: string, params?: Record<string, string | number
  * @param t Translation function
  * @returns Object with schema creation functions
  */
-export const createLocalizedSchemas = (t: TranslationFunction, language: SupportedLanguage) => {
+export const createLocalizedSchemas = (t: TranslationFunction) => {
   // Create a custom error map for Zod
   const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
     // Use the default error map as fallback
@@ -20,12 +19,12 @@ export const createLocalizedSchemas = (t: TranslationFunction, language: Support
     switch (issue.code) {
       case z.ZodIssueCode.invalid_type:
         if (issue.expected === 'number') {
-          return { message: t('validation.invalidNumber') };
+          return { message: t('invalidNumber') };
         }
         break;
       case z.ZodIssueCode.too_small:
         if (issue.type === 'number' && issue.minimum === 0) {
-          return { message: t('validation.mustBePositive') };
+          return { message: t('mustBePositive') };
         }
         break;
       // Add more cases as needed
@@ -55,11 +54,11 @@ export const createLocalizedSchemas = (t: TranslationFunction, language: Support
           const unformatted = unformat(val);
           return parseFloat(unformatted);
         })
-        .refine((val) => !isNaN(val), t('validation.mustBeNumber', { field: t(fieldName) }))
-        .refine((val) => val > min, t('validation.mustBeGreaterThan', { field: t(fieldName), value: min }))
+        .refine((val) => !isNaN(val), t('mustBeNumber', { field: t(fieldName) }))
+        .refine((val) => val > min, t('mustBeGreaterThan', { field: t(fieldName), value: min }))
         .refine(
           (val) => max === undefined || val <= max, 
-          max !== undefined ? t('validation.mustBeLessThan', { field: t(fieldName), value: max }) : ''
+          max !== undefined ? t('mustBeLessThan', { field: t(fieldName), value: max }) : ''
         );
     },
 
@@ -74,7 +73,7 @@ export const createLocalizedSchemas = (t: TranslationFunction, language: Support
       return z.string().refine((date) => {
         const dateObj = new Date(date);
         return !isNaN(dateObj.getTime());
-      }, t('validation.invalidDate', { field: t(fieldName) }));
+      }, t('invalidDate', { field: t(fieldName) }));
     },
 
     /**
@@ -108,7 +107,7 @@ export const createLocalizedSchemas = (t: TranslationFunction, language: Support
       const { startField, endField } = options;
       
       return {
-        message: t('validation.endDateAfterStart', { 
+        message: t('endDateAfterStart', { 
           startField: t(startField), 
           endField: t(endField) 
         }),

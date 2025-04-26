@@ -15,6 +15,7 @@ export interface AmortizationScheduleItem {
   extraPayment?: number;
   extraPaymentType?: 'reduceTerm' | 'reducePayment';
   isRegularPayment?: boolean; // Flag to indicate if this is a regular early payment
+  regularPaymentMessage?: string; // Message for regular payments that don't result in early repayment
 }
 
 export interface AmortizationScheduleParams {
@@ -216,15 +217,26 @@ export function generateAmortizationSchedule(
       const isBeforeEnd = !endMonth || currentPaymentDate <= endMonth;
       
       if (isAfterStart && isBeforeEnd) {
-        // If there's already an early payment for this date, add the regular payment amount
-        if (extraPayment > 0) {
-          extraPayment += regularPayment.amount;
-          // Use the regular payment type as it takes precedence
-          extraPaymentType = regularPayment.type;
-        } else {
-          extraPayment = regularPayment.amount;
-          extraPaymentType = regularPayment.type;
+        // Regular payment should first cover the monthly payment
+        // Any remaining amount goes towards early repayment
+        
+        // Calculate the excess amount (if any) after covering the monthly payment
+        const excessAmount = regularPayment.amount - currentMonthlyPayment;
+        
+        // If the regular payment is greater than the monthly payment,
+        // use the excess for early repayment
+        if (excessAmount > 0) {
+          // If there's already an early payment for this date, add the excess amount
+          if (extraPayment > 0) {
+            extraPayment += excessAmount;
+            // Use the regular payment type as it takes precedence
+            extraPaymentType = regularPayment.type;
+          } else {
+            extraPayment = excessAmount;
+            extraPaymentType = regularPayment.type;
+          }
         }
+        // Even if there's no excess, mark this as a regular payment
         isRegularPayment = true;
       }
     }
@@ -292,7 +304,11 @@ export function generateAmortizationSchedule(
       balance: Math.max(0, newBalance),
       extraPayment: extraPayment > 0 ? extraPayment : undefined,
       extraPaymentType: extraPayment > 0 ? extraPaymentType : undefined,
-      isRegularPayment: isRegularPayment
+      isRegularPayment: isRegularPayment,
+      // Add a message if this is a regular payment but no early repayment occurred
+      regularPaymentMessage: isRegularPayment && extraPayment <= 0 ? 
+        'The specified total payment is less than the monthly payment amount, so early repayment did not occur.' : 
+        undefined
     });
     
     // Update balance for next iteration
