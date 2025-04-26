@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { calculateMortgage, MortgageResults } from '@/utils/mortgageCalculator';
-import { AmortizationScheduleResult, generateAmortizationSchedule } from '@/utils/amortizationSchedule';
 import { PaymentType } from '@/utils/financialMath';
+import { 
+  mortgageService, 
+  MortgageCalculationResults, 
+  AmortizationScheduleResults 
+} from '@/services/mortgage';
 
 export interface EarlyPayment {
   id: string;
@@ -19,8 +22,6 @@ export interface RegularPayment {
 }
 
 export interface LoanDetailsValues {
-  homeValue: number;
-  downPayment: number;
   loanAmount: number;
   interestRate: number;
   loanTerm: number;
@@ -36,10 +37,10 @@ interface MortgageContextType {
   setEarlyPayments: (payments: EarlyPayment[]) => void;
   regularPayments: RegularPayment[];
   setRegularPayments: (payments: RegularPayment[]) => void;
-  mortgageResults: MortgageResults | null;
-  amortizationResult: AmortizationScheduleResult | null;
-  setMortgageResults: (mortage: MortgageResults) => void;
-  setAmortizationResult: (amortization: AmortizationScheduleResult) => void;
+  mortgageResults: MortgageCalculationResults | null;
+  amortizationResult: AmortizationScheduleResults | null;
+  setMortgageResults: (mortage: MortgageCalculationResults) => void;
+  setAmortizationResult: (amortization: AmortizationScheduleResults) => void;
 }
 
 const MortgageContext = createContext<MortgageContextType | undefined>(undefined);
@@ -48,14 +49,22 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [loanDetails, setLoanDetails] = useState<LoanDetailsValues | null>(null);
   const [earlyPayments, setEarlyPayments] = useState<EarlyPayment[]>([]);
   const [regularPayments, setRegularPayments] = useState<RegularPayment[]>([]);
-  const [mortgageResults, setMortgageResults] = useState<MortgageResults | null>(null);
-  const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResult | null>(null);
+  const [mortgageResults, setMortgageResults] = useState<MortgageCalculationResults | null>(null);
+  const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResults | null>(null);
 
   useEffect(() => {
     if (loanDetails) {
       try {
-        const results = calculateMortgage(loanDetails);
-        setMortgageResults(results);
+        // Use the mortgage service to calculate mortgage results
+        mortgageService.calculateMortgage({
+          ...loanDetails,
+          earlyPayments,
+          regularPayments
+        }).then(results => {
+          setMortgageResults(results);
+        }).catch(error => {
+          console.error('Error calculating mortgage results:', error);
+        });
       } catch (error) {
         console.error('Error calculating mortgage results:', error);
       }
@@ -66,15 +75,16 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loanDetails) {
       try {
-        const result = generateAmortizationSchedule({
-          loanAmount: loanDetails.loanAmount,
-          interestRate: loanDetails.interestRate,
-          loanTerm: loanDetails.loanTerm,
-          startDate: loanDetails.startDate,
+        // Use the mortgage service to generate amortization schedule
+        mortgageService.generateAmortizationSchedule({
+          ...loanDetails,
           earlyPayments,
           regularPayments
+        }).then(result => {
+          setAmortizationResult(result);
+        }).catch(error => {
+          console.error('Error generating amortization schedule:', error);
         });
-        setAmortizationResult(result);
       } catch (error) {
         console.error('Error generating amortization schedule:', error);
       }

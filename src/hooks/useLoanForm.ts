@@ -26,11 +26,7 @@ export const useLoanForm = () => {
       try {
         const loanDetails = unformatFormValues(value);
         const { earlyPayments, regularPayments, ...rest } = loanDetails;
-        setLoanDetails({
-          homeValue: 10,
-          downPayment: 10,
-          ...rest,
-        });
+        setLoanDetails(rest);
         setEarlyPayments(earlyPayments);
         setRegularPayments(regularPayments);
         navigate('result')
