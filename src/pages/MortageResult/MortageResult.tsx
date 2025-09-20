@@ -5,7 +5,7 @@ import PaymentSchedule from '@/components/PaymentSchedule';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import TabPanel from '@/components/TabPanel';
 import TabView from '@/components/TabView';
-import Page from './Page';
+import Page from '../../components/Page';
 
 const tabs = [
   {
