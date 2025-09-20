@@ -1,2 +1,0 @@
-import{n as e,f as t,G as s,j as r}from"./vendor-telegram-DYpFzjZD.js";import{a,u as n}from"./vendor-react-BsEvrc09.js";const o=a.memo((({children:o,back:i=!0})=>{const d=n(),f=e(t.safeAreaInsets),c=e(t.contentSafeAreaInsets);return a.useEffect((()=>{if(i)return s.show(),s.onClick((()=>{d(-1)}));s.hide()}),[i]),r.jsx("div",{style:{paddingTop:f.top+c.top,paddingLeft:f.left,paddingRight:f.right},children:o})}));export{o as P};
-//# sourceMappingURL=Page-D19Mk31s.js.map
