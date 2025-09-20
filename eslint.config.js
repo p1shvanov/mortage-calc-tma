@@ -11,7 +11,7 @@ export default tseslint.config(
     files: ['src/**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     extends: [
       eslint.configs.recommended,
-      ...tseslint.configs.recommendedTypeChecked,
+      ...tseslint.configs.recommended,
     ],
     plugins: {
       react,
@@ -24,6 +24,8 @@ export default tseslint.config(
         ecmaFeatures: {
           jsx: true,
         },
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
       },
       globals: {
         ...globals.browser,

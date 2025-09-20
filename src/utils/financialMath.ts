@@ -90,21 +90,23 @@ export function calculateInterestForPeriod(
   method: InterestCalculationMethod = InterestCalculationMethod.ACTUAL_365
 ): number {
   switch (method) {
-    case InterestCalculationMethod.ACTUAL_365:
+    case InterestCalculationMethod.ACTUAL_365: {
       const days = daysBetween(startDate, endDate);
       const yearDays = daysInYear(startDate);
       const dailyRate = annualInterestRate / 100 / yearDays;
       return balance * dailyRate * days;
+    }
     
     // Reserved for future calculation methods
     case InterestCalculationMethod.THIRTY_360:
     case InterestCalculationMethod.ACTUAL_ACTUAL:
-    default:
+    default: {
       // For now, use ACTUAL_365 for all methods
       const fallbackDays = daysBetween(startDate, endDate);
       const fallbackYearDays = daysInYear(startDate);
       const fallbackDailyRate = annualInterestRate / 100 / fallbackYearDays;
       return balance * fallbackDailyRate * fallbackDays;
+    }
   }
 }
 
