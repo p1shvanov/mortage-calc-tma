@@ -86,12 +86,12 @@ export const createLocalizedSchemas = (t: TranslationFunction) => {
     }) => {
       const { startField, endField, endIsOptional = false } = options;
       
-      return (data: any) => {
+      return (data: Record<string, unknown>) => {
         // If end date is optional and not provided, validation passes
         if (endIsOptional && !data[endField]) return true;
         
-        const startDate = new Date(data[startField]);
-        const endDate = new Date(data[endField]);
+        const startDate = new Date(data[startField] as string);
+        const endDate = new Date(data[endField] as string);
         
         return endDate >= startDate;
       };

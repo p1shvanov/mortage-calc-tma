@@ -12,7 +12,7 @@ import {
  */
 export class ServerMortgageService implements IMortgageService {
   // This field is used in the commented-out code examples
-  // @ts-ignore - This field is used in the commented-out code examples
+  // @ts-expect-error - This field is used in the commented-out code examples
   private readonly _apiBaseUrl: string;
 
   /**
@@ -25,9 +25,10 @@ export class ServerMortgageService implements IMortgageService {
 
   /**
    * Calculate mortgage results based on input parameters
-   * @param params Mortgage calculation parameters
+   * @param _params Mortgage calculation parameters
    * @returns Mortgage calculation results
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async calculateMortgage(_params: MortgageCalculationParams): Promise<MortgageCalculationResults> {
     try {
       // In a real implementation, this would make an API call to the server
@@ -56,9 +57,10 @@ export class ServerMortgageService implements IMortgageService {
 
   /**
    * Generate an amortization schedule for a loan
-   * @param params Mortgage calculation parameters
+   * @param _params Mortgage calculation parameters
    * @returns Amortization schedule results
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generateAmortizationSchedule(_params: MortgageCalculationParams): Promise<AmortizationScheduleResults> {
     try {
       // In a real implementation, this would make an API call to the server
