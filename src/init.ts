@@ -16,17 +16,21 @@ import {
   swipeBehavior,
   closingBehavior,
   backButton,
+  mainButton,
 } from '@telegram-apps/sdk-react';
 
 /**
  * Initializes the application and configures its dependencies.
+ * Follows Telegram Mini Apps best practices: init SDK first, then mount only
+ * the components that are used; check isSupported() before mounting.
+ * @see https://docs.telegram-mini-apps.com/packages/tma-js-sdk/usage-tips
  */
 export async function init(options: {
   debug: boolean;
   eruda: boolean;
   mockForMacOS: boolean;
 }): Promise<void> {
-  // Set @telegram-apps/sdk-react debug mode and initialize it.
+  // 1. Initialize the SDK first (no side effects until init is called).
   setDebug(options.debug);
   initSDK();
 
@@ -63,12 +67,13 @@ export async function init(options: {
     });
   }
 
-  // Mount all components used in the project.
+  // 2. Mount only the components used in the app (required before calling their methods).
   restoreInitData();
-  miniApp.mountSync()
+  miniApp.mountSync();
   await Promise.all([
     viewport.mount().then(() => {
-      backButton.isSupported() && backButton.mount();
+      if (backButton.isSupported()) backButton.mount();
+      if (typeof mainButton.mount === 'function') mainButton.mount();
       bindViewportCssVars();
       bindMiniAppCssVars();
       bindThemeParamsCssVars();
