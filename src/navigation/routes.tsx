@@ -5,6 +5,7 @@ import { LoanForm } from '@/pages/LoanForm';
 import { InitDataPage } from '@/pages/InitDataPage';
 import { ThemeParamsPage } from '@/pages/ThemeParamsPage';
 import { LaunchParamsPage } from '@/pages/LaunchParamsPage';
+import { HomePage } from '@/pages/HomePage';
 
 interface Route {
   path: string;
@@ -14,7 +15,8 @@ interface Route {
 }
 
 export const routes: Route[] = [
-  { path: '/', Component: LoanForm },
+  { path: '/', Component: HomePage },
+  { path: '/calculator', Component: LoanForm },
   { path: '/result', Component: MortageResult, title: 'Mortage Result' },
   { path: '/init-data', Component: InitDataPage, title: 'Init Data' },
   { path: '/theme-params', Component: ThemeParamsPage, title: 'Theme Params' },

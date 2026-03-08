@@ -8,9 +8,13 @@ const Router = () => {
     <HashRouter>
       <Routes>
         {routes.map((route) => (
-          <Route key={route.path} {...route} />
+          <Route
+            key={route.path}
+            path={route.path}
+            element={<route.Component />}
+          />
         ))}
-        <Route path='*' element={<Navigate to='/' />} />
+        <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
     </HashRouter>
   );

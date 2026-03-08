@@ -18,6 +18,7 @@ const Page = ({
   const contentInset = useSignal(viewport.contentSafeAreaInsets);
 
   useEffect(() => {
+    if (!backButton.isSupported()) return;
     if (back) {
       backButton.show();
       return backButton.onClick(() => {

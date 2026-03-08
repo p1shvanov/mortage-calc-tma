@@ -110,6 +110,22 @@ export const translations = {
     reset: 'Reset',
     years: 'years',
     months: 'months',
+
+    // Home
+    newCalculation: 'New calculation',
+    calculationHistory: 'Calculation history',
+    settings: 'Settings',
+    noCalculationsYet: 'No calculations yet',
+    goToCalculator: 'Go to calculator',
+    faq: 'FAQ',
+    theme: 'Theme',
+    language: 'Language',
+    open: 'Open',
+    resultTitle: 'Result',
+    editParameters: 'Edit parameters',
+    comingSoon: 'Coming soon',
+    backToHome: 'Back to main',
+    done: 'Done',
   },
   ru: {
     // App
@@ -223,5 +239,21 @@ export const translations = {
     reset: 'Сбросить',
     years: 'лет',
     months: 'месяцев',
+
+    // Home
+    newCalculation: 'Новый расчёт',
+    calculationHistory: 'История расчётов',
+    settings: 'Настройки',
+    noCalculationsYet: 'Пока нет расчётов',
+    goToCalculator: 'Перейти к калькулятору',
+    faq: 'FAQ',
+    theme: 'Тема',
+    language: 'Язык',
+    open: 'Открыть',
+    resultTitle: 'Результат',
+    editParameters: 'Изменить параметры',
+    comingSoon: 'Скоро',
+    backToHome: 'На главную',
+    done: 'Готово',
   },
 };
