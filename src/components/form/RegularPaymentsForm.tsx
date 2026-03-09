@@ -4,10 +4,17 @@ import { useLocalization } from '@/providers/LocalizationProvider';
 import InputNumberFormat from '@/components/ui/InputNumberFormat';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
+import { popup } from '@telegram-apps/sdk-react';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
 import { regularPaymentSchema } from '@/schemas/regularPayment';
 import { loanDetailsSchema } from '@/schemas/loanDetails';
-import { hapticButton, hapticSuccess, hapticSelection, hapticDestructive } from '@/utils/haptic';
+import {
+  hapticButton,
+  hapticSuccess,
+  hapticSelection,
+  hapticDestructive,
+  hapticWarning,
+} from '@/utils/haptic';
 
 const typeLabels: Record<string, string> = {
   reduceTerm: 'typeReduceTerm',
@@ -64,8 +71,12 @@ const RegularPaymentsForm = withForm({
                 expanded={sectionOpen && isLoanDetailsValid}
                 onChange={() => {
                   if (isLoanDetailsValid) {
-                    hapticSelection();
                     setSectionOpen((prev) => !prev);
+                  } else {
+                    hapticWarning();
+                    if (popup.isSupported()) {
+                      popup.show({ message: t('fillLoanDetailsFirst') });
+                    }
                   }
                 }}
               >
@@ -83,7 +94,7 @@ const RegularPaymentsForm = withForm({
                     </form.Field>
                   </>
                 </Accordion.Summary>
-                <Accordion.Content style={{ background: 'transparent' }}>
+                <Accordion.Content>
                   <form.Field name='regularPayments' mode='array'>
                 {(field) => {
                   const expandedItem =
