@@ -4,6 +4,7 @@ import { MortageResult } from '@/pages/MortageResult';
 import { LoanForm } from '@/pages/LoanForm';
 import { InitDataPage } from '@/pages/InitDataPage';
 import { HomePage } from '@/pages/HomePage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import OnboardingPage from '@/pages/Onboarding/OnboardingPage';
 
 interface Route {
@@ -15,6 +16,7 @@ interface Route {
 
 export const routes: Route[] = [
   { path: '/', Component: HomePage },
+  { path: '/settings', Component: SettingsPage },
   { path: '/onboarding', Component: OnboardingPage },
   { path: '/calculator', Component: LoanForm },
   { path: '/result', Component: MortageResult, title: 'Mortage Result' },

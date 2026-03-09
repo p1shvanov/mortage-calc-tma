@@ -28,7 +28,7 @@ const Input = forwardRef<HTMLInputElement, InputPropsType>(
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.value)}
           status={errors.length ? 'error' : 'default'}
-          after={isValidating ? <Spinner size='s' /> : rest.after}
+          after={isValidating ? <Spinner size="s" /> : rest.after}
         />
         {isTouched && errors.length ? (
           <Caption style={{ color: 'var(--tgui--destructive_text_color)', padding: '0 24px' }}>

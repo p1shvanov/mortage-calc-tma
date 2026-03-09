@@ -2,11 +2,14 @@ import { memo } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { routes } from './routes';
+import { SettingsButtonListener } from './SettingsButtonListener';
 
 const Router = () => {
   return (
     <HashRouter>
-      <Routes>
+      <>
+        <SettingsButtonListener />
+        <Routes>
         {routes.map((route) => (
           <Route
             key={route.path}
@@ -15,7 +18,8 @@ const Router = () => {
           />
         ))}
         <Route path='*' element={<Navigate to='/' replace />} />
-      </Routes>
+        </Routes>
+      </>
     </HashRouter>
   );
 };

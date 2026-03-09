@@ -29,6 +29,17 @@ export const translations = {
     paymentDaySpecific: 'Specific day of month',
     additionalOptions: 'Additional options',
 
+    // Field hints (tooltips)
+    hintLoanAmount: 'The total amount you borrow from the bank.',
+    hintInterestRate: 'Annual interest rate in percent. It determines how much you pay in interest over the loan term.',
+    hintLoanTerm: 'Loan term in years. Longer terms mean lower monthly payments but more interest paid in total.',
+    hintStartDate: 'The date when your first payment is due. Used to build the payment schedule.',
+    hintPaymentType:
+      'Annuity: equal monthly payments throughout the term; total payment is the same each month.\n\nDifferentiated: payments decrease over time; you pay more at the start (more principal + interest) and less toward the end.',
+    hintPaymentDay: 'Day of the month when your payment is due. For example, 15 means you pay on the 15th of each month.',
+    hintEarlyPaymentType:
+      'Reduce term: extra payment shortens the loan period; your monthly payment amount stays the same.\n\nReduce payment: extra payment lowers your next monthly payment; the loan term stays the same.',
+
     // Results
     paymentSummary: 'Payment Summary',
     monthlyPayment: 'Monthly Payment',
@@ -121,7 +132,14 @@ export const translations = {
     goToCalculator: 'Go to calculator',
     faq: 'FAQ',
     language: 'Language',
+    languageEnglish: 'English',
+    languageRussian: 'Русский',
     languageFlag: '🇬🇧',
+    addToHomeScreen: 'Add to Home Screen',
+    addToHomeScreenSubtitle: 'Create a shortcut on your device',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
     open: 'Open',
     resultTitle: 'Result',
     editParameters: 'Edit parameters',
@@ -143,11 +161,14 @@ export const translations = {
 
     // Onboarding
     onboardingWelcomeTitle: 'Mortgage Calculator',
-    onboardingWelcomeDesc: 'Calculate your mortgage, plan early repayments and see the full schedule.',
-    onboardingFeaturesTitle: 'What you can do',
-    onboardingFeaturesDesc: 'Enter loan details, add one-time or regular extra payments, save calculations and compare scenarios with charts.',
-    onboardingStartTitle: 'Ready to start',
-    onboardingStartDesc: 'Create your first calculation or open a saved one from the main screen.',
+    onboardingWelcomeDesc: 'Enter your loan details once — get a full schedule, compare scenarios, and see how early repayments change the picture.',
+    onboardingFormTitle: 'Parameters at a glance',
+    onboardingFormLead: 'Tap any row to read a short tip. You’ll fill these in on the next screen.',
+    onboardingPaymentTypesLead: 'Two ways banks can structure your monthly payment. Your contract usually states which one applies.',
+    onboardingEarlyLead: 'When you pay extra, you choose: shorten the term or lower the next payment.',
+    onboardingStartTitle: 'You’re all set',
+    onboardingStartDesc: 'Create your first calculation from the main screen. You can reopen this guide anytime from Settings.',
+    onboardingStepOf: 'Step {current} of {total}',
     onboardingSkip: 'Skip',
     onboardingNext: 'Next',
     onboardingGetStarted: 'Get started',
@@ -181,6 +202,17 @@ export const translations = {
     paymentDayMonthly: 'В тот же день, что и дата начала',
     paymentDaySpecific: 'Конкретный день месяца',
     additionalOptions: 'Дополнительные параметры',
+
+    // Field hints (tooltips)
+    hintLoanAmount: 'Общая сумма, которую вы берёте в кредит в банке.',
+    hintInterestRate: 'Годовая процентная ставка. От неё зависит, сколько вы заплатите процентов за весь срок.',
+    hintLoanTerm: 'Срок кредита в годах. Больший срок — меньше платёж в месяц, но больше переплата по процентам.',
+    hintStartDate: 'Дата, с которой начинается график платежей (дата первого платежа).',
+    hintPaymentType:
+      'Аннуитетный: равные ежемесячные платежи на весь срок; сумма платежа не меняется.\n\nДифференцированный: платежи уменьшаются со временем; в начале платите больше (долг + проценты), к концу — меньше.',
+    hintPaymentDay: 'Число месяца, когда нужно вносить платёж. Например, 15 — платёж каждый месяц 15-го числа.',
+    hintEarlyPaymentType:
+      'Сократить срок: досрочка уменьшает срок кредита; сумма ежемесячного платежа не меняется.\n\nУменьшить платёж: досрочка уменьшает следующий платёж; срок кредита не меняется.',
 
     // Results
     paymentSummary: 'Сводка по платежам',
@@ -275,7 +307,14 @@ export const translations = {
     goToCalculator: 'Перейти к калькулятору',
     faq: 'FAQ',
     language: 'Язык',
+    languageEnglish: 'English',
+    languageRussian: 'Русский',
     languageFlag: '🇷🇺',
+    addToHomeScreen: 'Добавить на главный экран',
+    addToHomeScreenSubtitle: 'Создать ярлык на устройстве',
+    theme: 'Тема',
+    themeLight: 'Светлая',
+    themeDark: 'Тёмная',
     open: 'Открыть',
     resultTitle: 'Результат',
     editParameters: 'Изменить параметры',
@@ -297,11 +336,14 @@ export const translations = {
 
     // Onboarding
     onboardingWelcomeTitle: 'Ипотечный калькулятор',
-    onboardingWelcomeDesc: 'Рассчитайте ипотеку, добавьте досрочные платежи и посмотрите полный график.',
-    onboardingFeaturesTitle: 'Что умеет приложение',
-    onboardingFeaturesDesc: 'Введите параметры кредита, добавьте разовые или регулярные досрочные платежи, сохраняйте расчёты и сравнивайте сценарии с помощью графиков.',
+    onboardingWelcomeDesc: 'Введите параметры кредита один раз — получите полный график, сравните сценарии и увидите, как досрочки меняют переплату.',
+    onboardingFormTitle: 'О чём спросит форма',
+    onboardingFormLead: 'Нажмите на строку — откроется подсказка. Эти поля вы заполните на следующем экране.',
+    onboardingPaymentTypesLead: 'Два способа, которыми банк может считать ежемесячный платёж. Обычно указано в договоре.',
+    onboardingEarlyLead: 'При досрочке вы выбираете: сократить срок кредита или уменьшить следующий платёж.',
     onboardingStartTitle: 'Всё готово',
-    onboardingStartDesc: 'Создайте первый расчёт или откройте сохранённый с главного экрана.',
+    onboardingStartDesc: 'Создайте первый расчёт с главного экрана. Эту подсказку можно снова открыть в настройках.',
+    onboardingStepOf: 'Шаг {current} из {total}',
     onboardingSkip: 'Пропустить',
     onboardingNext: 'Далее',
     onboardingGetStarted: 'Начать',
