@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, lazy, Suspense } from 'react';
+import { memo, useMemo, useState, useRef, useCallback, useEffect, lazy, Suspense } from 'react';
 
 import {
   Section,
@@ -14,7 +14,7 @@ import {
   Caption,
 } from '@telegram-apps/telegram-ui';
 import { Icon28Stats } from '@telegram-apps/telegram-ui/dist/icons/28/stats';
-import { useSignal, viewportState } from '@telegram-apps/sdk-react';
+import { useSignal, viewportState, mainButton } from '@telegram-apps/sdk-react';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
@@ -36,6 +36,28 @@ const PaymentSchedule = () => {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, schedule.length);
   const currentItems = schedule.slice(startIndex, endIndex);
+  const showPagination = schedule.length > itemsPerPage;
+
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const handleSwipeEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!showPagination || totalPages <= 1) return;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.clientX - touchStartRef.current.x;
+      const dy = touch.clientY - touchStartRef.current.y;
+      const minSwipe = 60;
+      if (Math.abs(dx) >= minSwipe && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) {
+          setCurrentPage((p) => Math.min(totalPages, p + 1));
+        } else {
+          setCurrentPage((p) => Math.max(1, p - 1));
+        }
+        hapticSelection();
+      }
+    },
+    [showPagination, totalPages],
+  );
 
   const firstPayment = useMemo(() => {
     if (typeof selectedItemIndex === 'number' && schedule[selectedItemIndex]) {
@@ -74,6 +96,21 @@ const PaymentSchedule = () => {
     return pages;
   }, [currentPage, totalPages]);
 
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages >= 1) {
+      setCurrentPage(totalPages);
+    }
+  }, [schedule.length, totalPages, currentPage]);
+
+  useEffect(() => {
+    if (selectedItemIndex !== null) {
+      mainButton.setParams({ isVisible: false });
+      return () => {
+        mainButton.setParams({ isVisible: true });
+      };
+    }
+  }, [selectedItemIndex]);
+
   if (!amortizationResult) {
     return null;
   }
@@ -90,7 +127,19 @@ const PaymentSchedule = () => {
   }
 
   return (
-    <Section>
+    <Section
+      onTouchStart={
+        showPagination
+          ? (e) => {
+              touchStartRef.current = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+              };
+            }
+          : undefined
+      }
+      onTouchEnd={showPagination ? handleSwipeEnd : undefined}
+    >
       {pieChartData && (
         <Modal
           onOpenChange={(open) => {
@@ -177,23 +226,10 @@ const PaymentSchedule = () => {
         })}
       </List>
 
-      <Section.Footer centered>
-        <CompactPagination>
-          {[
-            ...(currentPage > 1
-              ? [
-                  <CompactPagination.Item
-                    key="prev"
-                    onClick={() => {
-                      hapticSelection();
-                      setCurrentPage((p) => Math.max(1, p - 1));
-                    }}
-                  >
-                    ←
-                  </CompactPagination.Item>,
-                ]
-              : []),
-            ...paginationItems.map((page) => (
+      {showPagination && (
+        <Section.Footer centered>
+          <CompactPagination mode="ambient">
+            {paginationItems.map((page) => (
               <CompactPagination.Item
                 key={page}
                 selected={page === currentPage}
@@ -204,23 +240,10 @@ const PaymentSchedule = () => {
               >
                 {page}
               </CompactPagination.Item>
-            )),
-            ...(currentPage < totalPages
-              ? [
-                  <CompactPagination.Item
-                    key="next"
-                    onClick={() => {
-                      hapticSelection();
-                      setCurrentPage((p) => Math.min(totalPages, p + 1));
-                    }}
-                  >
-                    →
-                  </CompactPagination.Item>,
-                ]
-              : []),
-          ]}
-        </CompactPagination>
-      </Section.Footer>
+            ))}
+          </CompactPagination>
+        </Section.Footer>
+      )}
     </Section>
   );
 };

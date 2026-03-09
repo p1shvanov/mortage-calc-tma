@@ -93,7 +93,7 @@ const LoanForm: FC = () => {
 
   useEffect(() => {
     if (!mainButtonAvailable) return;
-    mainButton.setParams({ text: t('calculate'), isVisible: true, isEnabled: form.state.canSubmit });
+    mainButton.setParams({ text: t('calculate'), isVisible: true, isEnabled: form.state.canSubmit, hasShineEffect: true });
     const off = mainButton.onClick(() => {
       hapticButton();
       form.handleSubmit();

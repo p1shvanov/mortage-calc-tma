@@ -24,7 +24,6 @@ const BreadcrumbsNav = ({ items, divider = 'slash' }: BreadcrumbsNavProps) => {
         return (
           <Breadcrumbs.Item
             key={`${item.path ?? item.label}-${index}`}
-            // Component={isClickable ? 'button' : 'span'}
             onClick={
               isClickable && item.path
                 ? () => {

@@ -8,6 +8,7 @@ import {
   miniApp,
   viewport,
   themeParams,
+  on,
   enableClosingConfirmation,
   swipeBehavior,
   closingBehavior,
@@ -20,14 +21,23 @@ import {
   type ThemeParams,
 } from '@telegram-apps/sdk-react';
 
+const SECONDARY_BG = 'secondary_bg_color';
+
 /**
- * Sets Mini App background to theme's secondary color so the app blends with Telegram UI.
+ * Sets Mini App background, header and bottom bar to theme's secondary color.
+ * Uses themeParams state so it reflects current theme (e.g. after theme_changed).
+ * @see https://docs.telegram-mini-apps.com/platform/methods#web-app-set-background-color
+ * @see https://docs.telegram-mini-apps.com/platform/methods#web-app-set-header-color
+ * @see https://docs.telegram-mini-apps.com/platform/methods#web-app-set-bottom-bar-color
  */
-function setBackgroundAsSecondary(): void {
-  if (!miniApp.setBackgroundColor?.isAvailable?.()) return;
-  const theme = retrieveLaunchParams().tgWebAppThemeParams;
-  const color = theme?.secondary_bg_color;
-  if (color) miniApp.setBackgroundColor(color);
+function setChromeToSecondaryBg(): void {
+  const color =
+    themeParams.secondaryBackgroundColor?.() ??
+    retrieveLaunchParams().tgWebAppThemeParams?.secondary_bg_color ??
+    SECONDARY_BG;
+  if (miniApp.setBackgroundColor?.isAvailable?.()) miniApp.setBackgroundColor(color);
+  if (miniApp.setHeaderColor?.isAvailable?.()) miniApp.setHeaderColor(color);
+  if (miniApp.setBottomBarColor?.isAvailable?.()) miniApp.setBottomBarColor(color);
 }
 
 export type InitOptions = {
@@ -84,7 +94,9 @@ export async function init(options: InitOptions = {}): Promise<void> {
 
   restoreInitData();
   miniApp.mountSync();
-  setBackgroundAsSecondary();
+  setChromeToSecondaryBg();
+
+  on('theme_changed', () => setChromeToSecondaryBg());
 
   const viewportMountResult: Promise<{ mounted: boolean }> = mockForMacOS
     ? Promise.race([

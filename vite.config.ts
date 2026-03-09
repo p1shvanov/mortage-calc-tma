@@ -1,12 +1,19 @@
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import react from '@vitejs/plugin-react-swc';
 import mkcert from 'vite-plugin-mkcert';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/mortage-calc-tma/',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   css: {
     preprocessorOptions: {
       scss: {

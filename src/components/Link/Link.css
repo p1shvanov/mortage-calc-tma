@@ -1,5 +1,0 @@
-/* Use Telegram UI variable so theme switch (AppRoot appearance) applies. */
-.link {
-  text-decoration: none;
-  color: var(--tgui--link_color);
-}
