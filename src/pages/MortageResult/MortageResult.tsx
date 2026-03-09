@@ -83,6 +83,7 @@ const MortageResult = () => {
       text: t('editParameters'),
       isVisible: true,
       isEnabled: true,
+      hasShineEffect: true,
     });
     const off = mainButton.onClick(() => {
       hapticButton();

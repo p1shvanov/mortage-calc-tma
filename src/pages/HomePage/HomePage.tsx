@@ -1,4 +1,4 @@
-import { FC, memo, useEffect, useState, useCallback } from 'react';
+import { FC, memo, useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import {
   List,
@@ -12,29 +12,72 @@ import {
   IconButton,
   InlineButtons,
   Avatar,
+  CompactPagination,
 } from '@telegram-apps/telegram-ui';
-import { initDataState, useSignal } from '@telegram-apps/sdk-react';
+import { initDataState, mainButton, useSignal } from '@telegram-apps/sdk-react';
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 import { Icon24Cancel } from '@telegram-apps/telegram-ui/dist/icons/24/cancel';
 
 import Page from '@/components/Page';
 import BreadcrumbsNav from '@/components/BreadcrumbsNav';
+import { useMainButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
 import { hapticButton, hapticSelection, hapticSuccess, hapticDestructive, hapticError } from '@/utils/haptic';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
 import { isOnboardingCompleted } from '@/services/onboardingStorage';
 import type { SavedCalculation } from '@/types/storage';
 
+const ITEMS_PER_PAGE = 5;
+
 const HomePage: FC = () => {
   const { t, formatCurrency, formatDate } = useLocalization();
   const navigate = useNavigate();
   const initData = useSignal(initDataState);
+  const mainButtonAvailable = useMainButtonAvailable();
 
   const [calculations, setCalculations] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(calculations.length / ITEMS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentItems = calculations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const showPagination = !loading && !loadError && calculations.length > ITEMS_PER_PAGE;
+
+  const touchStartRef = useRef({ x: 0, y: 0 });
+  const handleSwipeEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (!showPagination || totalPages <= 1) return;
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+      const dx = touch.clientX - touchStartRef.current.x;
+      const dy = touch.clientY - touchStartRef.current.y;
+      const minSwipe = 60;
+      if (Math.abs(dx) >= minSwipe && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) {
+          setCurrentPage((p) => Math.min(totalPages, p + 1));
+        } else {
+          setCurrentPage((p) => Math.max(1, p - 1));
+        }
+        hapticSelection();
+      }
+    },
+    [showPagination, totalPages],
+  );
+
+  const paginationPages = (() => {
+    if (!showPagination || totalPages <= 0) return [];
+    const show = 5;
+    let from = Math.max(1, currentPage - Math.floor(show / 2));
+    const to = Math.min(totalPages, from + show - 1);
+    from = Math.max(1, to - show + 1);
+    const pages: number[] = [];
+    for (let i = from; i <= to; i++) pages.push(i);
+    return pages;
+  })();
 
   const loadCalculations = useCallback(() => {
     setLoadError(false);
@@ -56,6 +99,29 @@ const HomePage: FC = () => {
   useEffect(() => {
     loadCalculations();
   }, [loadCalculations]);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages >= 1) {
+      setCurrentPage(totalPages);
+    }
+  }, [calculations.length, totalPages, currentPage]);
+
+  const showList = !loading && !loadError && calculations.length > 0;
+  useEffect(() => {
+    if (!mainButtonAvailable) return;
+    if (showList) {
+      mainButton.setParams({ text: t('newCalculation'), isVisible: true, isEnabled: true, hasShineEffect: true });
+      const off = mainButton.onClick(() => {
+        hapticButton();
+        navigate('/calculator');
+      });
+      return () => {
+        mainButton.setParams({ isVisible: false });
+        off();
+      };
+    }
+    mainButton.setParams({ isVisible: false });
+  }, [mainButtonAvailable, showList, t, navigate]);
 
   const user = initData?.user;
   const greetingName = user
@@ -130,6 +196,17 @@ const HomePage: FC = () => {
 
         <Section
           header={t('calculationHistory')}
+          onTouchStart={
+            showPagination
+              ? (e) => {
+                  touchStartRef.current = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY,
+                  };
+                }
+              : undefined
+          }
+          onTouchEnd={showPagination ? handleSwipeEnd : undefined}
           footer={
             !loading && !loadError && calculations.length === 0 ? (
               <Placeholder
@@ -138,6 +215,7 @@ const HomePage: FC = () => {
                 action={
                   <Button
                     size="m"
+                    mode="filled"
                     onClick={() => {
                       hapticButton();
                       navigate('/calculator');
@@ -146,7 +224,13 @@ const HomePage: FC = () => {
                     {t('newCalculation')}
                   </Button>
                 }
-              />
+              >
+                <img
+                  alt=""
+                  src="https://xelene.me/telegram.gif"
+                  style={{ display: 'block', width: 144, height: 144 }}
+                />
+              </Placeholder>
             ) : loadError ? (
               <Placeholder
                 header={t('loadError')}
@@ -154,6 +238,7 @@ const HomePage: FC = () => {
                 action={
                   <Button
                     size="m"
+                    mode="filled"
                     onClick={() => {
                       hapticButton();
                       loadCalculations();
@@ -163,6 +248,23 @@ const HomePage: FC = () => {
                   </Button>
                 }
               />
+            ) : showPagination ? (
+              <Section.Footer centered>
+                <CompactPagination mode="ambient">
+                  {paginationPages.map((page) => (
+                    <CompactPagination.Item
+                      key={page}
+                      selected={page === currentPage}
+                      onClick={() => {
+                        hapticSelection();
+                        setCurrentPage(page);
+                      }}
+                    >
+                      {page}
+                    </CompactPagination.Item>
+                  ))}
+                </CompactPagination>
+              </Section.Footer>
             ) : null
           }
         >
@@ -180,7 +282,7 @@ const HomePage: FC = () => {
             </>
           ) : (
             !loadError &&
-            calculations.map((calc) => (
+            currentItems.map((calc) => (
               <Cell
                 key={calc.id}
                 onClick={() => handleOpenCalculation(calc)}
@@ -216,18 +318,6 @@ const HomePage: FC = () => {
               </Cell>
             ))
           )}
-        </Section>
-
-        <Section>
-          <Button
-            stretched
-            onClick={() => {
-              hapticButton();
-              navigate('/calculator');
-            }}
-          >
-            {t('newCalculation')}
-          </Button>
         </Section>
       </List>
       {snackbarOpen && (
