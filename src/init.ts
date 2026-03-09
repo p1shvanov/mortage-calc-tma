@@ -16,7 +16,7 @@ import {
   swipeBehavior,
   closingBehavior,
   backButton,
-  mainButton,
+  // mainButton,
 } from '@telegram-apps/sdk-react';
 
 /**
@@ -70,19 +70,30 @@ export async function init(options: {
   // 2. Mount only the components used in the app (required before calling their methods).
   restoreInitData();
   miniApp.mountSync();
-  await Promise.all([
-    viewport.mount().then(() => {
-      if (backButton.isSupported()) backButton.mount();
-      if (typeof mainButton.mount === 'function') mainButton.mount();
-      bindViewportCssVars();
-      bindMiniAppCssVars();
-      bindThemeParamsCssVars();
-      swipeBehavior.mount();
-      swipeBehavior.disableVertical();
-      closingBehavior.mount();
-      closingBehavior.enableConfirmation();
-      enableClosingConfirmation();
 
-    }),
-  ]);
+  // На десктопе (macOS) viewport.mount() может зависнуть: клиент не отвечает на запрос.
+  // Не ждём бесконечно — через таймаут продолжаем инициализацию. Если сработал таймаут,
+  // viewport не смонтирован — не вызываем bindViewportCssVars(), иначе будет ошибка "component is unmounted".
+  const viewportMountResult: Promise<{ mounted: boolean }> = options.mockForMacOS
+    ? Promise.race([
+        viewport.mount().then(() => ({ mounted: true })),
+        new Promise<{ mounted: boolean }>((resolve) =>
+          setTimeout(() => resolve({ mounted: false }), 2000),
+        ),
+      ])
+    : viewport.mount().then(() => ({ mounted: true }));
+
+  const { mounted: viewportMounted } = await viewportMountResult;
+
+  if (backButton.isSupported()) backButton.mount();
+  if (viewportMounted) {
+    bindViewportCssVars();
+  }
+  bindMiniAppCssVars();
+  bindThemeParamsCssVars();
+  swipeBehavior.mount();
+  swipeBehavior.disableVertical();
+  closingBehavior.mount();
+  closingBehavior.enableConfirmation();
+  enableClosingConfirmation();
 }

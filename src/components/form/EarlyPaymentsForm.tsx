@@ -1,5 +1,13 @@
 import { memo, useState } from 'react';
-import { Accordion, Badge, Button, Cell, List, Section, Text } from '@telegram-apps/telegram-ui';
+import {
+  Accordion,
+  Badge,
+  Button,
+  Cell,
+  List,
+  Section,
+  Text,
+} from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import InputNumberFormat from '@/components/ui/InputNumberFormat';
 import Select from '@/components/ui/Select';
@@ -7,7 +15,12 @@ import Input from '@/components/ui/Input';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
 import { earlyPaymentSchema } from '@/schemas/earlyPayment';
 import { loanDetailsSchema } from '@/schemas/loanDetails';
-import { hapticImpact, hapticNotification, hapticSelection } from '@/utils/haptic';
+import {
+  hapticButton,
+  hapticSuccess,
+  hapticSelection,
+  hapticDestructive,
+} from '@/utils/haptic';
 
 const typeLabels: Record<string, string> = {
   reduceTerm: 'typeReduceTerm',
@@ -15,7 +28,7 @@ const typeLabels: Record<string, string> = {
 };
 
 function isEarlyPaymentItemValid(
-  item: { amount?: string; date?: string; type?: string } | null
+  item: { amount?: string; date?: string; type?: string } | null,
 ): boolean {
   if (!item) return false;
   const result = earlyPaymentSchema.safeParse({
@@ -45,12 +58,18 @@ const EarlyPaymentsForm = withForm({
         })}
       >
         {(loanDetails) => {
-          const isLoanDetailsValid = loanDetailsSchema.safeParse(loanDetails).success;
+          const isLoanDetailsValid =
+            loanDetailsSchema.safeParse(loanDetails).success;
           return (
             <Section>
               <Accordion
                 expanded={sectionOpen && isLoanDetailsValid}
-                onChange={() => isLoanDetailsValid && setSectionOpen((prev) => !prev)}
+                onChange={() => {
+                  if (isLoanDetailsValid) {
+                    hapticSelection();
+                    setSectionOpen((prev) => !prev);
+                  }
+                }}
               >
                 <Accordion.Summary>
                   <>
@@ -68,150 +87,169 @@ const EarlyPaymentsForm = withForm({
                 </Accordion.Summary>
                 <Accordion.Content style={{ background: 'transparent' }}>
                   <form.Field name='earlyPayments' mode='array'>
-                {(field) => {
-                  const expandedItem =
-                    expandedIndex !== null ? field.state.value[expandedIndex] ?? null : null;
-                  const isExpandedItemValid = isEarlyPaymentItemValid(expandedItem);
-                  const canAdd =
-                    isLoanDetailsValid &&
-                    (expandedIndex === null || isExpandedItemValid);
+                    {(field) => {
+                      const expandedItem =
+                        expandedIndex !== null
+                          ? (field.state.value[expandedIndex] ?? null)
+                          : null;
+                      const isExpandedItemValid =
+                        isEarlyPaymentItemValid(expandedItem);
+                      const canAdd =
+                        isLoanDetailsValid &&
+                        (expandedIndex === null || isExpandedItemValid);
 
-                  return (
-                    <List>
-                      <div style={{ padding: '4px 0' }}>
-                        <Button
-                          size='s'
-                          mode='plain'
-                          before='+'
-                          disabled={!canAdd}
-                    onClick={() => {
-                      hapticImpact('light');
-                      field.pushValue({
-                        amount: '',
-                        date: new Date().toISOString().split('T')[0],
-                        id: Date.now().toString(),
-                        type: 'reduceTerm',
-                      });
-                      setExpandedIndex(field.state.value.length - 1);
-                    }}
-                  >
-                    {t('addEarlyPayment')}
-                  </Button>
-                </div>
-                {field.state.value.map((item, i) => {
-                  const isExpanded = expandedIndex === i;
-                  const amountStr = item?.amount ?? '';
-                  const amountNum = parseFloat(String(amountStr).replace(/\s/g, '') || '0');
-                  const dateStr = item?.date ?? '';
-                  const typeStr = item?.type ?? 'reduceTerm';
-                  const isItemValid = isEarlyPaymentItemValid(item);
-
-                  return (
-                    <div key={item?.id ?? i}>
-                      {isExpanded ? (
-                        <div style={{ padding: '8px 0' }}>
-                          <form.Field
-                            name={`earlyPayments[${i}].amount`}
-                            children={(f) => (
-                              <InputNumberFormat
-                                header={t('earlyPaymentAmount')}
-                                placeholder={t('earlyPaymentAmount')}
-                                field={f}
-                                inputMode='decimal'
-                                maximumFractionDigits={2}
-                              />
-                            )}
-                          />
-                          <form.Field
-                            name={`earlyPayments[${i}].date`}
-                            children={(f) => (
-                              <Input
-                                header={t('earlyPaymentDate')}
-                                placeholder={t('earlyPaymentDate')}
-                                field={f}
-                                type='date'
-                              />
-                            )}
-                          />
-                          <form.Field
-                            name={`earlyPayments[${i}].type`}
-                            children={(f) => (
-                              <Select
-                                header={t('earlyPaymentType')}
-                                field={f}
-                                options={[
-                                  { label: t('typeReduceTerm'), value: 'reduceTerm' },
-                                  { label: t('typeReducePayment'), value: 'reducePayment' },
-                                ]}
-                              />
-                            )}
-                          />
-                          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                            <Button
-                              size='s'
-                              mode='outline'
-                              disabled={!isItemValid}
-                              onClick={() => {
-                                hapticNotification('success');
-                                setExpandedIndex(null);
-                              }}
-                            >
-                              {t('done')}
-                            </Button>
-                            <Button
-                              size='s'
-                              mode='outline'
-                              onClick={() => {
-                                hapticImpact('light');
-                                field.removeValue(i);
-                                setExpandedIndex(null);
-                              }}
-                            >
-                              {t('remove')}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                      <Cell
-                        onClick={() => {
-                          hapticSelection();
-                          setExpandedIndex(i);
-                        }}
-                        after={
+                      return (
+                        <List>
                           <Button
                             size='s'
                             mode='plain'
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              hapticImpact('light');
-                              field.removeValue(i);
-                              setExpandedIndex(
-                                expandedIndex === i
-                                  ? null
-                                  : expandedIndex !== null && expandedIndex > i
-                                    ? expandedIndex - 1
-                                    : expandedIndex
-                              );
+                            before='+'
+                            disabled={!canAdd}
+                            onClick={() => {
+                              hapticButton();
+                              const nextIndex = field.state.value.length;
+                              field.pushValue({
+                                amount: '',
+                                date: new Date().toISOString().split('T')[0],
+                                id: Date.now().toString(),
+                                type: 'reduceTerm',
+                              });
+                              setExpandedIndex(nextIndex);
                             }}
                           >
-                            {t('remove')}
+                            {t('addEarlyPayment')}
                           </Button>
-                        }
-                      >
-                        <Text>
-                          {amountStr ? formatCurrency(amountNum) : '—'} ·{' '}
-                          {dateStr ? formatDate(dateStr) : '—'} ·{' '}
-                          {t(typeLabels[typeStr] ?? typeStr)}
-                        </Text>
-                      </Cell>
-                    )}
-                  </div>
-                );
-              })}
-            </List>
-                  );
-                }}
-              </form.Field>
+                          {field.state.value.map((item, i) => {
+                            const isExpanded = expandedIndex === i;
+                            const amountStr = item?.amount ?? '';
+                            const amountNum = parseFloat(
+                              String(amountStr).replace(/\s/g, '') || '0',
+                            );
+                            const dateStr = item?.date ?? '';
+                            const typeStr = item?.type ?? 'reduceTerm';
+                            const isItemValid = isEarlyPaymentItemValid(item);
+
+                            return (
+                              <div key={item?.id ?? i}>
+                                {isExpanded ? (
+                                  <List>
+                                    <form.Field
+                                      name={`earlyPayments[${i}].amount`}
+                                      children={(f) => (
+                                        <InputNumberFormat
+                                          header={t('earlyPaymentAmount')}
+                                          placeholder={t('earlyPaymentAmount')}
+                                          field={f}
+                                          inputMode='decimal'
+                                          maximumFractionDigits={2}
+                                        />
+                                      )}
+                                    />
+                                    <form.Field
+                                      name={`earlyPayments[${i}].date`}
+                                      children={(f) => (
+                                        <Input
+                                          header={t('earlyPaymentDate')}
+                                          placeholder={t('earlyPaymentDate')}
+                                          field={f}
+                                          type='date'
+                                        />
+                                      )}
+                                    />
+                                    <form.Field
+                                      name={`earlyPayments[${i}].type`}
+                                      children={(f) => (
+                                        <Select
+                                          header={t('earlyPaymentType')}
+                                          field={f}
+                                          options={[
+                                            {
+                                              label: t('typeReduceTerm'),
+                                              value: 'reduceTerm',
+                                            },
+                                            {
+                                              label: t('typeReducePayment'),
+                                              value: 'reducePayment',
+                                            },
+                                          ]}
+                                        />
+                                      )}
+                                    />
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        gap: 8,
+                                        marginTop: 8,
+                                      }}
+                                    >
+                                      <Button
+                                        size='s'
+                                        mode='outline'
+                                        disabled={!isItemValid}
+                                        onClick={() => {
+                                          hapticSuccess();
+                                          setExpandedIndex(null);
+                                        }}
+                                      >
+                                        {t('done')}
+                                      </Button>
+                                      <Button
+                                        size='s'
+                                        mode='outline'
+                                        onClick={() => {
+                                          hapticDestructive();
+                                          field.removeValue(i);
+                                          setExpandedIndex(null);
+                                        }}
+                                      >
+                                        {t('remove')}
+                                      </Button>
+                                    </div>
+                                  </List>
+                                ) : (
+                                  <Cell
+                                    onClick={() => {
+                                      hapticSelection();
+                                      setExpandedIndex(i);
+                                    }}
+                                    after={
+                                      <Button
+                                        size='s'
+                                        mode='plain'
+                                        onClick={(e: React.MouseEvent) => {
+                                          e.stopPropagation();
+                                          hapticDestructive();
+                                          field.removeValue(i);
+                                          setExpandedIndex(
+                                            expandedIndex === i
+                                              ? null
+                                              : expandedIndex !== null &&
+                                                  expandedIndex > i
+                                                ? expandedIndex - 1
+                                                : expandedIndex,
+                                          );
+                                        }}
+                                      >
+                                        {t('remove')}
+                                      </Button>
+                                    }
+                                  >
+                                    <Text>
+                                      {amountStr
+                                        ? formatCurrency(amountNum)
+                                        : '—'}{' '}
+                                      · {dateStr ? formatDate(dateStr) : '—'} ·{' '}
+                                      {t(typeLabels[typeStr] ?? typeStr)}
+                                    </Text>
+                                  </Cell>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </List>
+                      );
+                    }}
+                  </form.Field>
                 </Accordion.Content>
               </Accordion>
             </Section>

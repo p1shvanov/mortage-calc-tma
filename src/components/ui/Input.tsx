@@ -31,12 +31,7 @@ const Input = forwardRef<HTMLInputElement, InputPropsType>(
           after={isValidating ? <Spinner size='s' /> : rest.after}
         />
         {isTouched && errors.length ? (
-          <Caption
-            style={{
-              color: 'var(--tg-theme-destructive-text-color)',
-              padding: '0 24px',
-            }}
-          >
+          <Caption style={{ color: 'var(--tgui--destructive_text_color)', padding: '0 24px' }}>
             {errors.map((error) => error.message).join(', ')}
           </Caption>
         ) : null}

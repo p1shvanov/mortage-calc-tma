@@ -2,6 +2,7 @@ import React, { memo, useState } from 'react';
 
 import { SegmentedControlItem } from '@telegram-apps/telegram-ui/dist/components/Navigation/SegmentedControl/components/SegmentedControlItem/SegmentedControlItem';
 import { IconContainer, SegmentedControl } from '@telegram-apps/telegram-ui';
+import { hapticSelection } from '@/utils/haptic';
 
 
 interface Tab {
@@ -34,7 +35,10 @@ const TabView = ({ tabs, children, defaultTab }: TabViewProps) => {
           <SegmentedControlItem
             key={tab.id}
             selected={tab.id === activeTab}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+            hapticSelection();
+            setActiveTab(tab.id);
+          }}
           >
             {tab.label && tab.label}
             {tab.icon && <IconContainer>{tab.icon}</IconContainer>}

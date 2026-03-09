@@ -2,7 +2,7 @@ import { lazy, memo, Suspense, useMemo } from 'react';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
-import { Skeleton } from '@telegram-apps/telegram-ui';
+import { Placeholder, Skeleton } from '@telegram-apps/telegram-ui';
 
 const LineChart = lazy(() => import('@/components/charts/LineChart'));
 const PieChart = lazy(() => import('@/components/charts/PieChart'));
@@ -15,7 +15,12 @@ const ChartsContainer = () => {
   const { amortizationResult } = useMortgage();
 
   if (!amortizationResult || amortizationResult.schedule.length === 0) {
-    return null;
+    return (
+      <Placeholder
+        header={t('amortizationSchedule')}
+        description={t('noCalculationsYet')}
+      />
+    );
   }
 
   const months = useMemo(() => {

@@ -5,6 +5,7 @@ import InputNumberFormat from '@/components/ui/InputNumberFormat';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
+import { hapticButton, hapticSelection, hapticDestructive } from '@/utils/haptic';
 
 /**
  * Form component for regular payments
@@ -24,7 +25,10 @@ const RegularPaymentsForm = withForm({
             return (
               <Accordion
                 expanded={open}
-                onChange={() => setOpen((prev) => !prev)}
+                onChange={() => {
+                  hapticSelection();
+                  setOpen((prev) => !prev);
+                }}
               >
                 <Accordion.Summary>
                   {t('regularPayment')}
@@ -103,7 +107,10 @@ const RegularPaymentsForm = withForm({
                                 mode='outline'
                                 disabled={!isFieldsValid || !isValid}
                                 stretched
-                                onClick={() => field.removeValue(i)}
+                                onClick={() => {
+                                  hapticDestructive();
+                                  field.removeValue(i);
+                                }}
                               >
                                 {t('remove')}
                               </Button>
@@ -118,15 +125,16 @@ const RegularPaymentsForm = withForm({
                         <Button
                           disabled={!isFieldsValid || !isValid}
                           stretched
-                          onClick={() =>
+                          onClick={() => {
+                            hapticButton();
                             field.pushValue({
                               amount: '',
                               startMonth: new Date().toISOString().split('T')[0],
                               endMonth: '',
                               id: Date.now().toString(),
                               type: 'reduceTerm',
-                            })
-                          }
+                            });
+                          }}
                         >
                           {t('addRegularPayment')}
                         </Button>

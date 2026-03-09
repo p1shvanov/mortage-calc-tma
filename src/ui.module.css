@@ -38,8 +38,8 @@
   .tableRow.highlight {
     background-color: var(--tgui--secondary_bg_color);
   }
-  
-  .tabPanel {
+
+    .tabPanel {
     animation: fadeIn 1s ease-out;
   }
   

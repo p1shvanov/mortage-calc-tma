@@ -64,7 +64,16 @@ if (import.meta.env.DEV) {
           ['auth_date', (new Date().getTime() / 1000 | 0).toString()],
           ['hash', 'some-hash'],
           ['signature', 'some-signature'],
-          ['user', JSON.stringify({ id: 1, first_name: 'Vladislav' })],
+          ['user', JSON.stringify({
+            id: 1,
+            first_name: 'Vladislav',
+            last_name: 'Kibenko',
+            username: 'vdkfrost',
+            language_code: 'ru',
+            is_premium: false,
+            // В реальном Telegram photo_url приходит только при запуске из меню вложений
+            photo_url: 'https://t.me/i/userpic/320/4FPEE4tmP3ATHa57u6MqTDih13LTOiMoKoLDRG4PnSA.svg',
+          })],
         ]).toString()],
         ['tgWebAppVersion', '8.4'],
         ['tgWebAppPlatform', 'tdesktop'],

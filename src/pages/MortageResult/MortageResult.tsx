@@ -3,6 +3,9 @@ import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { List, Button, Placeholder, Section } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
 
+import { useMainButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
+import BackButton from '@/components/BackButton';
+import BreadcrumbsNav from '@/components/BreadcrumbsNav';
 import ChartsContainer from '@/components/ChartsContainer';
 import PaymentSchedule from '@/components/PaymentSchedule';
 import ResultsDisplay from '@/components/ResultsDisplay';
@@ -12,7 +15,7 @@ import Page from '@/components/Page';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
-import { hapticImpact } from '@/utils/haptic';
+import { hapticButton } from '@/utils/haptic';
 import type { CalculationPayload } from '@/hooks/useLoanForm';
 
 const tabs = [
@@ -33,6 +36,7 @@ const MortageResult = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const mainButtonAvailable = useMainButtonAvailable();
   const {
     loanDetails,
     earlyPayments,
@@ -74,14 +78,14 @@ const MortageResult = () => {
   const hasPayload = isCalculationPayload(location.state) || searchParams.get('id');
 
   useEffect(() => {
-    if (!hasPayload) return;
+    if (!hasPayload || !mainButtonAvailable) return;
     mainButton.setParams({
       text: t('editParameters'),
       isVisible: true,
       isEnabled: true,
     });
     const off = mainButton.onClick(() => {
-      hapticImpact('light');
+      hapticButton();
       if (loanDetails) {
         navigate('/calculator', {
           state: {
@@ -99,7 +103,7 @@ const MortageResult = () => {
       mainButton.setParams({ isVisible: false });
       off();
     };
-  }, [hasPayload, t, loanDetails, earlyPayments, regularPayments, stateSavedId, navigate]);
+  }, [hasPayload, mainButtonAvailable, t, loanDetails, earlyPayments, regularPayments, stateSavedId, navigate]);
 
   if (!hasPayload) {
     return (
@@ -109,7 +113,13 @@ const MortageResult = () => {
             header={t('noCalculationsYet')}
             description={t('goToCalculator')}
             action={
-              <Button size='m' onClick={() => navigate('/calculator')}>
+              <Button
+                size='m'
+                onClick={() => {
+                  hapticButton();
+                  navigate('/calculator');
+                }}
+              >
                 {t('goToCalculator')}
               </Button>
             }
@@ -122,29 +132,38 @@ const MortageResult = () => {
   return (
     <Page>
       <List>
-        <Section>
-          <Button
-            size='s'
-            mode='plain'
-            before={<span style={{ marginRight: 4 }}>←</span>}
-            onClick={() => {
-              hapticImpact('light');
-              if (loanDetails) {
-                navigate('/calculator', {
-                  state: {
-                    loanDetails,
-                    earlyPayments,
-                    regularPayments,
-                    savedId: stateSavedId,
-                  },
-                });
-              } else {
-                navigate('/calculator');
-              }
-            }}
-          >
-            {t('editParameters')}
-          </Button>
+        <Section
+          header={
+            <BreadcrumbsNav
+              items={[
+                { label: t('home'), path: '/' },
+                { label: t('calculator'), path: '/calculator' },
+                { label: t('resultTitle') },
+              ]}
+            />
+          }
+        >
+          {!mainButtonAvailable && (
+            <BackButton
+              onClick={() => {
+                hapticButton();
+                if (loanDetails) {
+                  navigate('/calculator', {
+                    state: {
+                      loanDetails,
+                      earlyPayments,
+                      regularPayments,
+                      savedId: stateSavedId,
+                    },
+                  });
+                } else {
+                  navigate('/calculator');
+                }
+              }}
+            >
+              {t('editParameters')}
+            </BackButton>
+          )}
         </Section>
         <ResultsDisplay />
         <TabView tabs={tabs} defaultTab='charts'>

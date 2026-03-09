@@ -2,6 +2,7 @@ import { memo, PropsWithChildren, useEffect } from 'react';
 
 import { backButton, useSignal, viewport } from '@telegram-apps/sdk-react';
 import { useNavigate } from 'react-router-dom';
+import { hapticButton } from '@/utils/haptic';
 
 const Page = ({
   children,
@@ -22,11 +23,12 @@ const Page = ({
     if (back) {
       backButton.show();
       return backButton.onClick(() => {
+        hapticButton();
         navigate(-1);
       });
     }
     backButton.hide();
-  }, [back]);
+  }, [back, navigate]);
 
   return (
     <div
