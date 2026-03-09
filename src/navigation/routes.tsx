@@ -3,9 +3,8 @@ import type { ComponentType, JSX } from 'react';
 import { MortageResult } from '@/pages/MortageResult';
 import { LoanForm } from '@/pages/LoanForm';
 import { InitDataPage } from '@/pages/InitDataPage';
-import { ThemeParamsPage } from '@/pages/ThemeParamsPage';
-import { LaunchParamsPage } from '@/pages/LaunchParamsPage';
 import { HomePage } from '@/pages/HomePage';
+import OnboardingPage from '@/pages/Onboarding/OnboardingPage';
 
 interface Route {
   path: string;
@@ -16,13 +15,8 @@ interface Route {
 
 export const routes: Route[] = [
   { path: '/', Component: HomePage },
+  { path: '/onboarding', Component: OnboardingPage },
   { path: '/calculator', Component: LoanForm },
   { path: '/result', Component: MortageResult, title: 'Mortage Result' },
   { path: '/init-data', Component: InitDataPage, title: 'Init Data' },
-  { path: '/theme-params', Component: ThemeParamsPage, title: 'Theme Params' },
-  {
-    path: '/launch-params',
-    Component: LaunchParamsPage,
-    title: 'Launch Params',
-  },
 ];

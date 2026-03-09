@@ -39,7 +39,7 @@ export const TableRow = ({
   style?: React.CSSProperties;
 }) => {
   return (
-    <tr 
+    <tr
       className={`${styles.tableRow} ${highlight ? styles.highlight : ''}`}
       style={style}
     >

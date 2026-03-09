@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
 import { regularPaymentSchema } from '@/schemas/regularPayment';
 import { loanDetailsSchema } from '@/schemas/loanDetails';
-import { hapticImpact, hapticNotification, hapticSelection } from '@/utils/haptic';
+import { hapticButton, hapticSuccess, hapticSelection, hapticDestructive } from '@/utils/haptic';
 
 const typeLabels: Record<string, string> = {
   reduceTerm: 'typeReduceTerm',
@@ -62,7 +62,12 @@ const RegularPaymentsForm = withForm({
             <Section>
               <Accordion
                 expanded={sectionOpen && isLoanDetailsValid}
-                onChange={() => isLoanDetailsValid && setSectionOpen((prev) => !prev)}
+                onChange={() => {
+                  if (isLoanDetailsValid) {
+                    hapticSelection();
+                    setSectionOpen((prev) => !prev);
+                  }
+                }}
               >
                 <Accordion.Summary>
                   <>
@@ -90,17 +95,17 @@ const RegularPaymentsForm = withForm({
 
                   return (
                     <List>
-                      <div style={{ padding: '4px 0' }}>
                         <Button
                           size='s'
                           mode='plain'
                           before='+'
                           disabled={!canAdd}
                     onClick={() => {
+                    hapticButton();
                     const today = new Date();
                     const nextMonth = new Date(today);
                     nextMonth.setMonth(today.getMonth() + 1);
-                    hapticImpact('light');
+                    const nextIndex = field.state.value.length;
                     field.pushValue({
                       amount: '',
                       startMonth: today.toISOString().split('T')[0],
@@ -108,12 +113,11 @@ const RegularPaymentsForm = withForm({
                       id: Date.now().toString(),
                       type: 'reduceTerm',
                     });
-                    setExpandedIndex(field.state.value.length - 1);
+                    setExpandedIndex(nextIndex);
                   }}
                 >
                   {t('addRegularPayment')}
                 </Button>
-              </div>
               {field.state.value.map((item, i) => {
                 const isExpanded = expandedIndex === i;
                 const amountStr = item?.amount ?? '';
@@ -126,7 +130,7 @@ const RegularPaymentsForm = withForm({
                 return (
                   <div key={item?.id ?? i}>
                     {isExpanded ? (
-                      <div style={{ padding: '8px 0' }}>
+                      <List>
                         <form.Field
                           name={`regularPayments[${i}].amount`}
                           children={(f) => (
@@ -180,7 +184,7 @@ const RegularPaymentsForm = withForm({
                             mode='outline'
                             disabled={!isItemValid}
                             onClick={() => {
-                              hapticNotification('success');
+                              hapticSuccess();
                               setExpandedIndex(null);
                             }}
                           >
@@ -190,7 +194,7 @@ const RegularPaymentsForm = withForm({
                             size='s'
                             mode='outline'
                             onClick={() => {
-                              hapticImpact('light');
+                              hapticDestructive();
                               field.removeValue(i);
                               setExpandedIndex(null);
                             }}
@@ -198,7 +202,7 @@ const RegularPaymentsForm = withForm({
                             {t('remove')}
                           </Button>
                         </div>
-                      </div>
+                      </List>
                     ) : (
                       <Cell
                         onClick={() => {
@@ -211,7 +215,7 @@ const RegularPaymentsForm = withForm({
                             mode='plain'
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
-                              hapticImpact('light');
+                              hapticDestructive();
                               field.removeValue(i);
                               setExpandedIndex(
                                 expandedIndex === i

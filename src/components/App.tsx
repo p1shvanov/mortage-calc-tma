@@ -7,10 +7,11 @@ import { useTheme } from '@/providers/ThemeProvider';
 
 const App = () => {
   const lp = useMemo(() => retrieveLaunchParams(), []);
-  const { isDark } = useTheme();
+  const { isDark, themeMode } = useTheme();
 
   return (
     <AppRoot
+      key={themeMode}
       appearance={isDark ? 'dark' : 'light'}
       platform={['macos', 'ios'].includes(lp.tgWebAppPlatform) ? 'ios' : 'base'}
     >

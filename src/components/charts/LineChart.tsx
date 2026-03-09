@@ -85,37 +85,40 @@ const LineChart = ({ data, title, extraPaymentInfo }: LineChartProps) => {
                 },
                 afterBody: function(tooltipItems) {
                   if (!extraPaymentInfo) return [];
-                  
                   const index = tooltipItems[0].dataIndex;
                   const info = extraPaymentInfo[index];
-                  
                   if (info && info.hasExtraPayment) {
                     const typeLabel = info.type === 'reduceTerm' ? t('typeReduceTerm') : t('typeReducePayment');
                     const tooltipLines = [
                       `${t('extraPayment')}: ${formatCurrency(info.amount)}`,
-                      `${t('earlyPaymentType')}: ${typeLabel}`
+                      `${t('earlyPaymentType')}: ${typeLabel}`,
                     ];
-                    
-                    // Add indicator for regular payments
                     if (info.isRegular) {
                       tooltipLines.push(`${t('regularPayment')}: ${t('yes')}`);
                     }
-                    
                     return tooltipLines;
                   }
                   return [];
-                }
-              }
-            }
+                },
+              },
+            },
           },
           scales: {
+            x: {
+              ticks: {
+                maxTicksLimit: 12,
+                maxRotation: -45,
+                minRotation: -45,
+                autoSkip: true,
+              },
+            },
             y: {
               type: 'linear',
               display: true,
               position: 'left',
               title: {
                 display: true,
-                text: t('paymentAmount')
+                text: t('paymentAmount'),
               },
               beginAtZero: true,
             },
@@ -125,7 +128,7 @@ const LineChart = ({ data, title, extraPaymentInfo }: LineChartProps) => {
               position: 'right',
               title: {
                 display: true,
-                text: t('balance')
+                text: t('balance'),
               },
               beginAtZero: true,
               grid: {

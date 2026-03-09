@@ -45,12 +45,7 @@ const FormField = ({
         step={step}
       />
       {error && (
-        <Caption
-          style={{
-            color: 'var(--tg-theme-destructive-text-color)',
-            padding: '0 24px',
-          }}
-        >
+        <Caption style={{ color: 'var(--tgui--destructive_text_color)', padding: '0 24px' }}>
           {error}
         </Caption>
       )}

@@ -1,30 +1,82 @@
-import { FC, memo, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { List, Section, Button, Cell, Text, Placeholder } from '@telegram-apps/telegram-ui';
+import { FC, memo, useEffect, useState, useCallback } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
+import {
+  List,
+  Section,
+  Button,
+  Cell,
+  Text,
+  Placeholder,
+  Skeleton,
+  Snackbar,
+  IconButton,
+  InlineButtons,
+  Avatar,
+} from '@telegram-apps/telegram-ui';
+import { initDataState, useSignal } from '@telegram-apps/sdk-react';
+import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
+import { Icon24Cancel } from '@telegram-apps/telegram-ui/dist/icons/24/cancel';
 
 import Page from '@/components/Page';
+import BreadcrumbsNav from '@/components/BreadcrumbsNav';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { hapticImpact, hapticSelection } from '@/utils/haptic';
+import { hapticButton, hapticSelection, hapticSuccess, hapticDestructive, hapticError } from '@/utils/haptic';
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { useTheme } from '@/providers/ThemeProvider';
 import { getCalculationsStorage } from '@/services/storage';
+import { isOnboardingCompleted } from '@/services/onboardingStorage';
 import type { SavedCalculation } from '@/types/storage';
 
 const HomePage: FC = () => {
   const { t, formatCurrency, formatDate } = useLocalization();
-  const { themeMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const initData = useSignal(initDataState);
+
   const [calculations, setCalculations] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  useEffect(() => {
+  const loadCalculations = useCallback(() => {
+    setLoadError(false);
+    setLoading(true);
     const storage = getCalculationsStorage();
     storage
       .getList()
-      .then(setCalculations)
-      .catch(() => setCalculations([]))
+      .then((list) => {
+        setCalculations(list);
+        setLoadError(false);
+      })
+      .catch(() => {
+        setCalculations([]);
+        setLoadError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadCalculations();
+  }, [loadCalculations]);
+
+  const user = initData?.user;
+  const greetingName = user
+    ? [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || null
+    : null;
+  const greeting = greetingName ? t('greeting', { name: greetingName }) : t('greetingAnonymous');
+  const userAcronym = user
+    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() || undefined
+    : undefined;
+  // photo_url приходит только при запуске из меню вложений (Attachment Menu). При открытии по ссылке — только acronym.
+  const userPhotoUrl =
+    user &&
+    (
+      (user as { photo_url?: string }).photo_url ??
+      (user as { photoUrl?: string }).photoUrl
+    );
+
+  if (!isOnboardingCompleted()) {
+    return <Navigate to="/onboarding" replace />;
+  }
 
   const handleOpenCalculation = (calc: SavedCalculation) => {
     hapticSelection();
@@ -40,13 +92,18 @@ const HomePage: FC = () => {
 
   const handleDeleteCalculation = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    hapticImpact('light');
+    hapticDestructive();
     const storage = getCalculationsStorage();
     try {
       await storage.delete(id);
       setCalculations((prev) => prev.filter((c) => c.id !== id));
+      hapticSuccess();
+      setSnackbarMessage(t('removed'));
+      setSnackbarOpen(true);
     } catch {
-      // ignore
+      hapticError();
+      setSnackbarMessage(t('saveError'));
+      setSnackbarOpen(true);
     }
   };
 
@@ -54,17 +111,36 @@ const HomePage: FC = () => {
     <Page back={false}>
       <List>
         <Section
+          header={<BreadcrumbsNav items={[{ label: t('home') }]} />}
+        >
+          <Placeholder
+            header={
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                {user && (
+                  <Avatar
+                    size={48}
+                    src={userPhotoUrl || undefined}
+                    acronym={userAcronym}
+                  />
+                )}
+                <Text weight="2">{greeting}</Text>
+              </div>
+            }
+          />
+        </Section>
+
+        <Section
           header={t('calculationHistory')}
           footer={
-            !loading && calculations.length === 0 ? (
+            !loading && !loadError && calculations.length === 0 ? (
               <Placeholder
                 header={t('noCalculationsYet')}
                 description={t('goToCalculator')}
                 action={
                   <Button
-                    size='m'
+                    size="m"
                     onClick={() => {
-                      hapticImpact('light');
+                      hapticButton();
                       navigate('/calculator');
                     }}
                   >
@@ -72,32 +148,66 @@ const HomePage: FC = () => {
                   </Button>
                 }
               />
+            ) : loadError ? (
+              <Placeholder
+                header={t('loadError')}
+                description={t('retry')}
+                action={
+                  <Button
+                    size="m"
+                    onClick={() => {
+                      hapticButton();
+                      loadCalculations();
+                    }}
+                  >
+                    {t('retry')}
+                  </Button>
+                }
+              />
             ) : null
           }
         >
           {loading ? (
-            <Cell>
-              <Text>...</Text>
-            </Cell>
+            <>
+              <Cell>
+                <Skeleton visible />
+              </Cell>
+              <Cell>
+                <Skeleton visible />
+              </Cell>
+              <Cell>
+                <Skeleton visible />
+              </Cell>
+            </>
           ) : (
+            !loadError &&
             calculations.map((calc) => (
               <Cell
                 key={calc.id}
                 onClick={() => handleOpenCalculation(calc)}
                 subtitle={`${calc.loanDetails.interestRate}% · ${calc.loanDetails.loanTerm} ${t('years')}`}
                 after={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Button
-                      size='s'
-                      mode='plain'
+                  <InlineButtons>
+                    <IconButton
+                      size="s"
+                      mode="plain"
                       onClick={(e) => handleDeleteCalculation(e, calc.id)}
+                      aria-label={t('remove')}
                     >
-                      {t('remove')}
-                    </Button>
-                    <Text style={{ color: 'var(--tgui--link_color)' }}>
-                      {t('open')}
-                    </Text>
-                  </div>
+                      <Icon24Cancel />
+                    </IconButton>
+                    <IconButton
+                      size="s"
+                      mode="plain"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenCalculation(calc);
+                      }}
+                      aria-label={t('open')}
+                    >
+                      <Icon24ChevronRight />
+                    </IconButton>
+                  </InlineButtons>
                 }
               >
                 <Text>
@@ -110,22 +220,21 @@ const HomePage: FC = () => {
         </Section>
 
         <Section header={t('settings')}>
-          <Cell after={<LanguageSwitcher />}>
+          <Cell
+            before={t('languageFlag')}
+            after={<LanguageSwitcher />}
+          >
             <Text>{t('language')}</Text>
           </Cell>
           <Cell
-            subtitle={themeMode}
-            after={
-              <Button size='s' mode='plain' onClick={toggleTheme}>
-                {themeMode === 'dark' ? '☀️' : '🌙'}
-              </Button>
-            }
+            subtitle={t('faq')}
+            after={<Icon24ChevronRight />}
+            onClick={() => {
+              hapticSelection();
+              navigate('/onboarding');
+            }}
           >
-            <Text>{t('theme')}</Text>
-          </Cell>
-          <Cell subtitle={t('faq')}>
             <Text>{t('faq')}</Text>
-            <Text style={{ opacity: 0.7, fontSize: 12 }}> — {t('comingSoon')}</Text>
           </Cell>
         </Section>
 
@@ -133,7 +242,7 @@ const HomePage: FC = () => {
           <Button
             stretched
             onClick={() => {
-              hapticImpact('light');
+              hapticButton();
               navigate('/calculator');
             }}
           >
@@ -141,6 +250,11 @@ const HomePage: FC = () => {
           </Button>
         </Section>
       </List>
+      {snackbarOpen && (
+        <Snackbar duration={3000} onClose={() => setSnackbarOpen(false)}>
+          {snackbarMessage}
+        </Snackbar>
+      )}
     </Page>
   );
 };

@@ -4,7 +4,6 @@ import {
   Select as TGSelect,
   SelectProps as TGSelectProps,
 } from '@telegram-apps/telegram-ui';
-
 import type { AnyFieldApi } from '@tanstack/react-form';
 
 export type SelectOptionType = {
@@ -38,12 +37,7 @@ const Select = forwardRef<HTMLSelectElement, SelectPropsType>((props) => {
         ))}
       </TGSelect>
       {isTouched && errors.length ? (
-        <Caption
-          style={{
-            color: 'var(--tg-theme-destructive-text-color)',
-            padding: '0 24px',
-          }}
-        >
+        <Caption style={{ color: 'var(--tgui--destructive_text_color)', padding: '0 24px' }}>
           {errors.join(', ')}
         </Caption>
       ) : null}

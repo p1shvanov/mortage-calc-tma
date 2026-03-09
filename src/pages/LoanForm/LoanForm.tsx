@@ -1,6 +1,6 @@
-import { FC, memo, useMemo, useEffect } from 'react';
+import { FC, memo, useMemo, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { List, Section, Button } from '@telegram-apps/telegram-ui';
+import { List, Section, Button, Snackbar } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
 
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
@@ -9,10 +9,13 @@ import RegularPaymentsForm from '@/components/form/RegularPaymentsForm';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useLoanForm, type CalculationPayload } from '@/hooks/useLoanForm';
+import { useMainButtonAvailable, useBackButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
 import { getCalculationsStorage } from '@/services/storage';
 import { payloadToFormValues } from '@/utils/payloadToFormValues';
-import { hapticImpact, hapticNotification } from '@/utils/haptic';
+import { hapticButton, hapticSuccess, hapticError } from '@/utils/haptic';
 import Page from '@/components/Page';
+import BackButton from '@/components/BackButton';
+import BreadcrumbsNav from '@/components/BreadcrumbsNav';
 
 function MainButtonSync({
   form,
@@ -46,6 +49,10 @@ const LoanForm: FC = () => {
   const { t } = useLocalization();
   const navigate = useNavigate();
   const location = useLocation();
+  const mainButtonAvailable = useMainButtonAvailable();
+  const backButtonAvailable = useBackButtonAvailable();
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   const defaultValues = useMemo(() => {
     if (isCalculationPayload(location.state)) return payloadToFormValues(location.state);
     return undefined;
@@ -58,72 +65,95 @@ const LoanForm: FC = () => {
   const form = useLoanForm({
     defaultValues,
     onSubmit: async (payload) => {
-      hapticNotification('success');
-      const storage = getCalculationsStorage();
-      let id = savedId;
-      if (id) {
-        await storage.update(id, payload).catch(() => {});
-      } else {
-        const saved = await storage.save(payload).catch(() => null);
-        if (saved) id = saved.id;
+      if (mainButtonAvailable) {
+        mainButton.setParams({ isLoaderVisible: true });
       }
-      navigate('/result', { state: { ...payload, savedId: id ?? undefined } });
+      try {
+        hapticSuccess();
+        const storage = getCalculationsStorage();
+        let id = savedId;
+        if (id) {
+          await storage.update(id, payload);
+        } else {
+          const saved = await storage.save(payload);
+          if (saved) id = saved.id;
+        }
+        navigate('/result', { state: { ...payload, savedId: id ?? undefined } });
+      } catch {
+        hapticError();
+        setSnackbarMessage(t('saveError'));
+        setSnackbarOpen(true);
+      } finally {
+        if (mainButtonAvailable) {
+          mainButton.setParams({ isLoaderVisible: false });
+        }
+      }
     },
   });
 
   useEffect(() => {
+    if (!mainButtonAvailable) return;
     mainButton.setParams({ text: t('calculate'), isVisible: true, isEnabled: form.state.canSubmit });
     const off = mainButton.onClick(() => {
-      hapticImpact('light');
+      hapticButton();
       form.handleSubmit();
     });
     return () => {
       mainButton.setParams({ isVisible: false });
       off();
     };
-  }, [t]);
+  }, [t, mainButtonAvailable]);
 
   return (
     <Page>
-      <MainButtonSync form={form} />
+      {mainButtonAvailable && <MainButtonSync form={form} />}
       <List
-        Component='form'
+        Component="form"
         onSubmit={(event) => {
           event.preventDefault();
           event.stopPropagation();
           form.handleSubmit();
         }}
       >
-        <Section>
-          <Button
-            size='s'
-            mode='plain'
-            before={<span style={{ marginRight: 4 }}>←</span>}
-            onClick={() => navigate('/')}
-          >
-            {t('backToHome')}
-          </Button>
+        <Section header={<BreadcrumbsNav items={[{ label: t('home'), path: '/' }, { label: t('calculator') }]} />}>
+          {!backButtonAvailable && (
+            <BackButton
+              onClick={() => {
+                hapticButton();
+                navigate('/');
+              }}
+            >
+              {t('backToHome')}
+            </BackButton>
+          )}
         </Section>
         <LoanDetailsForm form={form} />
         <EarlyPaymentsForm form={form} />
         <RegularPaymentsForm form={form} />
-        <Section>
-          <form.Subscribe
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-            children={([canSubmit, isSubmitting]) => (
-              <Button
-                type='submit'
-                stretched
-                disabled={!canSubmit}
-                loading={isSubmitting}
-                onClick={() => hapticImpact('light')}
-              >
-                {t('calculate')}
-              </Button>
-            )}
-          />
-        </Section>
+        {!mainButtonAvailable && (
+          <Section>
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
+              children={([canSubmit, isSubmitting]) => (
+                <Button
+                  type='submit'
+                  stretched
+                  disabled={!canSubmit}
+                  loading={isSubmitting}
+                  onClick={() => hapticButton()}
+                >
+                  {t('calculate')}
+                </Button>
+              )}
+            />
+          </Section>
+        )}
       </List>
+      {snackbarOpen && (
+        <Snackbar duration={3000} onClose={() => setSnackbarOpen(false)}>
+          {snackbarMessage}
+        </Snackbar>
+      )}
     </Page>
   );
 };
