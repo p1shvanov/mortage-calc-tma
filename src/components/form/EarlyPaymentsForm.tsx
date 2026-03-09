@@ -12,6 +12,7 @@ import { useLocalization } from '@/providers/LocalizationProvider';
 import InputNumberFormat from '@/components/ui/InputNumberFormat';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
+import { popup } from '@telegram-apps/sdk-react';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
 import { earlyPaymentSchema } from '@/schemas/earlyPayment';
 import { loanDetailsSchema } from '@/schemas/loanDetails';
@@ -20,6 +21,7 @@ import {
   hapticSuccess,
   hapticSelection,
   hapticDestructive,
+  hapticWarning,
 } from '@/utils/haptic';
 
 const typeLabels: Record<string, string> = {
@@ -68,6 +70,11 @@ const EarlyPaymentsForm = withForm({
                   if (isLoanDetailsValid) {
                     hapticSelection();
                     setSectionOpen((prev) => !prev);
+                  } else {
+                    hapticWarning();
+                    if (popup.isSupported()) {
+                      popup.show({ message: t('fillLoanDetailsFirst') });
+                    }
                   }
                 }}
               >
@@ -85,7 +92,7 @@ const EarlyPaymentsForm = withForm({
                     </form.Field>
                   </>
                 </Accordion.Summary>
-                <Accordion.Content style={{ background: 'transparent' }}>
+                <Accordion.Content>
                   <form.Field name='earlyPayments' mode='array'>
                     {(field) => {
                       const expandedItem =

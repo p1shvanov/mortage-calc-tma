@@ -27,6 +27,7 @@ export const translations = {
     paymentDay: 'Payment Day',
     paymentDayMonthly: 'Same day as start date',
     paymentDaySpecific: 'Specific day of month',
+    additionalOptions: 'Additional options',
 
     // Results
     paymentSummary: 'Payment Summary',
@@ -45,6 +46,7 @@ export const translations = {
     typeReduceTerm: 'Reduce Term',
     typeReducePayment: 'Reduce Payment',
     addEarlyPayment: 'Add Early Payment',
+    fillLoanDetailsFirst: 'Please fill in the loan amount, interest rate and term to add early or regular payments.',
     earlyPaymentList: 'Scheduled Early Payments',
     remove: 'Remove',
     paymentHistory: 'Early Payments',
@@ -178,6 +180,7 @@ export const translations = {
     paymentDay: 'День платежа',
     paymentDayMonthly: 'В тот же день, что и дата начала',
     paymentDaySpecific: 'Конкретный день месяца',
+    additionalOptions: 'Дополнительные параметры',
 
     // Results
     paymentSummary: 'Сводка по платежам',
@@ -196,6 +199,7 @@ export const translations = {
     typeReduceTerm: 'Сократить срок',
     typeReducePayment: 'Уменьшить платеж',
     addEarlyPayment: 'Добавить досрочный платеж',
+    fillLoanDetailsFirst: 'Сначала укажите сумму кредита, ставку и срок, чтобы добавить досрочные или регулярные платежи.',
     earlyPaymentList: 'Запланированные досрочные платежи',
     remove: 'Удалить',
     paymentHistory: 'Досрочные платежи',
