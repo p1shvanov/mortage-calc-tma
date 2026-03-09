@@ -19,7 +19,6 @@ import { Icon24Cancel } from '@telegram-apps/telegram-ui/dist/icons/24/cancel';
 
 import Page from '@/components/Page';
 import BreadcrumbsNav from '@/components/BreadcrumbsNav';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { hapticButton, hapticSelection, hapticSuccess, hapticDestructive, hapticError } from '@/utils/haptic';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
@@ -217,25 +216,6 @@ const HomePage: FC = () => {
               </Cell>
             ))
           )}
-        </Section>
-
-        <Section header={t('settings')}>
-          <Cell
-            before={t('languageFlag')}
-            after={<LanguageSwitcher />}
-          >
-            <Text>{t('language')}</Text>
-          </Cell>
-          <Cell
-            subtitle={t('faq')}
-            after={<Icon24ChevronRight />}
-            onClick={() => {
-              hapticSelection();
-              navigate('/onboarding');
-            }}
-          >
-            <Text>{t('faq')}</Text>
-          </Cell>
         </Section>
 
         <Section>
