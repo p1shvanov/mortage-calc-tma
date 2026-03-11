@@ -13,7 +13,7 @@ interface BreadcrumbsNavProps {
   divider?: 'dot' | 'slash' | 'chevron';
 }
 
-const BreadcrumbsNav = ({ items, divider = 'slash' }: BreadcrumbsNavProps) => {
+const BreadcrumbsNav = ({ items, divider = 'chevron' }: BreadcrumbsNavProps) => {
   const navigate = useNavigate();
 
   return (
@@ -21,9 +21,11 @@ const BreadcrumbsNav = ({ items, divider = 'slash' }: BreadcrumbsNavProps) => {
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         const isClickable = !isLast && item.path !== undefined;
+        const disabled = items.length === 1;
         return (
           <Breadcrumbs.Item
             key={`${item.path ?? item.label}-${index}`}
+            disabled={disabled}
             onClick={
               isClickable && item.path
                 ? () => {

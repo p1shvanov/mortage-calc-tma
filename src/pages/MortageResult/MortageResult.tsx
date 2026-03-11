@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { List, Button, Placeholder, Section } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
@@ -7,6 +7,7 @@ import { useMainButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
 import BackButton from '@/components/BackButton';
 import BreadcrumbsNav from '@/components/BreadcrumbsNav';
 import ChartsContainer from '@/components/ChartsContainer';
+import EarlyPaymentsModal from '@/components/EarlyPaymentsModal';
 import PaymentSchedule from '@/components/PaymentSchedule';
 import ResultsDisplay from '@/components/ResultsDisplay';
 import TabPanel from '@/components/TabPanel';
@@ -37,6 +38,7 @@ const MortageResult = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mainButtonAvailable = useMainButtonAvailable();
+  const [earlyPaymentsModalOpen, setEarlyPaymentsModalOpen] = useState(false);
   const {
     loanDetails,
     earlyPayments,
@@ -46,6 +48,9 @@ const MortageResult = () => {
     setRegularPayments,
   } = useMortgage();
   const { t } = useLocalization();
+
+  const hasOverpayments = earlyPayments.length > 0 || regularPayments.length > 0;
+  const mainButtonLabel = hasOverpayments ? t('editEarlyPayments') : t('addEarlyPayments');
 
   useEffect(() => {
     const state = location.state;
@@ -78,33 +83,33 @@ const MortageResult = () => {
   const hasPayload = isCalculationPayload(location.state) || searchParams.get('id');
 
   useEffect(() => {
-    if (!hasPayload || !mainButtonAvailable) return;
+    if (!hasPayload || !mainButtonAvailable || earlyPaymentsModalOpen) return;
     mainButton.setParams({
-      text: t('editParameters'),
+      text: mainButtonLabel,
       isVisible: true,
       isEnabled: true,
       hasShineEffect: true,
     });
     const off = mainButton.onClick(() => {
       hapticButton();
-      if (loanDetails) {
-        navigate('/calculator', {
-          state: {
-            loanDetails,
-            earlyPayments,
-            regularPayments,
-            savedId: stateSavedId,
-          },
-        });
-      } else {
-        navigate('/calculator');
-      }
+      setEarlyPaymentsModalOpen(true);
     });
     return () => {
       mainButton.setParams({ isVisible: false });
       off();
     };
-  }, [hasPayload, mainButtonAvailable, t, loanDetails, earlyPayments, regularPayments, stateSavedId, navigate]);
+  }, [hasPayload, mainButtonAvailable, t, mainButtonLabel, earlyPaymentsModalOpen]);
+
+  useEffect(() => {
+    if (!earlyPaymentsModalOpen && hasPayload && mainButtonAvailable) {
+      mainButton.setParams({
+        text: mainButtonLabel,
+        isVisible: true,
+        isEnabled: true,
+        hasShineEffect: true,
+      });
+    }
+  }, [earlyPaymentsModalOpen, hasPayload, mainButtonAvailable, mainButtonLabel]);
 
   if (!hasPayload) {
     return (
@@ -145,28 +150,41 @@ const MortageResult = () => {
           }
         >
           {!mainButtonAvailable && (
-            <BackButton
-              onClick={() => {
-                hapticButton();
-                if (loanDetails) {
-                  navigate('/calculator', {
-                    state: {
-                      loanDetails,
-                      earlyPayments,
-                      regularPayments,
-                      savedId: stateSavedId,
-                    },
-                  });
-                } else {
-                  navigate('/calculator');
-                }
-              }}
-            >
-              {t('editParameters')}
-            </BackButton>
+            <>
+              <BackButton
+                onClick={() => {
+                  hapticButton();
+                  if (loanDetails) {
+                    navigate('/calculator', {
+                      state: {
+                        loanDetails,
+                        earlyPayments,
+                        regularPayments,
+                        savedId: stateSavedId,
+                      },
+                    });
+                  } else {
+                    navigate('/calculator');
+                  }
+                }}
+              >
+                {t('editParameters')}
+              </BackButton>
+              <Button
+                size="s"
+                mode="plain"
+                onClick={() => {
+                  hapticButton();
+                  setEarlyPaymentsModalOpen(true);
+                }}
+              >
+                {mainButtonLabel}
+              </Button>
+            </>
           )}
         </Section>
         <ResultsDisplay />
+        <EarlyPaymentsModal open={earlyPaymentsModalOpen} onOpenChange={setEarlyPaymentsModalOpen} />
         <TabView tabs={tabs} defaultTab='charts'>
           <TabPanel id='charts'>
             <ChartsContainer />

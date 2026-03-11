@@ -8,7 +8,6 @@ const LineChart = lazy(() => import('@/components/charts/LineChart'));
 const PieChart = lazy(() => import('@/components/charts/PieChart'));
 const BarChart = lazy(() => import('@/components/charts/BarChart'));
 const DoughnutChart = lazy(() => import('@/components/charts/DoughnutChart'));
-const RadarChart = lazy(() => import('@/components/charts/RadarChart'));
 
 const ChartsContainer = () => {
   const { t } = useLocalization();
@@ -23,63 +22,144 @@ const ChartsContainer = () => {
     );
   }
 
+  const schedule = amortizationResult.schedule;
+
   const months = useMemo(() => {
-    return amortizationResult.schedule.map((item) => {
+    return schedule.map((item) => {
       const date = new Date(item.date);
       return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date
         .getFullYear()
         .toString()
         .slice(2)}`;
     });
-  }, [amortizationResult.schedule.length]);
+  }, [schedule]);
 
-  const principals = useMemo(() => {
-    return amortizationResult.schedule.map((item) => item.principal);
-  }, [amortizationResult.schedule.length]);
-  const interests = useMemo(() => {
-    return amortizationResult.schedule.map((item) => item.interest);
-  }, [amortizationResult.schedule.length]);
-  const balances = useMemo(() => {
-    return amortizationResult.schedule.map((item) => item.balance);
-  }, [amortizationResult.schedule.length]);
+  const principals = useMemo(() => schedule.map((item) => item.principal), [schedule]);
+  const interests = useMemo(() => schedule.map((item) => item.interest), [schedule]);
+  const balances = useMemo(() => schedule.map((item) => item.balance), [schedule]);
 
-  // Extract early payment information for tooltips
   const extraPaymentInfo = useMemo(() => {
-    return amortizationResult.schedule.map((item) => ({
+    return schedule.map((item) => ({
       hasExtraPayment: !!item.extraPayment && item.extraPayment > 0,
       amount: item.extraPayment || 0,
       type: item.extraPaymentType || '',
-      isRegular: item.isRegularPayment || false, // Add flag for regular payments
+      isRegular: item.isRegularPayment || false,
     }));
-  }, [amortizationResult.schedule]);
+  }, [schedule]);
+
+  const aggregateByYear = useMemo(() => schedule.length > 24, [schedule.length]);
 
   const lineChartData = useMemo(() => {
+    if (!aggregateByYear) {
+      return {
+        labels: months,
+        datasets: [
+          {
+            label: t('principal'),
+            data: principals,
+            borderColor: '#4bc0c0',
+            backgroundColor: '#4bc0c033',
+            fill: true,
+            yAxisID: 'y',
+          },
+          {
+            label: t('interest'),
+            data: interests,
+            borderColor: '#ff6384',
+            backgroundColor: '#ff638433',
+            fill: true,
+            yAxisID: 'y',
+          },
+          {
+            label: t('balance'),
+            data: balances,
+            borderColor: '#36a2eb',
+            backgroundColor: '#36a2eb33',
+            borderDash: [5, 5],
+            fill: false,
+            yAxisID: 'y1',
+          },
+        ],
+      };
+    }
+    const years: string[] = [];
+    const principalByYear: number[] = [];
+    const interestByYear: number[] = [];
+    const balanceByYear: number[] = [];
+    const extraInfoByYear: { hasExtraPayment: boolean; amount: number; type: string; isRegular: boolean }[] = [];
+    let currentYear = '';
+    let yearPrincipal = 0;
+    let yearInterest = 0;
+    let yearExtra = 0;
+    let yearExtraType = '';
+    let yearExtraRegular = false;
+    for (let i = 0; i < schedule.length; i++) {
+      const item = schedule[i];
+      const date = new Date(item.date);
+      const y = date.getFullYear().toString();
+      if (y !== currentYear) {
+        if (currentYear !== '') {
+          years.push(currentYear);
+          principalByYear.push(yearPrincipal);
+          interestByYear.push(yearInterest);
+          balanceByYear.push(schedule[i - 1].balance);
+          extraInfoByYear.push({
+            hasExtraPayment: yearExtra > 0,
+            amount: yearExtra,
+            type: yearExtraType,
+            isRegular: yearExtraRegular,
+          });
+        }
+        currentYear = y;
+        yearPrincipal = 0;
+        yearInterest = 0;
+        yearExtra = 0;
+        yearExtraType = '';
+        yearExtraRegular = false;
+      }
+      yearPrincipal += item.principal;
+      yearInterest += item.interest;
+      if (item.extraPayment && item.extraPayment > 0) {
+        yearExtra += item.extraPayment;
+        yearExtraType = item.extraPaymentType || '';
+        yearExtraRegular = yearExtraRegular || !!item.isRegularPayment;
+      }
+    }
+    if (currentYear !== '') {
+      years.push(currentYear);
+      principalByYear.push(yearPrincipal);
+      interestByYear.push(yearInterest);
+      balanceByYear.push(schedule[schedule.length - 1].balance);
+      extraInfoByYear.push({
+        hasExtraPayment: yearExtra > 0,
+        amount: yearExtra,
+        type: yearExtraType,
+        isRegular: yearExtraRegular,
+      });
+    }
     return {
-      labels: months,
+      labels: years,
       datasets: [
         {
           label: t('principal'),
-          data: principals,
+          data: principalByYear,
           borderColor: '#4bc0c0',
-          // https://gist.github.com/lopspower/03fb1cc0ac9f32ef38f4
           backgroundColor: '#4bc0c033',
           fill: true,
           yAxisID: 'y',
         },
         {
           label: t('interest'),
-          data: interests,
+          data: interestByYear,
           borderColor: '#ff6384',
-          // https://gist.github.com/lopspower/03fb1cc0ac9f32ef38f4
           backgroundColor: '#ff638433',
           fill: true,
           yAxisID: 'y',
         },
         {
           label: t('balance'),
-          data: balances,
+          data: balanceByYear,
           borderColor: '#36a2eb',
-          // https://gist.github.com/lopspower/03fb1cc0ac9f32ef38f4
           backgroundColor: '#36a2eb33',
           borderDash: [5, 5],
           fill: false,
@@ -87,43 +167,59 @@ const ChartsContainer = () => {
         },
       ],
     };
-  }, [principals.length, balances.length, interests.length]);
+  }, [months, principals, interests, balances, schedule, aggregateByYear, t]);
 
-  // Calculate total principal and interest for pie chart
-  const pieChartData = useMemo(() => {
-    const totalPrincipal = principals.reduce((sum, value) => sum + value, 0);
-    const totalInterest = amortizationResult.summary.newTotalInterest;
+  const lineChartExtraPaymentInfo = useMemo(() => {
+    if (!aggregateByYear) return extraPaymentInfo;
+    const byYear: { hasExtraPayment: boolean; amount: number; type: string; isRegular: boolean }[] = [];
+    let currentYear = '';
+    let yearExtra = 0;
+    let yearExtraType = '';
+    let yearExtraRegular = false;
+    for (let i = 0; i < schedule.length; i++) {
+      const item = schedule[i];
+      const date = new Date(item.date);
+      const y = date.getFullYear().toString();
+      if (y !== currentYear) {
+        if (currentYear !== '') {
+          byYear.push({
+            hasExtraPayment: yearExtra > 0,
+            amount: yearExtra,
+            type: yearExtraType,
+            isRegular: yearExtraRegular,
+          });
+        }
+        currentYear = y;
+        yearExtra = 0;
+        yearExtraType = '';
+        yearExtraRegular = false;
+      }
+      if (item.extraPayment && item.extraPayment > 0) {
+        yearExtra += item.extraPayment;
+        yearExtraType = item.extraPaymentType || '';
+        yearExtraRegular = yearExtraRegular || !!item.isRegularPayment;
+      }
+    }
+    if (currentYear !== '') {
+      byYear.push({
+        hasExtraPayment: yearExtra > 0,
+        amount: yearExtra,
+        type: yearExtraType,
+        isRegular: yearExtraRegular,
+      });
+    }
+    return byYear;
+  }, [aggregateByYear, schedule, extraPaymentInfo]);
 
-    return {
-      labels: [t('principal'), t('interest')],
-      datasets: [
-        {
-          data: [totalPrincipal, totalInterest],
-          backgroundColor: ['#4bc0c0', '#ff6384'],
-          borderColor: ['#4bc0c0', '#ff6384'],
-          borderWidth: 1,
-        },
-      ],
-    };
-  }, [principals, amortizationResult.summary.newTotalInterest, t]);
-
-  // Add comparison pie chart for early payments impact
   const comparisonPieChartData = useMemo(() => {
-    // Only show comparison if there are early payments
-    if (
-      !amortizationResult.schedule.some(
-        (item) => item.extraPayment && item.extraPayment > 0
-      )
-    ) {
+    if (!schedule.some((item) => item.extraPayment && item.extraPayment > 0)) {
       return null;
     }
-
     const originalInterest = amortizationResult.summary.originalTotalInterest;
     const newInterest = amortizationResult.summary.newTotalInterest;
     const interestSaved = originalInterest - newInterest;
-
     return {
-      labels: [t('newTotalInterest'), t('interestSaved')],
+      labels: [t('interestRemaining'), t('interestSaved')],
       datasets: [
         {
           data: [newInterest, interestSaved],
@@ -133,34 +229,8 @@ const ChartsContainer = () => {
         },
       ],
     };
-  }, [amortizationResult, t]);
+  }, [amortizationResult, schedule, t]);
 
-  // Bar chart data for monthly principal vs interest
-  const barChartData = useMemo(() => {
-    // Only show a subset of months for better visibility
-    const interval = Math.max(1, Math.floor(months.length / 12));
-    const filteredMonths = months.filter((_, i) => i % interval === 0);
-    const filteredPrincipals = principals.filter((_, i) => i % interval === 0);
-    const filteredInterests = interests.filter((_, i) => i % interval === 0);
-
-    return {
-      labels: filteredMonths,
-      datasets: [
-        {
-          label: t('principal'),
-          data: filteredPrincipals,
-          backgroundColor: '#4bc0c0',
-        },
-        {
-          label: t('interest'),
-          data: filteredInterests,
-          backgroundColor: '#ff6384',
-        },
-      ],
-    };
-  }, [months, principals, interests, t]);
-
-  // Doughnut chart data for total payment breakdown
   const doughnutChartData = useMemo(() => {
     const totalPrincipal = principals.reduce((sum, value) => sum + value, 0);
     const totalInterest = amortizationResult.summary.newTotalInterest;
@@ -183,77 +253,66 @@ const ChartsContainer = () => {
     };
   }, [principals, amortizationResult, t]);
 
-  // Radar chart data for comparing mortgage metrics before and after early payments
-  const radarChartData = useMemo(() => {
-    // Only show if there are early payments
-    if (
-      !amortizationResult.schedule.some(
-        (item) => item.extraPayment && item.extraPayment > 0
-      )
-    ) {
-      return null;
-    }
+  const hasEarlyPayments = useMemo(
+    () => schedule.some((item) => item.extraPayment && item.extraPayment > 0),
+    [schedule]
+  );
 
-    // Scale values to be comparable on the same chart
-    const originalTerm = amortizationResult.summary.originalTerm;
-    const newTerm = amortizationResult.summary.newTerm;
-    const originalInterest = amortizationResult.summary.originalTotalInterest;
-    const newInterest = amortizationResult.summary.newTotalInterest;
-    const originalPayment = amortizationResult.summary.originalMonthlyPayment;
-    const finalPayment = amortizationResult.summary.finalMonthlyPayment;
-
-    // Normalize values to percentages of the original values
-    const normalizedNewTerm = (newTerm / originalTerm) * 100;
-    const normalizedNewInterest = (newInterest / originalInterest) * 100;
-    const normalizedFinalPayment = (finalPayment / originalPayment) * 100;
-
+  const comparisonBarTermData = useMemo(() => {
+    if (!hasEarlyPayments) return null;
+    const s = amortizationResult.summary;
     return {
-      labels: [t('loanTerm'), t('totalInterest'), t('monthlyPayment')],
+      labels: [t('original'), t('withEarlyPayments')],
       datasets: [
         {
-          label: t('original'),
-          data: [100, 100, 100], // Original values as baseline (100%)
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          borderColor: 'rgb(255, 99, 132)',
-          pointBackgroundColor: 'rgb(255, 99, 132)',
-        },
-        {
-          label: t('withEarlyPayments'),
-          data: [
-            normalizedNewTerm,
-            normalizedNewInterest,
-            normalizedFinalPayment,
-          ],
-          backgroundColor: 'rgba(54, 162, 235, 0.2)',
-          borderColor: 'rgb(54, 162, 235)',
-          pointBackgroundColor: 'rgb(54, 162, 235)',
+          label: t('loanTerm'),
+          data: [s.originalTerm, s.newTerm],
+          backgroundColor: ['#ff6384', '#36a2eb'],
         },
       ],
     };
-  }, [amortizationResult, t]);
+  }, [amortizationResult.summary, hasEarlyPayments, t]);
+
+  const comparisonBarInterestData = useMemo(() => {
+    if (!hasEarlyPayments) return null;
+    const s = amortizationResult.summary;
+    return {
+      labels: [t('original'), t('withEarlyPayments')],
+      datasets: [
+        {
+          label: t('totalInterest'),
+          data: [s.originalTotalInterest, s.newTotalInterest],
+          backgroundColor: ['#ff6384', '#36a2eb'],
+        },
+      ],
+    };
+  }, [amortizationResult.summary, hasEarlyPayments, t]);
+
+  const comparisonBarPaymentData = useMemo(() => {
+    if (!hasEarlyPayments) return null;
+    const s = amortizationResult.summary;
+    return {
+      labels: [t('original'), t('withEarlyPayments')],
+      datasets: [
+        {
+          label: t('monthlyPayment'),
+          data: [s.originalMonthlyPayment, s.finalMonthlyPayment],
+          backgroundColor: ['#ff6384', '#36a2eb'],
+        },
+      ],
+    };
+  }, [amortizationResult.summary, hasEarlyPayments, t]);
 
   return (
     <>
-      {/* Line chart showing amortization schedule */}
       <Suspense fallback={<Skeleton visible />}>
         <LineChart
           data={lineChartData}
           title={t('amortizationSchedule')}
-          extraPaymentInfo={extraPaymentInfo}
+          extraPaymentInfo={lineChartExtraPaymentInfo}
         />
       </Suspense>
 
-      {/* Bar chart showing principal vs interest over time */}
-      <Suspense fallback={<Skeleton visible />}>
-        <BarChart data={barChartData} title={t('monthlyPaymentBreakdown')} />
-      </Suspense>
-
-      {/* Pie chart showing payment distribution */}
-      <Suspense fallback={<Skeleton visible />}>
-        <PieChart data={pieChartData} title={t('paymentDistribution')} />
-      </Suspense>
-
-      {/* Doughnut chart showing total payment breakdown including extra payments */}
       <Suspense fallback={<Skeleton visible />}>
         <DoughnutChart
           data={doughnutChartData}
@@ -261,19 +320,38 @@ const ChartsContainer = () => {
         />
       </Suspense>
 
-      {/* Conditional charts that only appear when early payments exist */}
+      {comparisonBarTermData && comparisonBarInterestData && comparisonBarPaymentData && (
+        <>
+          <Suspense fallback={<Skeleton visible />}>
+            <BarChart
+              data={comparisonBarTermData}
+              title={t('mortgageComparison')}
+              valueFormatter={(value) =>
+                `${Math.floor(value / 12)} ${t('years')} ${value % 12} ${t('months')}`
+              }
+            />
+          </Suspense>
+          <Suspense fallback={<Skeleton visible />}>
+            <BarChart
+              data={comparisonBarInterestData}
+              title={t('totalInterest')}
+            />
+          </Suspense>
+          <Suspense fallback={<Skeleton visible />}>
+            <BarChart
+              data={comparisonBarPaymentData}
+              title={t('monthlyPayment')}
+            />
+          </Suspense>
+        </>
+      )}
+
       {comparisonPieChartData && (
         <Suspense fallback={<Skeleton visible />}>
           <PieChart
             data={comparisonPieChartData}
             title={t('interestSavings')}
           />
-        </Suspense>
-      )}
-
-      {radarChartData && (
-        <Suspense fallback={<Skeleton visible />}>
-          <RadarChart data={radarChartData} title={t('mortgageComparison')} />
         </Suspense>
       )}
     </>

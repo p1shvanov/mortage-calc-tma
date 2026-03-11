@@ -29,17 +29,20 @@ interface BarChartProps {
     datasets: {
       label: string;
       data: number[];
-      backgroundColor: string;
+      backgroundColor: string | string[];
       borderColor?: string;
       borderWidth?: number;
     }[];
   };
   title?: string;
   stacked?: boolean;
+  /** Format tooltip value (e.g. term as years/months). If not set, uses currency. */
+  valueFormatter?: (value: number) => string;
 }
 
-const BarChart = ({ data, title, stacked = false }: BarChartProps) => {
+const BarChart = ({ data, title, stacked = false, valueFormatter }: BarChartProps) => {
   const { formatCurrency, t } = useLocalization();
+  const formatValue = valueFormatter ?? ((v: number) => formatCurrency(v));
 
   return (
     <Section header={title}>
@@ -63,7 +66,7 @@ const BarChart = ({ data, title, stacked = false }: BarChartProps) => {
                     label += ': ';
                   }
                   if (context.parsed.y !== null) {
-                    label += formatCurrency(context.parsed.y);
+                    label += formatValue(context.parsed.y);
                   }
                   return label;
                 }

@@ -1,24 +1,22 @@
 import { calculateMortgage } from '@/utils/mortgageCalculator';
 import { generateAmortizationSchedule } from '@/utils/amortizationSchedule';
-import { 
-  IMortgageService, 
-  MortgageCalculationParams, 
+import {
+  IMortgageService,
+  BaseCalculationParams,
+  MortgageCalculationParams,
   MortgageCalculationResults,
   AmortizationScheduleResults
 } from './IMortgageService';
 
 /**
- * Local implementation of the mortgage service
- * This implementation uses the local utility functions for calculations
+ * Local implementation of the mortgage service.
+ * Base calculation (loan only) and schedule (with optional overpayments) are separate.
  */
 export class LocalMortgageService implements IMortgageService {
   /**
-   * Calculate mortgage results based on input parameters
-   * @param params Mortgage calculation parameters
-   * @returns Mortgage calculation results
+   * Base calculation: loan parameters only. Used for "without overpayments" summary.
    */
-  async calculateMortgage(params: MortgageCalculationParams): Promise<MortgageCalculationResults> {
-    // Use the existing utility function
+  async calculateBase(params: BaseCalculationParams): Promise<MortgageCalculationResults> {
     const result = calculateMortgage({
       loanAmount: params.loanAmount,
       interestRate: params.interestRate,
@@ -27,7 +25,6 @@ export class LocalMortgageService implements IMortgageService {
       paymentType: params.paymentType,
       paymentDay: params.paymentDay
     });
-
     return {
       monthlyPayment: result.monthlyPayment,
       totalInterest: result.totalInterest,
@@ -37,6 +34,13 @@ export class LocalMortgageService implements IMortgageService {
       paymentType: result.paymentType,
       effectiveInterestRate: result.effectiveInterestRate
     };
+  }
+
+  /**
+   * @deprecated Use calculateBase for base-only results.
+   */
+  async calculateMortgage(params: MortgageCalculationParams): Promise<MortgageCalculationResults> {
+    return this.calculateBase(params);
   }
 
   /**

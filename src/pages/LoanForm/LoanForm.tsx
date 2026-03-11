@@ -1,11 +1,9 @@
-import { FC, memo, useMemo, useEffect, useState } from 'react';
+import { FC, memo, useMemo, useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { List, Section, Button, Snackbar } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
 
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
-import EarlyPaymentsForm from '@/components/form/EarlyPaymentsForm';
-import RegularPaymentsForm from '@/components/form/RegularPaymentsForm';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useLoanForm, type CalculationPayload } from '@/hooks/useLoanForm';
@@ -34,6 +32,37 @@ function MainButtonEnabled({ canSubmit }: { canSubmit: boolean }) {
     mainButton.setParams({ isEnabled: canSubmit });
   }, [canSubmit]);
   return null;
+}
+
+function ValidationSnackbarSync({
+  form,
+  setSnackbarOpen,
+  setSnackbarMessage,
+  t,
+}: {
+  form: ReturnType<typeof useLoanForm>;
+  setSnackbarOpen: (open: boolean) => void;
+  setSnackbarMessage: (msg: string) => void;
+  t: (key: string) => string;
+}) {
+  const prevAttemptsRef = useRef(0);
+  return (
+    <form.Subscribe
+      selector={(s) => ({ submissionAttempts: s.submissionAttempts, canSubmit: s.canSubmit })}
+    >
+      {({ submissionAttempts, canSubmit }) => {
+        if (submissionAttempts > prevAttemptsRef.current && !canSubmit) {
+          prevAttemptsRef.current = submissionAttempts;
+          hapticError();
+          setSnackbarMessage(t('fixFormErrors'));
+          setSnackbarOpen(true);
+        } else {
+          prevAttemptsRef.current = submissionAttempts;
+        }
+        return null;
+      }}
+    </form.Subscribe>
+  );
 }
 
 function isCalculationPayload(state: unknown): state is CalculationPayload {
@@ -107,6 +136,12 @@ const LoanForm: FC = () => {
   return (
     <Page>
       {mainButtonAvailable && <MainButtonSync form={form} />}
+      <ValidationSnackbarSync
+        form={form}
+        setSnackbarOpen={setSnackbarOpen}
+        setSnackbarMessage={setSnackbarMessage}
+        t={t}
+      />
       <List
         Component="form"
         onSubmit={(event) => {
@@ -128,8 +163,6 @@ const LoanForm: FC = () => {
           )}
         </Section>
         <LoanDetailsForm form={form} />
-        <EarlyPaymentsForm form={form} />
-        <RegularPaymentsForm form={form} />
         {!mainButtonAvailable && (
           <Section>
             <form.Subscribe

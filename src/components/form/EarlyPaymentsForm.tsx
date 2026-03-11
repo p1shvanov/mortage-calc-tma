@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, Fragment } from 'react';
 import {
   Accordion,
   Badge,
@@ -137,7 +137,7 @@ const EarlyPaymentsForm = withForm({
                             const isItemValid = isEarlyPaymentItemValid(item);
 
                             return (
-                              <div key={item?.id ?? i}>
+                              <Fragment key={item?.id ?? i}>
                                 {isExpanded ? (
                                   <List>
                                     <form.Field
@@ -182,13 +182,7 @@ const EarlyPaymentsForm = withForm({
                                         />
                                       )}
                                     />
-                                    <div
-                                      style={{
-                                        display: 'flex',
-                                        gap: 8,
-                                        marginTop: 8,
-                                      }}
-                                    >
+                                    <List>
                                       <Button
                                         size='s'
                                         mode='outline'
@@ -211,7 +205,7 @@ const EarlyPaymentsForm = withForm({
                                       >
                                         {t('remove')}
                                       </Button>
-                                    </div>
+                                    </List>
                                   </List>
                                 ) : (
                                   <Cell
@@ -250,7 +244,7 @@ const EarlyPaymentsForm = withForm({
                                     </Text>
                                   </Cell>
                                 )}
-                              </div>
+                              </Fragment>
                             );
                           })}
                         </List>

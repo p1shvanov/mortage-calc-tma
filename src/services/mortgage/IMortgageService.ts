@@ -2,7 +2,7 @@ import { PaymentType } from '@/utils/financialMath';
 import { EarlyPayment, RegularPayment } from '@/providers/MortgageProvider';
 
 /**
- * Interface for mortgage calculation parameters
+ * Interface for mortgage calculation parameters (full: loan + optional overpayments).
  */
 export interface MortgageCalculationParams {
   loanAmount: number;
@@ -14,6 +14,14 @@ export interface MortgageCalculationParams {
   earlyPayments?: EarlyPayment[];
   regularPayments?: RegularPayment[];
 }
+
+/**
+ * Parameters for base mortgage calculation (loan only, no overpayments).
+ */
+export type BaseCalculationParams = Pick<
+  MortgageCalculationParams,
+  'loanAmount' | 'interestRate' | 'loanTerm' | 'startDate' | 'paymentType' | 'paymentDay'
+>;
 
 /**
  * Interface for mortgage calculation results
@@ -64,20 +72,24 @@ export interface AmortizationScheduleResults {
 
 /**
  * Interface for mortgage service
- * This service is responsible for calculating mortgage payments and generating amortization schedules
+ * This service is responsible for calculating mortgage payments and generating amortization schedules.
+ * Base calculation (loan only) and schedule generation (with optional overpayments) are separate.
  */
 export interface IMortgageService {
   /**
-   * Calculate mortgage results based on input parameters
-   * @param params Mortgage calculation parameters
-   * @returns Mortgage calculation results
+   * Base calculation: loan parameters only, no early/regular payments.
+   * Use this for the "without overpayments" summary.
+   */
+  calculateBase(params: BaseCalculationParams): Promise<MortgageCalculationResults>;
+
+  /**
+   * Calculate mortgage results based on input parameters.
+   * @deprecated Prefer calculateBase for base-only results.
    */
   calculateMortgage(params: MortgageCalculationParams): Promise<MortgageCalculationResults>;
-  
+
   /**
-   * Generate an amortization schedule for a loan
-   * @param params Mortgage calculation parameters
-   * @returns Amortization schedule results
+   * Generate amortization schedule (base if no overpayments, extended if overpayments provided).
    */
   generateAmortizationSchedule(params: MortgageCalculationParams): Promise<AmortizationScheduleResults>;
 }

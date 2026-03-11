@@ -52,26 +52,17 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [mortgageResults, setMortgageResults] = useState<MortgageCalculationResults | null>(null);
   const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResults | null>(null);
 
+  // Base calculation: loan only → mortgageResults (no overpayments)
   useEffect(() => {
     if (loanDetails) {
-      try {
-        // Use the mortgage service to calculate mortgage results
-        mortgageService.calculateMortgage({
-          ...loanDetails,
-          earlyPayments,
-          regularPayments
-        }).then(results => {
-          setMortgageResults(results);
-        }).catch(error => {
-          console.error('Error calculating mortgage results:', error);
-        });
-      } catch (error) {
-        console.error('Error calculating mortgage results:', error);
-      }
+      mortgageService
+        .calculateBase(loanDetails)
+        .then(setMortgageResults)
+        .catch((error) => console.error('Error calculating mortgage results:', error));
     }
   }, [loanDetails]);
-  
-  // Generate amortization schedule when loan details, early payments, or regular payments change
+
+  // Schedule (and extended summary): loan + overpayments → amortizationResult
   useEffect(() => {
     if (loanDetails) {
       try {

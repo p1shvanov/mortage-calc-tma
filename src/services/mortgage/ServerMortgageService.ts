@@ -1,6 +1,7 @@
-import { 
-  IMortgageService, 
-  MortgageCalculationParams, 
+import {
+  IMortgageService,
+  BaseCalculationParams,
+  MortgageCalculationParams,
   MortgageCalculationResults,
   AmortizationScheduleResults
 } from './IMortgageService';
@@ -21,6 +22,14 @@ export class ServerMortgageService implements IMortgageService {
    */
   constructor(apiBaseUrl?: string) {
     this._apiBaseUrl = apiBaseUrl || '/api/mortgage';
+  }
+
+  /**
+   * Base calculation (loan only). Placeholder for future server API.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async calculateBase(_params: BaseCalculationParams): Promise<MortgageCalculationResults> {
+    throw new Error('Server implementation not available yet');
   }
 
   /**
