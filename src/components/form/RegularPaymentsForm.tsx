@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, Fragment } from 'react';
 import { Accordion, Badge, Button, Cell, List, Section, Text } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import InputNumberFormat from '@/components/ui/InputNumberFormat';
@@ -139,7 +139,7 @@ const RegularPaymentsForm = withForm({
                 const isItemValid = isRegularPaymentItemValid(item);
 
                 return (
-                  <div key={item?.id ?? i}>
+                  <Fragment key={item?.id ?? i}>
                     {isExpanded ? (
                       <List>
                         <form.Field
@@ -189,7 +189,7 @@ const RegularPaymentsForm = withForm({
                             />
                           )}
                         />
-                        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <List>
                           <Button
                             size='s'
                             mode='outline'
@@ -212,7 +212,7 @@ const RegularPaymentsForm = withForm({
                           >
                             {t('remove')}
                           </Button>
-                        </div>
+                        </List>
                       </List>
                     ) : (
                       <Cell
@@ -249,7 +249,7 @@ const RegularPaymentsForm = withForm({
                         </Text>
                       </Cell>
                     )}
-                  </div>
+                  </Fragment>
                 );
               })}
             </List>

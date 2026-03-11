@@ -4,7 +4,6 @@ import {
   Cell,
   Section,
   Text,
-  Card,
   Progress,
   Subheadline,
   Caption,
@@ -48,126 +47,94 @@ const ResultsDisplay = () => {
   const { monthlyPayment, totalInterest, payoffDate } = mortgageResults;
 
   return (
-    <Card>
-      <Section
-        header={t('paymentSummary')}
-        footer={
-          hasEarlyPayments && amortizationResult && (
-            <Cell readOnly before={<Text>{t('totalSavings')}</Text>}>
-              <Text style={{ color: 'var(--tgui--green)' }}>
-                {formatCurrency(amortizationResult.summary.totalSavings)}
-              </Text>
-            </Cell>
-          )
-        }
-      >
-        {amortizationResult?.schedule && amortizationResult.schedule.length > 0 && (
-          <Cell readOnly>
-            <Subheadline>{t('paidPercent')}</Subheadline>
-            <Progress value={progressValue} />
-            <Caption>
-              {progressValue}% {t('principal')} · {100 - progressValue}% {t('interest')}
-            </Caption>
-          </Cell>
-        )}
+    <Section header={t('paymentSummary')}>
+      {amortizationResult?.schedule && amortizationResult.schedule.length > 0 && (
+        <Cell readOnly>
+          <Subheadline>{t('paidPercent')}</Subheadline>
+          <Progress value={progressValue} />
+          <Caption>
+            {progressValue}% {t('principal')} · {100 - progressValue}% {t('interest')}
+          </Caption>
+        </Cell>
+      )}
 
-        <Cell
-          subtitle={
-            hasEarlyPayments &&
-            amortizationResult?.summary.finalMonthlyPayment !== monthlyPayment && (
-              <Text style={{ color: 'var(--tgui--green)' }}>
-                {t('originalPayment')}: {formatCurrency(monthlyPayment)}
-              </Text>
-            )
-          }
-          subhead={t('monthlyPayment')}
-          before="💰"
-          readOnly
-        >
-          <Text>
-            {formatCurrency(
-              hasEarlyPayments &&
-                amortizationResult &&
-                amortizationResult.summary.finalMonthlyPayment !== monthlyPayment
-                ? amortizationResult.summary.finalMonthlyPayment
-                : monthlyPayment
-            )}
-          </Text>
+      <Cell subhead={t('monthlyPayment')} before="💰" readOnly>
+        {hasEarlyPayments &&
+        amortizationResult &&
+        amortizationResult.summary.finalMonthlyPayment !== monthlyPayment ? (
+          <>
+            <Text>{formatCurrency(monthlyPayment)}</Text>
+            <Text> → </Text>
+            <Text>{formatCurrency(amortizationResult.summary.finalMonthlyPayment)}</Text>
+          </>
+        ) : (
+          <Text>{formatCurrency(monthlyPayment)}</Text>
+        )}
+      </Cell>
+
+      <Cell subhead={t('totalInterest')} before="📈" readOnly>
+        {hasEarlyPayments && amortizationResult ? (
+          <>
+            <Text>{formatCurrency(amortizationResult.summary.originalTotalInterest)}</Text>
+            <Text> → </Text>
+            <Text>{formatCurrency(amortizationResult.summary.newTotalInterest)}</Text>
+          </>
+        ) : (
+          <Text>{formatCurrency(totalInterest)}</Text>
+        )}
+      </Cell>
+
+      {hasEarlyPayments && amortizationResult && (
+        <Cell subhead={t('totalSavings')} before="💚" readOnly>
+          <Text>{formatCurrency(amortizationResult.summary.totalSavings)}</Text>
         </Cell>
-        <Cell
-          subtitle={
-            hasEarlyPayments && (
-              <Text style={{ color: 'var(--tgui--green)' }}>
-                {t('savings')}:{' '}
-                {formatCurrency(
-                  amortizationResult!.summary.originalTotalInterest -
-                    amortizationResult!.summary.newTotalInterest
-                )}
-              </Text>
-            )
-          }
-          subhead={t('totalInterest')}
-          before="📈"
-          readOnly
-        >
+      )}
+
+      <Cell subhead={t('loanTerm')} before="⏱️" readOnly>
+        {hasEarlyPayments && amortizationResult ? (
+          <>
+            <Text>
+              {Math.floor(amortizationResult.summary.originalTerm / 12)} {t('years')}{' '}
+              {amortizationResult.summary.originalTerm % 12} {t('months')}
+            </Text>
+            <Text> → </Text>
+            <Text>
+              {Math.floor(amortizationResult.summary.newTerm / 12)} {t('years')}{' '}
+              {amortizationResult.summary.newTerm % 12} {t('months')}
+            </Text>
+            <Caption>
+              {t('monthsSaved')}: {amortizationResult.summary.originalTerm - amortizationResult.summary.newTerm}
+            </Caption>
+          </>
+        ) : (
           <Text>
-            {formatCurrency(
-              hasEarlyPayments
-                ? amortizationResult!.summary.newTotalInterest
-                : totalInterest
-            )}
+            {Math.floor(mortgageResults.loanTerm)} {t('years')}
           </Text>
-        </Cell>
-        <Cell
-          subtitle={
-            hasEarlyPayments && (
-              <Text style={{ color: 'var(--tgui--green)' }}>
-                {t('monthsSaved')}:{' '}
-                {amortizationResult!.summary.originalTerm -
-                  amortizationResult!.summary.newTerm}
-              </Text>
-            )
-          }
-          subhead={t('loanTerm')}
-          before="⏱️"
-          readOnly
-        >
-          <Text>
-            {hasEarlyPayments
-              ? `${Math.floor(amortizationResult!.summary.newTerm / 12)} ${t('years')} ${amortizationResult!.summary.newTerm % 12} ${t('months')}`
-              : `${Math.floor(mortgageResults.loanTerm)} ${t('years')}`}
-          </Text>
-        </Cell>
-        <Cell
-          subtitle={
-            hasEarlyPayments &&
-            amortizationResult?.schedule &&
-            amortizationResult.schedule.length > 0 && (
-              <Text style={{ color: 'var(--tgui--green)' }}>
-                {t('actualPayoffDate')}:{' '}
-                {formatDate(
-                  amortizationResult.schedule[
-                    amortizationResult.schedule.length - 1
-                  ].date
-                )}
-              </Text>
-            )
-          }
-          subhead={t('planPayoffDate')}
-          before="🏁"
-          readOnly
-        >
+        )}
+      </Cell>
+
+      <Cell subhead={t('planPayoffDate')} before="🏁" readOnly>
+        {hasEarlyPayments &&
+        amortizationResult?.schedule &&
+        amortizationResult.schedule.length > 0 ? (
+          <>
+            <Text>{formatDate(payoffDate)}</Text>
+            <Text> → </Text>
+            <Text>{formatDate(amortizationResult.schedule[amortizationResult.schedule.length - 1].date)}</Text>
+          </>
+        ) : (
           <Text>{formatDate(payoffDate)}</Text>
-        </Cell>
-        <Cell subhead={t('paymentType')} before="💵" readOnly>
-          <Text>
-            {mortgageResults.paymentType === 'annuity'
-              ? t('annuityPayment')
-              : t('differentiatedPayment')}
-          </Text>
-        </Cell>
-      </Section>
-    </Card>
+        )}
+      </Cell>
+
+      <Cell subhead={t('paymentType')} before="💵" readOnly>
+        <Text>
+          {mortgageResults.paymentType === 'annuity'
+            ? t('annuityPayment')
+            : t('differentiatedPayment')}
+        </Text>
+      </Cell>
+    </Section>
   );
 };
 

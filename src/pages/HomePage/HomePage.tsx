@@ -180,7 +180,7 @@ const HomePage: FC = () => {
         >
           <Placeholder
             header={
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <>
                 {user && (
                   <Avatar
                     size={48}
@@ -189,7 +189,7 @@ const HomePage: FC = () => {
                   />
                 )}
                 <Text weight="2">{greeting}</Text>
-              </div>
+              </>
             }
           />
         </Section>
