@@ -1,4 +1,4 @@
-import{r as e,R as t}from"./vendor-telegram-CP6ZID0r.js";
+import{r as e,R as t}from"./vendor-telegram-B6YVG9Qw.js";
 /**
  * @remix-run/router v1.23.2
  *
@@ -30,4 +30,4 @@ function M(){return M=Object.assign?Object.assign.bind():function(e){for(var t=1
  *
  * @license MIT
  */function he(e){return void 0===e&&(e=""),new URLSearchParams("string"==typeof e||Array.isArray(e)||e instanceof URLSearchParams?e:Object.keys(e).reduce((t,r)=>{let n=e[r];return t.concat(Array.isArray(n)?n.map(e=>[r,e]):[[r,n]])},[]))}new Promise(()=>{});try{window.__reactRouterVersion="6"}catch(be){}const pe=t.startTransition;function de(t){let{basename:r,children:n,future:a,window:l}=t,i=e.useRef();null==i.current&&(i.current=o({window:l,v5Compat:!0}));let s=i.current,[u,c]=e.useState({action:s.action,location:s.location}),{v7_startTransition:h}=a||{},p=e.useCallback(e=>{h&&pe?pe(()=>c(e)):c(e)},[c,h]);return e.useLayoutEffect(()=>s.listen(p),[s,p]),e.useEffect(()=>{return null==(e=a)||e.v7_startTransition,void(null==e||e.v7_relativeSplatPath);var e},[a]),e.createElement(se,{basename:r,children:n,location:u.location,navigationType:u.action,navigator:s,future:a})}var fe,me,ve,ge;function ye(t){let r=e.useRef(he(t)),n=e.useRef(!1),a=G(),o=e.useMemo(()=>function(e,t){let r=he(e);return t&&t.forEach((e,n)=>{r.has(n)||t.getAll(n).forEach(e=>{r.append(n,e)})}),r}(a.search,n.current?null:r.current),[a.search]),l=Q(),i=e.useCallback((e,t)=>{const r=he("function"==typeof e?e(o):e);n.current=!0,l("?"+r,t)},[l,o]);return[o,i]}(me=fe||(fe={})).UseScrollRestoration="useScrollRestoration",me.UseSubmit="useSubmit",me.UseSubmitFetcher="useSubmitFetcher",me.UseFetcher="useFetcher",me.useViewTransitionState="useViewTransitionState",(ge=ve||(ve={})).UseFetcher="useFetcher",ge.UseFetchers="useFetchers",ge.UseScrollRestoration="useScrollRestoration";export{de as H,le as N,ue as R,G as a,ye as b,ie as c,Q as u};
-//# sourceMappingURL=vendor-react-B43EGn3I.js.map
+//# sourceMappingURL=vendor-react-BDXKn0jX.js.map
