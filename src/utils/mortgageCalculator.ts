@@ -1,16 +1,19 @@
 import {
   calculateMonthlyPayment,
   calculatePayoffDate,
+  effectiveAnnualRatePercent,
   PaymentType,
+  roundMoney,
 } from './financialMath';
+import { generateAmortizationSchedule } from './amortizationSchedule';
 
 export interface MortgageParams {
   loanAmount: number;
   interestRate: number;
   loanTerm: number; // in years
   startDate: string;
-  paymentType?: PaymentType; // Preparation for future extension
-  paymentDay?: number; // Preparation for future extension - day of monthly payment
+  paymentType?: PaymentType;
+  paymentDay?: number;
 }
 
 export interface MortgageResults {
@@ -19,58 +22,64 @@ export interface MortgageResults {
   totalCost: number;
   payoffDate: string;
   loanTerm: number;
-  // Additional fields for future extensions
-  effectiveInterestRate?: number; // Effective interest rate
+  effectiveInterestRate: number;
   paymentType: PaymentType;
 }
 
 /**
- * Calculate mortgage results based on input parameters
+ * Calculate mortgage results based on input parameters.
+ * Uses the same schedule logic (ACTUAL_365) for total interest/cost so base summary matches the schedule.
  */
 export function calculateMortgage(params: MortgageParams): MortgageResults {
-  const { 
-    loanAmount, 
-    interestRate, 
-    loanTerm, 
+  const {
+    loanAmount,
+    interestRate,
+    loanTerm,
     startDate,
-    paymentType = 'annuity', // Default to annuity payments
-    // paymentDay
+    paymentType = 'annuity',
+    paymentDay,
   } = params;
-  
-  // Calculate monthly payment
-  const monthlyPayment = calculateMonthlyPayment(loanAmount, interestRate, loanTerm, paymentType);
-  
-  // Calculate total cost based on payment type
-  let totalCost: number;
-  
-  if (paymentType === 'differentiated') {
-    // For differentiated payments, we need to calculate each payment separately
-    // and sum them up, since they decrease over time
-    let totalPayments = 0;
-    const numberOfPayments = loanTerm * 12;
-    
-    for (let i = 1; i <= numberOfPayments; i++) {
-      totalPayments += calculateMonthlyPayment(loanAmount, interestRate, loanTerm, paymentType, i);
-    }
-    
-    totalCost = totalPayments;
-  } else {
-    // For annuity payments, all payments are the same
-    totalCost = monthlyPayment * loanTerm * 12;
+
+  if (loanAmount <= 0 || loanTerm <= 0) {
+    return {
+      monthlyPayment: 0,
+      totalInterest: 0,
+      totalCost: roundMoney(loanAmount),
+      payoffDate: startDate,
+      loanTerm,
+      effectiveInterestRate: interestRate <= 0 ? 0 : effectiveAnnualRatePercent(interestRate),
+      paymentType,
+    };
   }
-  
-  // Calculate total interest (total cost - loan amount)
-  const totalInterest = totalCost - loanAmount;
-  
-  // Calculate payoff date
+
+  const monthlyPayment = roundMoney(
+    calculateMonthlyPayment(loanAmount, interestRate, loanTerm, paymentType)
+  );
+
+  // Base totals from schedule (no overpayments) so interest methodology matches the UI schedule
+  const scheduleResult = generateAmortizationSchedule({
+    loanAmount,
+    interestRate,
+    loanTerm,
+    startDate,
+    paymentType,
+    paymentDay,
+    earlyPayments: [],
+    regularPayments: [],
+  });
+
+  const totalInterest = scheduleResult.summary.newTotalInterest;
+  const totalCost = roundMoney(loanAmount + totalInterest);
   const payoffDate = calculatePayoffDate(startDate, loanTerm);
-  
+  const effectiveInterestRate = effectiveAnnualRatePercent(interestRate);
+
   return {
     monthlyPayment,
     totalInterest,
     totalCost,
     payoffDate,
     loanTerm,
-    paymentType
+    effectiveInterestRate,
+    paymentType,
   };
 }

@@ -36,6 +36,7 @@ const LoanDetailsForm = withForm({
                   placeholder={t('interestRate')}
                   field={field}
                   format='percent'
+                  locales={language}
                   inputMode='decimal'
                   maximumFractionDigits={2}
                 />

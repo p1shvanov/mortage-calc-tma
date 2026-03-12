@@ -6,6 +6,7 @@ import { mainButton } from '@telegram-apps/sdk-react';
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
+import { useMortgage } from '@/providers/MortgageProvider';
 import { useLoanForm, type CalculationPayload } from '@/hooks/useLoanForm';
 import { useMainButtonAvailable, useBackButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
 import { getCalculationsStorage } from '@/services/storage';
@@ -75,17 +76,19 @@ function isCalculationPayload(state: unknown): state is CalculationPayload {
 }
 
 const LoanForm: FC = () => {
-  const { t } = useLocalization();
+  const { t, language } = useLocalization();
   const navigate = useNavigate();
   const location = useLocation();
+  const { loanDetails, earlyPayments, regularPayments } = useMortgage();
   const mainButtonAvailable = useMainButtonAvailable();
   const backButtonAvailable = useBackButtonAvailable();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const defaultValues = useMemo(() => {
-    if (isCalculationPayload(location.state)) return payloadToFormValues(location.state);
+    if (isCalculationPayload(location.state)) return payloadToFormValues(location.state, language);
+    if (loanDetails) return payloadToFormValues({ loanDetails, earlyPayments, regularPayments }, language);
     return undefined;
-  }, [location.state]);
+  }, [location.state, loanDetails, earlyPayments, regularPayments, language]);
 
   const savedId = location.state && typeof location.state === 'object' && 'savedId' in location.state
     ? (location.state as { savedId?: string }).savedId
@@ -150,7 +153,8 @@ const LoanForm: FC = () => {
           form.handleSubmit();
         }}
       >
-        <Section header={<BreadcrumbsNav items={[{ label: t('home'), path: '/' }, { label: t('calculator') }]} />}>
+        <BreadcrumbsNav items={[{ label: t('home'), path: '/' }, { label: t('calculator') }]} />
+        <Section>
           {!backButtonAvailable && (
             <BackButton
               onClick={() => {

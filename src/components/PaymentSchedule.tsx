@@ -1,20 +1,10 @@
-import {
-  memo,
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  lazy,
-  Suspense,
-} from 'react';
+import { memo, useMemo, useState, useRef, useCallback, useEffect } from 'react';
 
 import {
   Section,
   Cell,
   IconButton,
   Modal,
-  Skeleton,
   Pagination,
   Placeholder,
   Text,
@@ -25,8 +15,6 @@ import { mainButton } from '@telegram-apps/sdk-react';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { hapticSelection } from '@/utils/haptic';
-
-const PieChart = lazy(() => import('@/components/charts/PieChart'));
 
 const ITEMS_PER_PAGE = 12;
 
@@ -73,23 +61,12 @@ const PaymentSchedule = () => {
     return null;
   }, [selectedItemIndex, schedule]);
 
-  const pieChartData = useMemo(() => {
-    if (!firstPayment) return null;
-    return {
-      labels: [t('principal'), t('interest')],
-      datasets: [
-        {
-          data: [firstPayment.principal, firstPayment.interest],
-          backgroundColor: [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-          ],
-          borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
-          borderWidth: 1,
-        },
-      ],
-    };
-  }, [firstPayment, t]);
+  const paymentRatio = useMemo(() => {
+    if (!firstPayment || firstPayment.payment <= 0) return null;
+    const pPct = Math.round((firstPayment.principal / firstPayment.payment) * 100);
+    const iPct = Math.round((firstPayment.interest / firstPayment.payment) * 100);
+    return { p: pPct, i: iPct };
+  }, [firstPayment]);
 
   const handleCellClick = (index: number) => {
     hapticSelection();
@@ -187,6 +164,10 @@ const PaymentSchedule = () => {
       {showPagination && (
         <Section.Footer centered>
           <Pagination
+            boundaryCount={0}
+            siblingCount={1}
+            hideNextButton
+            hidePrevButton
             count={totalPages}
             page={currentPage}
             onChange={(_, page) => {
@@ -196,16 +177,63 @@ const PaymentSchedule = () => {
           />
         </Section.Footer>
       )}
-      {pieChartData && (
+      {firstPayment && (
         <Modal
           onOpenChange={(open) => {
             if (!open) setSelectedItemIndex(null);
           }}
           open={selectedItemIndex !== null}
         >
-          <Suspense fallback={<Skeleton visible />}>
-            <PieChart data={pieChartData} title={t('paymentBreakdown')} />
-          </Suspense>
+          <Section
+            header={t('paymentDetailTitle', {
+              n: firstPayment.month,
+              total: schedule.length,
+            })}
+          >
+            <Cell subhead={t('paymentDate')} readOnly>
+              <Text>{formatDate(firstPayment.date)}</Text>
+            </Cell>
+            <Cell subhead={t('paymentAmount')} readOnly>
+              <Text weight="2">{formatCurrency(firstPayment.payment)}</Text>
+            </Cell>
+            <Cell subhead={t('principal')} readOnly>
+              <Text>{formatCurrency(firstPayment.principal)}</Text>
+            </Cell>
+            <Cell subhead={t('interest')} readOnly>
+              <Text>{formatCurrency(firstPayment.interest)}</Text>
+            </Cell>
+            {paymentRatio && (
+              <Cell subhead={t('paymentBreakdown')} readOnly>
+                <Text>
+                  {t('paymentStructureRatio', {
+                    p: paymentRatio.p,
+                    i: paymentRatio.i,
+                  })}
+                </Text>
+              </Cell>
+            )}
+            <Cell subhead={t('interestToDate')} readOnly>
+              <Text>{formatCurrency(firstPayment.totalInterest)}</Text>
+            </Cell>
+            <Cell subhead={t('remainingBalance')} readOnly>
+              <Text>{formatCurrency(firstPayment.balance)}</Text>
+            </Cell>
+            {firstPayment.extraPayment != null && firstPayment.extraPayment > 0 && (
+              <Cell
+                subhead={t('extraPayment')}
+                readOnly
+                description={
+                  firstPayment.extraPaymentType
+                    ? firstPayment.extraPaymentType === 'reduceTerm'
+                      ? t('typeReduceTerm')
+                      : t('typeReducePayment')
+                    : undefined
+                }
+              >
+                <Text>{formatCurrency(firstPayment.extraPayment)}</Text>
+              </Cell>
+            )}
+          </Section>
         </Modal>
       )}
     </Section>

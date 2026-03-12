@@ -11,6 +11,11 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/mortage-calc-tma/',
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    globals: true,
+  },
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

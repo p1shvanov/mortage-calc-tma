@@ -1,7 +1,11 @@
 import { memo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { List, Section, Cell, Text, Switch } from '@telegram-apps/telegram-ui';
-import { addToHomeScreen, viewport, useSignal, retrieveLaunchParams } from '@telegram-apps/sdk-react';
+import {
+  addToHomeScreen,
+  viewport,
+  useSignal,
+  retrieveLaunchParams,
+} from '@telegram-apps/sdk-react';
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 
 import Page from '@/components/Page';
@@ -12,14 +16,16 @@ import { hapticSelection } from '@/utils/haptic';
 
 const SettingsPage = () => {
   const { t } = useLocalization();
-  const navigate = useNavigate();
   const { themeMode } = useTheme();
   const isFullscreen = useSignal(viewport.isFullscreen);
-  const fullscreenAvailable = viewport.requestFullscreen?.isAvailable?.() && viewport.exitFullscreen?.isAvailable?.();
+  const fullscreenAvailable =
+    viewport.requestFullscreen?.isAvailable?.() &&
+    viewport.exitFullscreen?.isAvailable?.();
 
   const platform = retrieveLaunchParams().tgWebAppPlatform;
   const isMobilePlatform = platform === 'android' || platform === 'ios';
-  const showAddToHomeScreen = addToHomeScreen.isAvailable?.() && isMobilePlatform;
+  const showAddToHomeScreen =
+    addToHomeScreen.isAvailable?.() && isMobilePlatform;
 
   const handleFullscreenToggle = () => {
     hapticSelection();
@@ -37,9 +43,6 @@ const SettingsPage = () => {
           <LanguageSwitcher />
         </Section>
         <Section header={t('settings')}>
-          <Cell subtitle={themeMode === 'dark' ? t('themeDark') : t('themeLight')}>
-            <Text>{t('theme')}</Text>
-          </Cell>
           {fullscreenAvailable && (
             <Cell
               subtitle={isFullscreen ? t('fullscreenOn') : t('fullscreenOff')}
@@ -55,16 +58,6 @@ const SettingsPage = () => {
               <Text>{t('fullscreen')}</Text>
             </Cell>
           )}
-          <Cell
-            subtitle={t('faq')}
-            after={<Icon24ChevronRight />}
-            onClick={() => {
-              hapticSelection();
-              navigate('/onboarding');
-            }}
-          >
-            <Text>{t('faq')}</Text>
-          </Cell>
         </Section>
 
         {showAddToHomeScreen && (
@@ -81,8 +74,12 @@ const SettingsPage = () => {
             </Cell>
           </Section>
         )}
-
         <Section header={t('about')}>
+          <Cell
+            subtitle={themeMode === 'dark' ? t('themeDark') : t('themeLight')}
+          >
+            <Text>{t('theme')}</Text>
+          </Cell>
           <Cell subtitle={__APP_VERSION__}>
             <Text>{t('version')}</Text>
           </Cell>
