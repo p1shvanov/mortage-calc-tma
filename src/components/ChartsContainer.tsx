@@ -238,14 +238,23 @@ const ChartsContainer = () => {
       (sum, item) => sum + (item.extraPayment || 0),
       0
     );
+    const hasExtra = totalExtraPayments > 0;
 
     return {
-      labels: [t('principal'), t('interest'), t('extraPayment')],
+      labels: hasExtra
+        ? [t('principal'), t('interest'), t('extraPayment')]
+        : [t('principal'), t('interest')],
       datasets: [
         {
-          data: [totalPrincipal, totalInterest, totalExtraPayments],
-          backgroundColor: ['#4bc0c0', '#ff6384', '#ffcd56'],
-          borderColor: ['#4bc0c0', '#ff6384', '#ffcd56'],
+          data: hasExtra
+            ? [totalPrincipal, totalInterest, totalExtraPayments]
+            : [totalPrincipal, totalInterest],
+          backgroundColor: hasExtra
+            ? ['#4bc0c0', '#ff6384', '#ffcd56']
+            : ['#4bc0c0', '#ff6384'],
+          borderColor: hasExtra
+            ? ['#4bc0c0', '#ff6384', '#ffcd56']
+            : ['#4bc0c0', '#ff6384'],
           borderWidth: 1,
           hoverOffset: 10,
         },

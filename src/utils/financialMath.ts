@@ -1,3 +1,17 @@
+/** Round monetary values to 2 decimal places (cents) to avoid float drift and for display consistency. */
+export function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/**
+ * Effective annual rate from nominal annual percentage (e.g. 12 → ~12.68).
+ * Formula: (1 + r/12)^12 - 1, result as percentage.
+ */
+export function effectiveAnnualRatePercent(nominalAnnualPercent: number): number {
+  const monthly = nominalAnnualPercent / 100 / 12;
+  return roundMoney(((1 + monthly) ** 12 - 1) * 100);
+}
+
 /**
  * Types of interest calculation methods
  * Preparation for future functionality expansion

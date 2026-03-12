@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { List, Button, Placeholder, Section } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
@@ -49,41 +49,67 @@ const MortageResult = () => {
   } = useMortgage();
   const { t } = useLocalization();
 
-  const hasOverpayments = earlyPayments.length > 0 || regularPayments.length > 0;
-  const mainButtonLabel = hasOverpayments ? t('editEarlyPayments') : t('addEarlyPayments');
+  const hasOverpayments =
+    earlyPayments.length > 0 || regularPayments.length > 0;
+  const mainButtonLabel = hasOverpayments
+    ? t('editEarlyPayments')
+    : t('addEarlyPayments');
+
+  const initialLoadDoneRef = useRef(false);
 
   useEffect(() => {
     const state = location.state;
+    const id = searchParams.get('id');
     if (isCalculationPayload(state)) {
-      setLoanDetails(state.loanDetails);
-      setEarlyPayments(state.earlyPayments);
-      setRegularPayments(state.regularPayments);
+      if (!initialLoadDoneRef.current) {
+        initialLoadDoneRef.current = true;
+        setLoanDetails(state.loanDetails);
+        setEarlyPayments(state.earlyPayments ?? []);
+        setRegularPayments(state.regularPayments ?? []);
+      }
       return;
     }
-    const id = searchParams.get('id');
     if (id) {
-      getCalculationsStorage()
-        .getById(id)
-        .then((calc) => {
-          if (calc) {
-            setLoanDetails(calc.loanDetails);
-            setEarlyPayments(calc.earlyPayments);
-            setRegularPayments(calc.regularPayments);
-          }
-        })
-        .catch(() => {});
+      if (!initialLoadDoneRef.current) {
+        initialLoadDoneRef.current = true;
+        getCalculationsStorage()
+          .getById(id)
+          .then((calc) => {
+            if (calc) {
+              setLoanDetails(calc.loanDetails);
+              setEarlyPayments(calc.earlyPayments ?? []);
+              setRegularPayments(calc.regularPayments ?? []);
+            }
+          })
+          .catch(() => {});
+      }
+    } else {
+      initialLoadDoneRef.current = false;
     }
   }, [location.state, searchParams, setLoanDetails, setEarlyPayments, setRegularPayments]);
 
   const stateSavedId =
-    location.state && typeof location.state === 'object' && 'savedId' in location.state
+    location.state &&
+    typeof location.state === 'object' &&
+    'savedId' in location.state
       ? (location.state as { savedId?: string }).savedId
       : undefined;
 
-  const hasPayload = isCalculationPayload(location.state) || searchParams.get('id');
+  const savedId = stateSavedId ?? searchParams.get('id') ?? null;
 
   useEffect(() => {
-    if (!hasPayload || !mainButtonAvailable || earlyPaymentsModalOpen) return;
+    if (!savedId || !loanDetails) return;
+    getCalculationsStorage()
+      .update(savedId, { loanDetails, earlyPayments, regularPayments })
+      .catch(() => {});
+  }, [savedId, loanDetails, earlyPayments, regularPayments]);
+
+  const hasPayload =
+    isCalculationPayload(location.state) || searchParams.get('id');
+  const canEditEarlyPayments = hasPayload && !!loanDetails;
+
+  useEffect(() => {
+    if (!canEditEarlyPayments || !mainButtonAvailable || earlyPaymentsModalOpen) return;
     mainButton.setParams({
       text: mainButtonLabel,
       isVisible: true,
@@ -98,10 +124,16 @@ const MortageResult = () => {
       mainButton.setParams({ isVisible: false });
       off();
     };
-  }, [hasPayload, mainButtonAvailable, t, mainButtonLabel, earlyPaymentsModalOpen]);
+  }, [
+    canEditEarlyPayments,
+    mainButtonAvailable,
+    t,
+    mainButtonLabel,
+    earlyPaymentsModalOpen,
+  ]);
 
   useEffect(() => {
-    if (!earlyPaymentsModalOpen && hasPayload && mainButtonAvailable) {
+    if (!earlyPaymentsModalOpen && canEditEarlyPayments && mainButtonAvailable) {
       mainButton.setParams({
         text: mainButtonLabel,
         isVisible: true,
@@ -109,7 +141,12 @@ const MortageResult = () => {
         hasShineEffect: true,
       });
     }
-  }, [earlyPaymentsModalOpen, hasPayload, mainButtonAvailable, mainButtonLabel]);
+  }, [
+    earlyPaymentsModalOpen,
+    canEditEarlyPayments,
+    mainButtonAvailable,
+    mainButtonLabel,
+  ]);
 
   if (!hasPayload) {
     return (
@@ -138,17 +175,14 @@ const MortageResult = () => {
   return (
     <Page>
       <List>
-        <Section
-          header={
-            <BreadcrumbsNav
-              items={[
-                { label: t('home'), path: '/' },
-                { label: t('calculator'), path: '/calculator' },
-                { label: t('resultTitle') },
-              ]}
-            />
-          }
-        >
+        <BreadcrumbsNav
+          items={[
+            { label: t('home'), path: '/' },
+            { label: t('calculator'), path: '/calculator' },
+            { label: t('resultTitle') },
+          ]}
+        />
+        <Section>
           {!mainButtonAvailable && (
             <>
               <BackButton
@@ -170,21 +204,26 @@ const MortageResult = () => {
               >
                 {t('editParameters')}
               </BackButton>
-              <Button
-                size="s"
-                mode="plain"
-                onClick={() => {
-                  hapticButton();
-                  setEarlyPaymentsModalOpen(true);
-                }}
-              >
-                {mainButtonLabel}
-              </Button>
+              {canEditEarlyPayments && (
+                <Button
+                  size='s'
+                  mode='plain'
+                  onClick={() => {
+                    hapticButton();
+                    setEarlyPaymentsModalOpen(true);
+                  }}
+                >
+                  {mainButtonLabel}
+                </Button>
+              )}
             </>
           )}
         </Section>
         <ResultsDisplay />
-        <EarlyPaymentsModal open={earlyPaymentsModalOpen} onOpenChange={setEarlyPaymentsModalOpen} />
+        <EarlyPaymentsModal
+          open={earlyPaymentsModalOpen}
+          onOpenChange={setEarlyPaymentsModalOpen}
+        />
         <TabView tabs={tabs} defaultTab='charts'>
           <TabPanel id='charts'>
             <ChartsContainer />

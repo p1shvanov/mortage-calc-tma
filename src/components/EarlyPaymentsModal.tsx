@@ -4,7 +4,7 @@ import { Modal, List, Section, Button, Snackbar } from '@telegram-apps/telegram-
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { useLoanForm } from '@/hooks/useLoanForm';
-import { payloadToFormValues } from '@/utils/payloadToFormValues';
+import { payloadToFormValues, type FormValuesLocale } from '@/utils/payloadToFormValues';
 import type { LoanDetailsType } from '@/types/form';
 import { hapticButton, hapticSuccess, hapticError } from '@/utils/haptic';
 import EarlyPaymentsForm from '@/components/form/EarlyPaymentsForm';
@@ -83,12 +83,14 @@ const EarlyPaymentsModalContent = memo(function EarlyPaymentsModalContent({
 });
 
 const EarlyPaymentsModal = memo(function EarlyPaymentsModal({ open, onOpenChange }: EarlyPaymentsModalProps) {
+  const { language } = useLocalization();
   const { loanDetails, earlyPayments, regularPayments } = useMortgage();
+  const locale: FormValuesLocale = language;
 
   const defaultValues = useMemo(() => {
     if (!open || !loanDetails) return undefined;
-    return payloadToFormValues({ loanDetails, earlyPayments, regularPayments });
-  }, [open, loanDetails, earlyPayments, regularPayments]);
+    return payloadToFormValues({ loanDetails, earlyPayments, regularPayments }, locale);
+  }, [open, loanDetails, earlyPayments, regularPayments, locale]);
 
   if (!open) return null;
 
@@ -96,6 +98,7 @@ const EarlyPaymentsModal = memo(function EarlyPaymentsModal({ open, onOpenChange
     <Modal open={open} onOpenChange={onOpenChange} snapPoints={[1]}>
       {defaultValues ? (
         <EarlyPaymentsModalContent
+          key={`${defaultValues.loanAmount}-${defaultValues.interestRate}-${defaultValues.loanTerm}`}
           defaultValues={defaultValues}
           onClose={() => onOpenChange(false)}
         />

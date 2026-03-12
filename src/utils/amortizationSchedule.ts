@@ -2,6 +2,7 @@ import {
   calculateInterestForPeriod,
   InterestCalculationMethod,
   PaymentType,
+  roundMoney,
 } from './financialMath';
 
 export interface AmortizationScheduleItem {
@@ -61,20 +62,51 @@ export interface AmortizationScheduleResult {
 export function generateAmortizationSchedule(
   params: AmortizationScheduleParams
 ): AmortizationScheduleResult {
-  const { 
-    loanAmount, 
-    interestRate, 
-    loanTerm, 
-    startDate, 
+  const {
+    loanAmount,
+    interestRate,
+    loanTerm,
+    startDate,
     earlyPayments = [],
     regularPayments = [],
-    paymentType = 'annuity', // Default to annuity payments
-    interestCalculationMethod = InterestCalculationMethod.ACTUAL_365 // Default to current method
+    paymentType = 'annuity',
+    interestCalculationMethod = InterestCalculationMethod.ACTUAL_365
   } = params;
-  
+
+  if (loanAmount <= 0 || loanTerm <= 0) {
+    return {
+      schedule: [],
+      summary: {
+        originalTerm: 0,
+        newTerm: 0,
+        originalTotalInterest: 0,
+        newTotalInterest: 0,
+        originalMonthlyPayment: 0,
+        finalMonthlyPayment: 0,
+        totalSavings: 0,
+        paymentType,
+      },
+    };
+  }
+
   // Total number of payments (years * 12 months)
-  const numberOfPayments = loanTerm * 12;
-  
+  const numberOfPayments = Math.max(0, Math.floor(loanTerm * 12));
+  if (numberOfPayments === 0) {
+    return {
+      schedule: [],
+      summary: {
+        originalTerm: 0,
+        newTerm: 0,
+        originalTotalInterest: 0,
+        newTotalInterest: 0,
+        originalMonthlyPayment: 0,
+        finalMonthlyPayment: 0,
+        totalSavings: 0,
+        paymentType,
+      },
+    };
+  }
+
   // Calculate original monthly payment based on payment type
   const monthlyRate = interestRate / 100 / 12;
   let originalMonthlyPayment: number;
@@ -91,22 +123,16 @@ export function generateAmortizationSchedule(
       (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
   }
   
-  // Map early payments to their corresponding payment dates
-  // Sort early payments by date first to ensure they're processed in chronological order
-  const sortedEarlyPayments = [...earlyPayments].sort((a, b) => 
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-  
-  const earlyPaymentsByDate = new Map<string, {
-    amount: number;
-    type: 'reduceTerm' | 'reducePayment';
-  }>();
-  
-  sortedEarlyPayments.forEach(payment => {
-    earlyPaymentsByDate.set(payment.date, {
-      amount: payment.amount,
-      type: payment.type
-    });
+  // Map early payments by month (YYYY-MM); keep full list with dates for interest splitting
+  const earlyPaymentsByMonth = new Map<string, Array<{ date: string; amount: number; type: 'reduceTerm' | 'reducePayment' }>>();
+  earlyPayments.forEach(payment => {
+    const d = new Date(payment.date);
+    const monthKey = Number.isNaN(d.getTime())
+      ? payment.date.slice(0, 7)
+      : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const list = earlyPaymentsByMonth.get(monthKey) ?? [];
+    list.push({ date: payment.date, amount: payment.amount, type: payment.type });
+    earlyPaymentsByMonth.set(monthKey, list);
   });
   
   // Generate the amortization schedule
@@ -116,25 +142,35 @@ export function generateAmortizationSchedule(
   let currentMonthlyPayment = originalMonthlyPayment;
   const startDateObj = new Date(startDate);
   
-  // Calculate original total interest (without early payments)
+  // Original total interest: use same ACTUAL_365 schedule when there are overpayments, so totalSavings is consistent
   let originalTotalInterest: number;
-  
-  if (paymentType === 'differentiated') {
-    // For differentiated payments, calculate the sum of all interest payments
-    let totalPayments = 0;
-    let remainingBalance = loanAmount;
-    const fixedPrincipalPortion = loanAmount / numberOfPayments;
-    
-    for (let i = 0; i < numberOfPayments; i++) {
-      const interestPortion = remainingBalance * monthlyRate;
-      totalPayments += fixedPrincipalPortion + interestPortion;
-      remainingBalance -= fixedPrincipalPortion;
-    }
-    
-    originalTotalInterest = totalPayments - loanAmount;
+  if (earlyPayments.length > 0 || regularPayments.length > 0) {
+    const baseResult = generateAmortizationSchedule({
+      loanAmount,
+      interestRate,
+      loanTerm,
+      startDate,
+      paymentType,
+      paymentDay: params.paymentDay,
+      interestCalculationMethod,
+      earlyPayments: [],
+      regularPayments: [],
+    });
+    originalTotalInterest = baseResult.summary.newTotalInterest;
   } else {
-    // For annuity payments, all payments are the same
-    originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
+    if (paymentType === 'differentiated') {
+      let totalPayments = 0;
+      let remainingBalance = loanAmount;
+      const fixedPrincipalPortion = loanAmount / numberOfPayments;
+      for (let i = 0; i < numberOfPayments; i++) {
+        const interestPortion = remainingBalance * monthlyRate;
+        totalPayments += fixedPrincipalPortion + interestPortion;
+        remainingBalance -= fixedPrincipalPortion;
+      }
+      originalTotalInterest = totalPayments - loanAmount;
+    } else {
+      originalTotalInterest = (originalMonthlyPayment * numberOfPayments) - loanAmount;
+    }
   }
   
   // Track if we've had a reducePayment type early payment
@@ -142,9 +178,10 @@ export function generateAmortizationSchedule(
   
   let currentDate = new Date(startDateObj);
   let month = 1;
-  let remainingTerm = numberOfPayments; // Track remaining term separately
-  
-  while (month <= remainingTerm && balance > 0.01) {
+  let remainingTerm = numberOfPayments; // Used as hint for reduceTerm; we exit when balance is paid off
+  const maxMonths = numberOfPayments + 24; // Safety cap to avoid infinite loop
+
+  while (balance > 0.01 && month <= maxMonths) {
   // Calculate payment date based on payment day setting
   const paymentDate = new Date(currentDate);
   paymentDate.setMonth(currentDate.getMonth() + 1);
@@ -158,15 +195,62 @@ export function generateAmortizationSchedule(
     const adjustedDay = Math.min(params.paymentDay, lastDay);
     paymentDate.setDate(adjustedDay);
   }
-    
-    // Calculate interest for this period using the selected calculation method
-    const interest = calculateInterestForPeriod(
-      balance,
-      interestRate,
-      currentDate,
-      paymentDate,
-      interestCalculationMethod
-    );
+
+    const dateStr = paymentDate.toISOString().split('T')[0];
+    const monthKey = dateStr.slice(0, 7);
+
+    // Early payments in this month that fall within (currentDate, paymentDate] for interest splitting
+    const listInMonth = earlyPaymentsByMonth.get(monthKey) ?? [];
+    const periodStart = new Date(currentDate);
+    const periodEnd = new Date(paymentDate);
+    const inPeriod = listInMonth
+      .map((ep) => ({ ...ep, dateObj: new Date(ep.date) }))
+      .filter((ep) => !Number.isNaN(ep.dateObj.getTime()) && ep.dateObj > periodStart && ep.dateObj <= periodEnd)
+      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+    let interest: number;
+    let extraPayment = 0;
+    let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+
+    if (inPeriod.length === 0) {
+      interest = calculateInterestForPeriod(
+        balance,
+        interestRate,
+        currentDate,
+        paymentDate,
+        interestCalculationMethod
+      );
+      if (listInMonth.length > 0) {
+        extraPayment = listInMonth.reduce((s, ep) => s + ep.amount, 0);
+        extraPaymentType = listInMonth[listInMonth.length - 1].type;
+      }
+    } else {
+      // Split period by exact early payment dates: interest before each date on current balance, after on reduced
+      interest = 0;
+      let segmentStart = new Date(currentDate);
+      let runningBalance = balance;
+      for (const ep of inPeriod) {
+        const segmentEnd = ep.dateObj;
+        interest += calculateInterestForPeriod(
+          runningBalance,
+          interestRate,
+          segmentStart,
+          segmentEnd,
+          interestCalculationMethod
+        );
+        runningBalance -= ep.amount;
+        segmentStart = segmentEnd;
+        extraPayment += ep.amount;
+        extraPaymentType = ep.type;
+      }
+      interest += calculateInterestForPeriod(
+        runningBalance,
+        interestRate,
+        segmentStart,
+        paymentDate,
+        interestCalculationMethod
+      );
+    }
     
     // Calculate principal and payment based on payment type
     let principal: number;
@@ -183,27 +267,28 @@ export function generateAmortizationSchedule(
     } else {
       // For annuity payments, the total payment is fixed
       // The principal portion increases over time, and the interest portion decreases
-      principal = currentMonthlyPayment - interest;
-      payment = currentMonthlyPayment;
+      // Never allow negative principal (e.g. when segmented interest exceeds monthly payment)
+      principal = Math.max(0, currentMonthlyPayment - interest);
+      payment = principal + interest;
     }
-    
-    // Update the balance
-    let newBalance = balance - principal;
-    
-    // Format the date as ISO string (YYYY-MM-DD)
-    const dateStr = paymentDate.toISOString().split('T')[0];
-    
-    // Check if there's an early payment for this date
-    let extraPayment = 0;
-    let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+
+    // Cap principal at remaining balance so we never overpay (last payment / small balance)
+    principal = Math.min(principal, balance);
+    // At or past scheduled term, or negligible remainder: close out in this row to avoid extra payments from rounding
+    const remainder = balance - principal;
+    const isLastPayment =
+      balance > 0 &&
+      (month >= numberOfPayments || (remainder >= 0 && remainder < 0.02));
+    if (isLastPayment) principal = balance;
+    payment = principal + interest;
+
+    // Update the balance (use rounded principal to avoid drift; last payment pays off exactly)
+    const principalR = isLastPayment ? principal : roundMoney(principal);
+    const interestR = roundMoney(interest);
+    let newBalance = isLastPayment ? 0 : roundMoney(balance - principalR);
+
     let isRegularPayment = false;
-    
-    if (earlyPaymentsByDate.has(dateStr)) {
-      const earlyPayment = earlyPaymentsByDate.get(dateStr)!;
-      extraPayment = earlyPayment.amount;
-      extraPaymentType = earlyPayment.type;
-    }
-    
+
     // Check if this date falls within any regular payment ranges
     const currentPaymentDate = new Date(dateStr);
     
@@ -243,7 +328,7 @@ export function generateAmortizationSchedule(
     
     // Apply extra payment
     if (extraPayment > 0) {
-      newBalance -= extraPayment;
+      newBalance = roundMoney(newBalance - extraPayment);
       
       if (newBalance > 0) {
         // If payment type is to reduce payment, recalculate the monthly payment
@@ -289,28 +374,31 @@ export function generateAmortizationSchedule(
         }
       }
     }
-    
-    // Update total interest
-    totalInterest += interest;
-    
-    // Add this month to the schedule
+
+    newBalance = Math.max(0, newBalance);
+
+    // Update total interest (use rounded interest for consistency with row display)
+    totalInterest += interestR;
+
+    // Add this month to the schedule (rounded values for display and consistency)
+    const paymentR = roundMoney(payment);
     schedule.push({
       month,
       date: dateStr,
-      payment: currentMonthlyPayment,
-      principal,
-      interest,
-      totalInterest,
-      balance: Math.max(0, newBalance),
-      extraPayment: extraPayment > 0 ? extraPayment : undefined,
+      payment: paymentR,
+      principal: principalR,
+      interest: interestR,
+      totalInterest: roundMoney(totalInterest),
+      balance: roundMoney(newBalance),
+      extraPayment: extraPayment > 0 ? roundMoney(extraPayment) : undefined,
       extraPaymentType: extraPayment > 0 ? extraPaymentType : undefined,
       isRegularPayment: isRegularPayment,
       // Add a message if this is a regular payment but no early repayment occurred
-      regularPaymentMessage: isRegularPayment && extraPayment <= 0 ? 
-        'The specified total payment is less than the monthly payment amount, so early repayment did not occur.' : 
+      regularPaymentMessage: isRegularPayment && extraPayment <= 0 ?
+        'The specified total payment is less than the monthly payment amount, so early repayment did not occur.' :
         undefined
     });
-    
+
     // Update balance for next iteration
     balance = newBalance;
     
@@ -319,24 +407,21 @@ export function generateAmortizationSchedule(
     month++;
   }
   
-  // Calculate summary statistics
+  // Calculate summary statistics (rounded for consistency)
   const newTerm = schedule.length;
-  const newTotalInterest = totalInterest;
-  const finalMonthlyPayment = schedule[schedule.length - 1].payment;
-  
-  // Calculate total savings - this should only include interest savings
-  // The true savings is the difference between the total interest that would have been paid
-  // without early payments and the total interest actually paid
-  const totalSavings = originalTotalInterest - newTotalInterest;
-  
+  const newTotalInterestR = roundMoney(totalInterest);
+  const finalMonthlyPayment = schedule.length > 0 ? schedule[schedule.length - 1].payment : 0;
+
+  const totalSavings = roundMoney(originalTotalInterest - newTotalInterestR);
+
   return {
     schedule,
     summary: {
       originalTerm: numberOfPayments,
       newTerm,
-      originalTotalInterest,
-      newTotalInterest,
-      originalMonthlyPayment,
+      originalTotalInterest: roundMoney(originalTotalInterest),
+      newTotalInterest: newTotalInterestR,
+      originalMonthlyPayment: roundMoney(originalMonthlyPayment),
       finalMonthlyPayment,
       totalSavings,
       paymentType

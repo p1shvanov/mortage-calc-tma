@@ -1,5 +1,5 @@
 import { FC, memo, useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   List,
   Section,
@@ -21,10 +21,15 @@ import { Icon24Cancel } from '@telegram-apps/telegram-ui/dist/icons/24/cancel';
 import Page from '@/components/Page';
 import BreadcrumbsNav from '@/components/BreadcrumbsNav';
 import { useMainButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
-import { hapticButton, hapticSelection, hapticSuccess, hapticDestructive, hapticError } from '@/utils/haptic';
+import {
+  hapticButton,
+  hapticSelection,
+  hapticSuccess,
+  hapticDestructive,
+  hapticError,
+} from '@/utils/haptic';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
-import { isOnboardingCompleted } from '@/services/onboardingStorage';
 import type { SavedCalculation } from '@/types/storage';
 
 const ITEMS_PER_PAGE = 5;
@@ -42,10 +47,17 @@ const HomePage: FC = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil(calculations.length / ITEMS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(calculations.length / ITEMS_PER_PAGE),
+  );
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentItems = calculations.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const showPagination = !loading && !loadError && calculations.length > ITEMS_PER_PAGE;
+  const currentItems = calculations.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
+  const showPagination =
+    !loading && !loadError && calculations.length > ITEMS_PER_PAGE;
 
   const touchStartRef = useRef({ x: 0, y: 0 });
   const handleSwipeEnd = useCallback(
@@ -110,7 +122,12 @@ const HomePage: FC = () => {
   useEffect(() => {
     if (!mainButtonAvailable) return;
     if (showList) {
-      mainButton.setParams({ text: t('newCalculation'), isVisible: true, isEnabled: true, hasShineEffect: true });
+      mainButton.setParams({
+        text: t('newCalculation'),
+        isVisible: true,
+        isEnabled: true,
+        hasShineEffect: true,
+      });
       const off = mainButton.onClick(() => {
         hapticButton();
         navigate('/calculator');
@@ -125,23 +142,22 @@ const HomePage: FC = () => {
 
   const user = initData?.user;
   const greetingName = user
-    ? [user.first_name, user.last_name].filter(Boolean).join(' ') || user.username || null
+    ? [user.first_name, user.last_name].filter(Boolean).join(' ') ||
+      user.username ||
+      null
     : null;
-  const greeting = greetingName ? t('greeting', { name: greetingName }) : t('greetingAnonymous');
+  const greeting = greetingName
+    ? t('greeting', { name: greetingName })
+    : t('greetingAnonymous');
   const userAcronym = user
-    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() || undefined
+    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase() ||
+      undefined
     : undefined;
   // photo_url приходит только при запуске из меню вложений (Attachment Menu). При открытии по ссылке — только acronym.
   const userPhotoUrl =
     user &&
-    (
-      (user as { photo_url?: string }).photo_url ??
-      (user as { photoUrl?: string }).photoUrl
-    );
-
-  if (!isOnboardingCompleted()) {
-    return <Navigate to="/onboarding" replace />;
-  }
+    ((user as { photo_url?: string }).photo_url ??
+      (user as { photoUrl?: string }).photoUrl);
 
   const handleOpenCalculation = (calc: SavedCalculation) => {
     hapticSelection();
@@ -175,25 +191,20 @@ const HomePage: FC = () => {
   return (
     <Page back={false}>
       <List>
-        <Section
-          header={<BreadcrumbsNav items={[{ label: t('home') }]} />}
-        >
-          <Placeholder
-            header={
-              <>
-                {user && (
-                  <Avatar
-                    size={48}
-                    src={userPhotoUrl || undefined}
-                    acronym={userAcronym}
-                  />
-                )}
-                <Text weight="2">{greeting}</Text>
-              </>
-            }
-          />
+        <BreadcrumbsNav items={[{ label: t('home') }]} />
+        <Section>
+          <Placeholder header={greeting}>
+            <Text weight='2'>
+              {user && (
+                <Avatar
+                  size={48}
+                  src={userPhotoUrl || undefined}
+                  acronym={userAcronym || undefined}
+                />
+              )}
+            </Text>
+          </Placeholder>
         </Section>
-
         <Section
           header={t('calculationHistory')}
           onTouchStart={
@@ -214,8 +225,8 @@ const HomePage: FC = () => {
                 description={t('goToCalculator')}
                 action={
                   <Button
-                    size="m"
-                    mode="filled"
+                    size='m'
+                    mode='filled'
                     onClick={() => {
                       hapticButton();
                       navigate('/calculator');
@@ -226,8 +237,8 @@ const HomePage: FC = () => {
                 }
               >
                 <img
-                  alt=""
-                  src="https://xelene.me/telegram.gif"
+                  alt=''
+                  src='https://xelene.me/telegram.gif'
                   style={{ display: 'block', width: 144, height: 144 }}
                 />
               </Placeholder>
@@ -237,8 +248,8 @@ const HomePage: FC = () => {
                 description={t('retry')}
                 action={
                   <Button
-                    size="m"
-                    mode="filled"
+                    size='m'
+                    mode='filled'
                     onClick={() => {
                       hapticButton();
                       loadCalculations();
@@ -250,7 +261,7 @@ const HomePage: FC = () => {
               />
             ) : showPagination ? (
               <Section.Footer centered>
-                <CompactPagination mode="ambient">
+                <CompactPagination mode='ambient'>
                   {paginationPages.map((page) => (
                     <CompactPagination.Item
                       key={page}
@@ -290,16 +301,16 @@ const HomePage: FC = () => {
                 after={
                   <InlineButtons>
                     <IconButton
-                      size="s"
-                      mode="plain"
+                      size='s'
+                      mode='plain'
                       onClick={(e) => handleDeleteCalculation(e, calc.id)}
                       aria-label={t('remove')}
                     >
                       <Icon24Cancel />
                     </IconButton>
                     <IconButton
-                      size="s"
-                      mode="plain"
+                      size='s'
+                      mode='plain'
                       onClick={(e) => {
                         e.stopPropagation();
                         handleOpenCalculation(calc);
