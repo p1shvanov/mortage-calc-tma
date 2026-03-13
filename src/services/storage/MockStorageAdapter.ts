@@ -1,11 +1,8 @@
 import type { ICalculationsStorage } from './ICalculationsStorage';
-import type { SavedCalculation } from '@/types/storage';
+import type { SavedCalculation, CalculationData } from '@/types/storage';
+import { generateCalculationId } from '@/domain';
 
 const STORAGE_KEY = 'mortage-calc-calculations';
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-}
 
 export class MockStorageAdapter implements ICalculationsStorage {
   private getListFromStorage(): SavedCalculation[] {
@@ -33,13 +30,11 @@ export class MockStorageAdapter implements ICalculationsStorage {
     return list.find((c) => c.id === id) ?? null;
   }
 
-  async save(
-    calculation: Omit<SavedCalculation, 'id' | 'createdAt'>
-  ): Promise<SavedCalculation> {
+  async save(calculation: CalculationData): Promise<SavedCalculation> {
     const list = this.getListFromStorage();
     const saved: SavedCalculation = {
       ...calculation,
-      id: generateId(),
+      id: generateCalculationId(),
       createdAt: new Date().toISOString(),
     };
     list.unshift(saved);
@@ -47,10 +42,7 @@ export class MockStorageAdapter implements ICalculationsStorage {
     return saved;
   }
 
-  async update(
-    id: string,
-    calculation: Omit<SavedCalculation, 'id' | 'createdAt'>
-  ): Promise<SavedCalculation> {
+  async update(id: string, calculation: CalculationData): Promise<SavedCalculation> {
     const list = this.getListFromStorage();
     const index = list.findIndex((c) => c.id === id);
     if (index === -1) {

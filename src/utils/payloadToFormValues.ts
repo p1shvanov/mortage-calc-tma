@@ -1,5 +1,5 @@
 import type { LoanDetailsType } from '@/types/form';
-import type { CalculationPayload } from '@/hooks/useLoanForm';
+import type { CalculationData } from '@/domain';
 
 export type FormValuesLocale = 'en' | 'ru';
 
@@ -18,12 +18,12 @@ function toLocalizedNumberString(
 }
 
 /**
- * Converts calculation payload (numbers) to form default values (strings for inputs).
+ * Converts calculation data (numbers) to form default values (strings for inputs).
  * Used when opening the calculator from the result page ("Edit parameters") or from history.
  * Pass locale so percent/number inputs get the correct decimal separator (e.g. 18,75 for ru).
  */
 export function payloadToFormValues(
-  payload: CalculationPayload,
+  payload: CalculationData,
   locale: FormValuesLocale = 'en'
 ): LoanDetailsType {
   const { loanDetails, earlyPayments, regularPayments } = payload;

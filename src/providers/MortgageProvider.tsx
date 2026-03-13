@@ -1,34 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { PaymentType } from '@/utils/financialMath';
-import { 
-  mortgageService, 
-  MortgageCalculationResults, 
-  AmortizationScheduleResults 
+import type { LoanDetailsValues, EarlyPayment, RegularPayment } from '@/domain';
+import {
+  mortgageService,
+  MortgageCalculationResults,
+  AmortizationScheduleResults,
 } from '@/services/mortgage';
-
-export interface EarlyPayment {
-  id: string;
-  date: string; // ISO date string format YYYY-MM-DD
-  amount: number;
-  type: 'reduceTerm' | 'reducePayment';
-}
-
-export interface RegularPayment {
-  id: string;
-  amount: number;
-  startMonth: string; // Month to start regular payments
-  endMonth?: string;  // Month to end regular payments (optional)
-  type: 'reduceTerm' | 'reducePayment'; // Recalculation type
-}
-
-export interface LoanDetailsValues {
-  loanAmount: number;
-  interestRate: number;
-  loanTerm: number;
-  startDate: string;
-  paymentType: PaymentType;
-  paymentDay: number;
-}
 
 interface MortgageContextType {
   loanDetails: LoanDetailsValues | null;
@@ -39,8 +15,6 @@ interface MortgageContextType {
   setRegularPayments: (payments: RegularPayment[]) => void;
   mortgageResults: MortgageCalculationResults | null;
   amortizationResult: AmortizationScheduleResults | null;
-  setMortgageResults: (mortage: MortgageCalculationResults) => void;
-  setAmortizationResult: (amortization: AmortizationScheduleResults) => void;
 }
 
 const MortgageContext = createContext<MortgageContextType | undefined>(undefined);
@@ -52,34 +26,23 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [mortgageResults, setMortgageResults] = useState<MortgageCalculationResults | null>(null);
   const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResults | null>(null);
 
-  // Base calculation: loan only → mortgageResults (no overpayments)
+  // Single effect: base summary (loan only) + schedule (loan + overpayments)
   useEffect(() => {
-    if (loanDetails) {
-      mortgageService
-        .calculateBase(loanDetails)
-        .then(setMortgageResults)
-        .catch((error) => console.error('Error calculating mortgage results:', error));
-    }
-  }, [loanDetails]);
+    if (!loanDetails) return;
 
-  // Schedule (and extended summary): loan + overpayments → amortizationResult
-  useEffect(() => {
-    if (loanDetails) {
-      try {
-        // Use the mortgage service to generate amortization schedule
-        mortgageService.generateAmortizationSchedule({
-          ...loanDetails,
-          earlyPayments,
-          regularPayments
-        }).then(result => {
-          setAmortizationResult(result);
-        }).catch(error => {
-          console.error('Error generating amortization schedule:', error);
-        });
-      } catch (error) {
-        console.error('Error generating amortization schedule:', error);
-      }
-    }
+    mortgageService
+      .calculateBase(loanDetails)
+      .then(setMortgageResults)
+      .catch((err) => console.error('Error calculating mortgage results:', err));
+
+    mortgageService
+      .generateAmortizationSchedule({
+        ...loanDetails,
+        earlyPayments,
+        regularPayments,
+      })
+      .then(setAmortizationResult)
+      .catch((err) => console.error('Error generating amortization schedule:', err));
   }, [loanDetails, earlyPayments, regularPayments]);
 
   return (
@@ -93,8 +56,6 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
         setRegularPayments,
         mortgageResults,
         amortizationResult,
-        setMortgageResults,
-        setAmortizationResult
       }}
     >
       {children}
