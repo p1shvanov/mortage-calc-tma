@@ -14,11 +14,18 @@ import './mockEnv.ts';
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 try {
-  const { tgWebAppPlatform: platform } = retrieveLaunchParams();
+  const launchParams = retrieveLaunchParams();
+  const platform = launchParams.tgWebAppPlatform;
+  const startParam = launchParams.tgWebAppStartParam;
   const debug = import.meta.env.DEV;
+  const erudaFromUrl = new URLSearchParams(window.location.search).get('eruda') === '1';
+  const debugFromStartParam = startParam === 'platformer_debug';
   await init({
-    debug,
-    eruda: debug && ['ios', 'android', 'macos'].includes(platform ?? ''),
+    debug: debug || debugFromStartParam,
+    eruda:
+      erudaFromUrl ||
+      debugFromStartParam ||
+      (debug && ['ios', 'android', 'macos'].includes(platform ?? '')),
     mockForMacOS: platform === 'macos',
   });
   root.render(<Root />);
