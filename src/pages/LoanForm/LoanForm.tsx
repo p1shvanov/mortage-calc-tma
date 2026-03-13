@@ -1,13 +1,12 @@
 import { FC, memo, useMemo, useEffect, useState, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { List, Section, Button, Snackbar } from '@telegram-apps/telegram-ui';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { List, Section, Button, Snackbar, Placeholder } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
 
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
 
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { useMortgage } from '@/providers/MortgageProvider';
-import { useLoanForm, type CalculationPayload } from '@/hooks/useLoanForm';
+import { useLoanForm } from '@/hooks/useLoanForm';
 import { useMainButtonAvailable, useBackButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
 import { getCalculationsStorage } from '@/services/storage';
 import { payloadToFormValues } from '@/utils/payloadToFormValues';
@@ -15,6 +14,7 @@ import { hapticButton, hapticSuccess, hapticError } from '@/utils/haptic';
 import Page from '@/components/Page';
 import BackButton from '@/components/BackButton';
 import BreadcrumbsNav from '@/components/BreadcrumbsNav';
+import type { SavedCalculation } from '@/types/storage';
 
 function MainButtonSync({
   form,
@@ -66,33 +66,44 @@ function ValidationSnackbarSync({
   );
 }
 
-function isCalculationPayload(state: unknown): state is CalculationPayload {
-  return (
-    typeof state === 'object' &&
-    state !== null &&
-    'loanDetails' in state &&
-    typeof (state as CalculationPayload).loanDetails === 'object'
-  );
-}
-
 const LoanForm: FC = () => {
   const { t, language } = useLocalization();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { loanDetails, earlyPayments, regularPayments } = useMortgage();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('id');
   const mainButtonAvailable = useMainButtonAvailable();
   const backButtonAvailable = useBackButtonAvailable();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const defaultValues = useMemo(() => {
-    if (isCalculationPayload(location.state)) return payloadToFormValues(location.state, language);
-    if (loanDetails) return payloadToFormValues({ loanDetails, earlyPayments, regularPayments }, language);
-    return undefined;
-  }, [location.state, loanDetails, earlyPayments, regularPayments, language]);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [loadedForEdit, setLoadedForEdit] = useState<SavedCalculation | null>(null);
+  const loadedIdRef = useRef<string | null>(null);
 
-  const savedId = location.state && typeof location.state === 'object' && 'savedId' in location.state
-    ? (location.state as { savedId?: string }).savedId
-    : undefined;
+  useEffect(() => {
+    if (!editId) {
+      setLoadedForEdit(null);
+      loadedIdRef.current = null;
+      return;
+    }
+    if (loadedIdRef.current === editId) return;
+    loadedIdRef.current = editId;
+    setLoadingEdit(true);
+    getCalculationsStorage()
+      .getById(editId)
+      .then((calc) => {
+        setLoadedForEdit(calc);
+        setLoadingEdit(false);
+      })
+      .catch(() => {
+        setLoadedForEdit(null);
+        setLoadingEdit(false);
+      });
+  }, [editId]);
+
+  const defaultValues = useMemo(() => {
+    if (loadedForEdit) return payloadToFormValues(loadedForEdit, language);
+    return undefined;
+  }, [loadedForEdit, language]);
 
   const form = useLoanForm({
     defaultValues,
@@ -103,14 +114,15 @@ const LoanForm: FC = () => {
       try {
         hapticSuccess();
         const storage = getCalculationsStorage();
-        let id = savedId;
-        if (id) {
-          await storage.update(id, payload);
+        let id: string;
+        if (editId) {
+          await storage.update(editId, payload);
+          id = editId;
         } else {
           const saved = await storage.save(payload);
-          if (saved) id = saved.id;
+          id = saved.id;
         }
-        navigate('/result', { state: { ...payload, savedId: id ?? undefined } });
+        navigate(`/result?id=${id}`);
       } catch {
         hapticError();
         setSnackbarMessage(t('saveError'));
@@ -135,6 +147,40 @@ const LoanForm: FC = () => {
       off();
     };
   }, [t, mainButtonAvailable]);
+
+  if (editId && loadingEdit) {
+    return (
+      <Page>
+        <List>
+          <Placeholder header={t('loading')} description={t('loadingCalculation')} />
+        </List>
+      </Page>
+    );
+  }
+
+  if (editId && !loadingEdit && !loadedForEdit) {
+    return (
+      <Page>
+        <List>
+          <Placeholder
+            header={t('calculationNotFound')}
+            description={t('goToCalculator')}
+            action={
+              <Button
+                size="m"
+                onClick={() => {
+                  hapticButton();
+                  navigate('/');
+                }}
+              >
+                {t('goToHome')}
+              </Button>
+            }
+          />
+        </List>
+      </Page>
+    );
+  }
 
   return (
     <Page>

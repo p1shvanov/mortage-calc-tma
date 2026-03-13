@@ -161,14 +161,7 @@ const HomePage: FC = () => {
 
   const handleOpenCalculation = (calc: SavedCalculation) => {
     hapticSelection();
-    navigate('/result', {
-      state: {
-        loanDetails: calc.loanDetails,
-        earlyPayments: calc.earlyPayments,
-        regularPayments: calc.regularPayments,
-        savedId: calc.id,
-      },
-    });
+    navigate(`/result?id=${calc.id}`);
   };
 
   const handleDeleteCalculation = async (e: React.MouseEvent, id: string) => {

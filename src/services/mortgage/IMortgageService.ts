@@ -1,5 +1,5 @@
-import { PaymentType } from '@/utils/financialMath';
-import { EarlyPayment, RegularPayment } from '@/providers/MortgageProvider';
+import type { PaymentType } from '@/domain';
+import type { EarlyPayment, RegularPayment } from '@/domain';
 
 /**
  * Interface for mortgage calculation parameters (full: loan + optional overpayments).

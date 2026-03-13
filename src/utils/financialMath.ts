@@ -1,3 +1,7 @@
+import type { PaymentType } from '@/domain';
+
+export type { PaymentType };
+
 /** Round monetary values to 2 decimal places (cents) to avoid float drift and for display consistency. */
 export function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -21,11 +25,6 @@ export enum InterestCalculationMethod {
   THIRTY_360 = 'THIRTY_360',
   ACTUAL_ACTUAL = 'ACTUAL_ACTUAL',
 }
-
-/**
- * Types of loan payments
- */
-export type PaymentType = 'annuity' | 'differentiated';
 
 /**
  * Calculate monthly payment for a differentiated loan

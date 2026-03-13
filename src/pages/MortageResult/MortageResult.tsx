@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { List, Button, Placeholder, Section } from '@telegram-apps/telegram-ui';
 import { mainButton } from '@telegram-apps/sdk-react';
 
@@ -17,28 +17,20 @@ import { useMortgage } from '@/providers/MortgageProvider';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
 import { hapticButton } from '@/utils/haptic';
-import type { CalculationPayload } from '@/hooks/useLoanForm';
 
 const tabs = [
   { id: 'charts', icon: '📊' },
   { id: 'schedule', icon: '📅' },
 ];
 
-function isCalculationPayload(state: unknown): state is CalculationPayload {
-  return (
-    typeof state === 'object' &&
-    state !== null &&
-    'loanDetails' in state &&
-    typeof (state as CalculationPayload).loanDetails === 'object'
-  );
-}
-
+/** Result page: id in URL required. All data is loaded from storage (single source of truth). */
 const MortageResult = () => {
-  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mainButtonAvailable = useMainButtonAvailable();
   const [earlyPaymentsModalOpen, setEarlyPaymentsModalOpen] = useState(false);
+  const [loadingById, setLoadingById] = useState(false);
+  const [calculationNotFound, setCalculationNotFound] = useState(false);
   const {
     loanDetails,
     earlyPayments,
@@ -49,53 +41,53 @@ const MortageResult = () => {
   } = useMortgage();
   const { t } = useLocalization();
 
+  const idFromUrl = searchParams.get('id');
+  const savedId = idFromUrl;
+
   const hasOverpayments =
     earlyPayments.length > 0 || regularPayments.length > 0;
   const mainButtonLabel = hasOverpayments
     ? t('editEarlyPayments')
     : t('addEarlyPayments');
 
-  const initialLoadDoneRef = useRef(false);
+  const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const state = location.state;
     const id = searchParams.get('id');
-    if (isCalculationPayload(state)) {
-      if (!initialLoadDoneRef.current) {
-        initialLoadDoneRef.current = true;
-        setLoanDetails(state.loanDetails);
-        setEarlyPayments(state.earlyPayments ?? []);
-        setRegularPayments(state.regularPayments ?? []);
-      }
+
+    if (!id) {
+      loadedIdRef.current = null;
+      setLoadingById(false);
+      setCalculationNotFound(false);
       return;
     }
-    if (id) {
-      if (!initialLoadDoneRef.current) {
-        initialLoadDoneRef.current = true;
-        getCalculationsStorage()
-          .getById(id)
-          .then((calc) => {
-            if (calc) {
-              setLoanDetails(calc.loanDetails);
-              setEarlyPayments(calc.earlyPayments ?? []);
-              setRegularPayments(calc.regularPayments ?? []);
-            }
-          })
-          .catch(() => {});
-      }
-    } else {
-      initialLoadDoneRef.current = false;
+
+    if (loadedIdRef.current !== id) {
+      loadedIdRef.current = id;
+      setLoadingById(true);
+      setCalculationNotFound(false);
+      getCalculationsStorage()
+        .getById(id)
+        .then((calc) => {
+          setLoadingById(false);
+          if (calc) {
+            setCalculationNotFound(false);
+            setLoanDetails(calc.loanDetails);
+            setEarlyPayments(calc.earlyPayments ?? []);
+            setRegularPayments(calc.regularPayments ?? []);
+          } else {
+            setCalculationNotFound(true);
+          }
+        })
+        .catch(() => {
+          setLoadingById(false);
+          setCalculationNotFound(true);
+        });
     }
-  }, [location.state, searchParams, setLoanDetails, setEarlyPayments, setRegularPayments]);
+  }, [searchParams, setLoanDetails, setEarlyPayments, setRegularPayments]);
 
-  const stateSavedId =
-    location.state &&
-    typeof location.state === 'object' &&
-    'savedId' in location.state
-      ? (location.state as { savedId?: string }).savedId
-      : undefined;
-
-  const savedId = stateSavedId ?? searchParams.get('id') ?? null;
+  const hasPayload = idFromUrl && loanDetails !== null && !calculationNotFound;
+  const canEditEarlyPayments = hasPayload && !!loanDetails;
 
   useEffect(() => {
     if (!savedId || !loanDetails) return;
@@ -103,10 +95,6 @@ const MortageResult = () => {
       .update(savedId, { loanDetails, earlyPayments, regularPayments })
       .catch(() => {});
   }, [savedId, loanDetails, earlyPayments, regularPayments]);
-
-  const hasPayload =
-    isCalculationPayload(location.state) || searchParams.get('id');
-  const canEditEarlyPayments = hasPayload && !!loanDetails;
 
   useEffect(() => {
     if (!canEditEarlyPayments || !mainButtonAvailable || earlyPaymentsModalOpen) return;
@@ -148,7 +136,41 @@ const MortageResult = () => {
     mainButtonLabel,
   ]);
 
-  if (!hasPayload) {
+  if (idFromUrl && loadingById) {
+    return (
+      <Page>
+        <List>
+          <Placeholder header={t('loading')} description={t('loadingCalculation')} />
+        </List>
+      </Page>
+    );
+  }
+
+  if (idFromUrl && calculationNotFound) {
+    return (
+      <Page>
+        <List>
+          <Placeholder
+            header={t('calculationNotFound')}
+            description={t('goToCalculator')}
+            action={
+              <Button
+                size='m'
+                onClick={() => {
+                  hapticButton();
+                  navigate('/');
+                }}
+              >
+                {t('goToHome')}
+              </Button>
+            }
+          />
+        </List>
+      </Page>
+    );
+  }
+
+  if (!idFromUrl || !hasPayload) {
     return (
       <Page>
         <List>
@@ -157,7 +179,7 @@ const MortageResult = () => {
             description={t('goToCalculator')}
             action={
               <Button
-                size='m'
+                size="m"
                 onClick={() => {
                   hapticButton();
                   navigate('/calculator');
@@ -188,18 +210,7 @@ const MortageResult = () => {
               <BackButton
                 onClick={() => {
                   hapticButton();
-                  if (loanDetails) {
-                    navigate('/calculator', {
-                      state: {
-                        loanDetails,
-                        earlyPayments,
-                        regularPayments,
-                        savedId: stateSavedId,
-                      },
-                    });
-                  } else {
-                    navigate('/calculator');
-                  }
+                  navigate(savedId ? `/calculator?id=${savedId}` : '/calculator');
                 }}
               >
                 {t('editParameters')}
