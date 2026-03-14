@@ -1,4 +1,4 @@
-import{r as t,j as e}from"./vendor-telegram-DCqeDgJ0.js";
+import{r as t,j as e}from"./vendor-telegram-Cz9x-d9S.js";
 /*!
  * @kurkle/color v0.3.4
  * https://github.com/kurkle/color#readme
