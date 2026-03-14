@@ -1,74 +1,59 @@
-# Refactor: архитектура, конфиг, UI
+# MR: Доработки UI — графики, темы, настройки
 
-**Ветка:** `refactor/architecture-storage-mortgage-settings`  
-**Тип:** refactor
-
----
-
-## Описание
-
-Рефакторинг архитектуры расчётов и настроек, упрощение слоя mortgage-сервиса, исправление опечаток и доработка экрана результата.
+## Обзор
+Улучшения графиков погашения, единая палитра цветов из темы Telegram, короткие подписи в сводке, замена селекта на радио для типа досрочного погашения, разделение графиков и мелкие правки.
 
 ---
 
-## Изменения
+## 1. Цвета и тема
 
-### 1. Опечатка Mortage → Mortgage
-- Страница результата переименована: `MortageResult` → `MortgageResult` (папка и компонент).
-- В роутах и README обновлены название и заголовок.
+- **themeColors.ts** — новый модуль вместо `chartsTheme.ts`: единая точка получения цветов приложения из палитры Telegram (`getThemeColors`, `getTelegramPalette`, `TelegramPalette`, `PALETTE_LABELS`).
+- **Удалён chartsTheme.ts** — логика перенесена в `themeColors.ts`.
+- Графики и UI используют только цвета из палитры: основной долг — `link`, проценты — `destructiveText`, остаток — `text`, досрочный платёж — `hint` (чтобы не совпадал с основным долгом).
+- В настройках добавлена секция «Цвета темы» с превью палитры (для отладки/проверки).
 
-### 2. Контекст расчёта только на странице результата
-- **Удалён глобальный `MortgageProvider`** из `Root`. Storage остаётся единственным источником правды для сохранённых расчётов.
-- Добавлен хук **`useCalculationWithResults(id)`**: загрузка расчёта из storage по `id`, расчёт base + schedule, синхронизация с storage при изменениях.
-- Контекст доступен только на странице результата через **`MortgageContextProvider`** (value из хука). Компоненты `ResultsDisplay`, `ChartsContainer`, `PaymentSchedule`, `EarlyPaymentsModal` по-прежнему используют `useMortgage()`.
+## 2. Графики
 
-### 3. Валидация: один источник схем
-- Удалён глобальный **`z.setErrorMap`** в `createLocalizedSchemas` (избежание побочных эффектов).
-- **EarlyPaymentsForm** и **RegularPaymentsForm** переведены на `useLocalizedFormSchemas()`; удалены дублирующие схемы с хардкодом сообщений:
-  - `schemas/loanDetails.ts`
-  - `schemas/earlyPayment.ts`
-  - `schemas/regularPayment.ts`
+- **Два графика вместо одного:**
+  - «Состав платежа» (`chartPaymentStructure`) — соотношение основного долга и процентов в платеже (две линии с заливкой).
+  - «Погашение основного долга (остаток)» (`chartBalanceDecrease`) — остаток долга по времени (одна ось).
+- **График остатка при досрочных:**
+  - Линия «По плану» (без досрочных) и «Факт» (с досрочными).
+  - Маркеры в месяцах с досрочным погашением (точки на линии).
+- **Отображение по месяцам** — убрана агрегация по годам для графика погашения и графика ежемесячного платежа.
+- **Линия «Основной долг»** на графике состава платежа — сумма планового principal + досрочные за период (при «уменьшении платежа» линия не падает к нулю).
+- **Полупрозрачная заливка** под линией остатка на втором графике (как на первом).
+- Заголовок первого графика укорочен: «Состав платежа» вместо «Соотношение основного долга и процентов в платеже».
 
-### 4. Упрощение mortgage-сервиса (заготовки под API убраны)
-- Удалены: **MortgageServiceFactory**, **ServerMortgageService**, **config/mortgage.ts**.
-- В `services/mortgage` экспортируется один инстанс: `mortgageService = new LocalMortgageService()`.
-- Удалён deprecated метод **`calculateMortgage`** из `IMortgageService` и реализаций.
+## 3. Сводка и локализация
 
-### 5. Настройки
-- Секция «Настройки» показывается только если есть хотя бы один пункт (fullscreen и/или «Добавить на главный экран»).
-- Пункт «Добавить на главный экран» перенесён внутрь секции «Настройки».
+- Короткие подписи в сводке по платежам: «Экономия» вместо «Общая экономия на процентах», «Сумма выплат», «Дата погашения» (RU и аналоги по другим языкам).
+- Добавлены ключи: `chartPaymentStructure`, `chartBalanceDecrease`, `chartBalancePlanned`, `chartBalanceActual`, `chartBalanceExtraMarkers`, `chartPaymentStructure` (короткие формулировки), `themeColors`.
 
-### 6. Сборка и бандл
-- **vite**: `drop_console: true`, `sourcemap: false` для production.
-- Удалён неиспользуемый **RadarChart.tsx**.
+## 4. Форма досрочных платежей
 
-### 7. Экран результата (сводка по платежам)
-- При наличии досрочных погашений для **«Переплата (%)»** и **«Общая сумма выплат»** выводится формат «было → стало» (как для начисленных процентов и срока).
+- **TypeRadioGroup** — выбор типа «Сократить срок» / «Уменьшить платёж» через радио (Cell + Radio из telegram-ui) вместо селекта (избежание зависаний).
+- Кнопки в форме: «Готово» — `mode='filled'`, «Удалить» — `mode='outline'`, обёрнуты в flex для аккуратного ряда.
+- Используется в `EarlyPaymentsForm` и `RegularPaymentsForm`.
 
-### 8. Документация
-- README: актуальная структура папок, описание без упоминания server/конфига mortgage; ключевые компоненты (storage, MortgageResult, LoanForm).
-- `services/mortgage/README.md`: только локальная реализация и использование `mortgageService`.
+## 5. Прочее
+
+- **Deploy:** при `npm run deploy` версия в `package.json` инкрементируется (patch) через `npm version patch --no-git-tag-version` в predeploy.
+- Плагин фона области графика (chartAreaBackground) удалён — не используется.
 
 ---
 
-## Файлы
+## Затронутые файлы
 
-**Новые:**  
-`src/hooks/useCalculationWithResults.ts`, `src/pages/MortgageResult/MortgageResult.tsx`, `src/pages/MortgageResult/index.ts`
-
-**Удалённые:**  
-`src/pages/MortageResult/*`, `src/config/mortgage.ts`, `src/schemas/loanDetails.ts`, `src/schemas/earlyPayment.ts`, `src/schemas/regularPayment.ts`, `src/services/mortgage/MortgageServiceFactory.ts`, `src/services/mortgage/ServerMortgageService.ts`, `src/components/charts/RadarChart.tsx`
-
-**Изменённые:**  
-README.md, Root.tsx, routes.tsx, MortgageProvider.tsx, createLocalizedSchemas.ts, EarlyPaymentsForm.tsx, RegularPaymentsForm.tsx, SettingsPage.tsx, ResultsDisplay.tsx, services/mortgage (index, IMortgageService, LocalMortgageService, README), vite.config.ts
-
----
-
-## Проверка
-
-- [ ] `npm run build` — успешно
-- [ ] `npm run test` — все тесты проходят
-- [ ] `npm run lint` — без ошибок
-- [ ] Главная → список расчётов, создание/открытие расчёта, результат с графиками и сводкой
-- [ ] Редактирование досрочных на странице результата, обновление сводки (в т.ч. переплата % и общая сумма «было → стало»)
-- [ ] Настройки: при отсутствии fullscreen секция «Настройки» не показывается; при наличии — в ней fullscreen и при необходимости «Добавить на главный экран»
+- `package.json` — скрипты version:bump, predeploy
+- `src/config/themeColors.ts` — новый
+- `src/config/chartsTheme.ts` — удалён
+- `src/components/charts/LineChart.tsx` — singleYAxis, leftAxisTitle, опции датасетов (pointRadius, showLine), удалён плагин фона
+- `src/components/result/ChartsContainer.tsx` — два графика, данные для плана/факта и маркеров, themeColors
+- `src/components/result/ResultsDisplay.tsx` — не менялся в текущем наборе (короткие подписи только в translations)
+- `src/components/form/EarlyPaymentsForm.tsx` — TypeRadioGroup, кнопки
+- `src/components/form/RegularPaymentsForm.tsx` — TypeRadioGroup, кнопки
+- `src/components/ui/TypeRadioGroup.tsx` — новый
+- `src/pages/SettingsPage/SettingsPage.tsx` — секция «Цвета темы», убран переключатель полноэкранного режима
+- `src/providers/ThemeProvider.tsx` — импорт из themeColors
+- `src/localization/translations.ts` — новые ключи и короткие подписи

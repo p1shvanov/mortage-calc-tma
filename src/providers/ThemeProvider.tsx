@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { miniApp, useSignal } from '@telegram-apps/sdk-react';
-import type { TelegramPalette } from '@/config/chartsTheme';
-import { getTelegramPalette } from '@/config/chartsTheme';
+import { getTelegramPalette, type TelegramPalette } from '@/config/themeColors';
 
 export type ThemeMode = 'light' | 'dark';
 

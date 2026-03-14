@@ -1,9 +1,10 @@
 import { lazy, memo, Suspense, useMemo } from 'react';
 
-import { getChartColors } from '@/config/chartsTheme';
+import { getThemeColors } from '@/config/themeColors';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
+import { generateAmortizationSchedule } from '@/utils/amortizationSchedule';
 import { Placeholder, Skeleton } from '@telegram-apps/telegram-ui';
 
 const LineChart = lazy(() => import('@/components/charts/LineChart'));
@@ -14,8 +15,8 @@ const DoughnutChart = lazy(() => import('@/components/charts/DoughnutChart'));
 const ChartsContainer = memo(function ChartsContainer() {
   const { t, formatLoanTerm } = useLocalization();
   const { tgPalette } = useTheme();
-  const { amortizationResult } = useMortgage();
-  const colors = getChartColors(tgPalette);
+  const { amortizationResult, loanDetails } = useMortgage();
+  const colors = getThemeColors(tgPalette);
 
   if (!amortizationResult || amortizationResult.schedule.length === 0) {
     return (
@@ -51,102 +52,13 @@ const ChartsContainer = memo(function ChartsContainer() {
     }));
   }, [schedule]);
 
-  const aggregateByYear = useMemo(() => schedule.length > 24, [schedule.length]);
-
-  const lineChartData = useMemo(() => {
-    if (!aggregateByYear) {
-      return {
-        labels: months,
-        datasets: [
-          {
-            label: t('principal'),
-            data: principals,
-            borderColor: colors.principal,
-            backgroundColor: colors.principalFill,
-            fill: true,
-            yAxisID: 'y',
-          },
-          {
-            label: t('interest'),
-            data: interests,
-            borderColor: colors.interest,
-            backgroundColor: colors.interestFill,
-            fill: true,
-            yAxisID: 'y',
-          },
-          {
-            label: t('balance'),
-            data: balances,
-            borderColor: colors.balance,
-            backgroundColor: colors.balanceFill,
-            borderDash: [5, 5],
-            fill: false,
-            yAxisID: 'y1',
-          },
-        ],
-      };
-    }
-    const years: string[] = [];
-    const principalByYear: number[] = [];
-    const interestByYear: number[] = [];
-    const balanceByYear: number[] = [];
-    const extraInfoByYear: { hasExtraPayment: boolean; amount: number; type: string; isRegular: boolean }[] = [];
-    let currentYear = '';
-    let yearPrincipal = 0;
-    let yearInterest = 0;
-    let yearExtra = 0;
-    let yearExtraType = '';
-    let yearExtraRegular = false;
-    for (let i = 0; i < schedule.length; i++) {
-      const item = schedule[i];
-      const date = new Date(item.date);
-      const y = date.getFullYear().toString();
-      if (y !== currentYear) {
-        if (currentYear !== '') {
-          years.push(currentYear);
-          principalByYear.push(yearPrincipal);
-          interestByYear.push(yearInterest);
-          balanceByYear.push(schedule[i - 1].balance);
-          extraInfoByYear.push({
-            hasExtraPayment: yearExtra > 0,
-            amount: yearExtra,
-            type: yearExtraType,
-            isRegular: yearExtraRegular,
-          });
-        }
-        currentYear = y;
-        yearPrincipal = 0;
-        yearInterest = 0;
-        yearExtra = 0;
-        yearExtraType = '';
-        yearExtraRegular = false;
-      }
-      yearPrincipal += item.principal;
-      yearInterest += item.interest;
-      if (item.extraPayment && item.extraPayment > 0) {
-        yearExtra += item.extraPayment;
-        yearExtraType = item.extraPaymentType || '';
-        yearExtraRegular = yearExtraRegular || !!item.inRecurringOverpaymentPeriod;
-      }
-    }
-    if (currentYear !== '') {
-      years.push(currentYear);
-      principalByYear.push(yearPrincipal);
-      interestByYear.push(yearInterest);
-      balanceByYear.push(schedule[schedule.length - 1].balance);
-      extraInfoByYear.push({
-        hasExtraPayment: yearExtra > 0,
-        amount: yearExtra,
-        type: yearExtraType,
-        isRegular: yearExtraRegular,
-      });
-    }
-    return {
-      labels: years,
+  const paymentStructureChartData = useMemo(
+    () => ({
+      labels: months,
       datasets: [
         {
           label: t('principal'),
-          data: principalByYear,
+          data: principals,
           borderColor: colors.principal,
           backgroundColor: colors.principalFill,
           fill: true,
@@ -154,66 +66,101 @@ const ChartsContainer = memo(function ChartsContainer() {
         },
         {
           label: t('interest'),
-          data: interestByYear,
+          data: interests,
           borderColor: colors.interest,
           backgroundColor: colors.interestFill,
           fill: true,
           yAxisID: 'y',
         },
-        {
-          label: t('balance'),
-          data: balanceByYear,
-          borderColor: colors.balance,
-          backgroundColor: colors.balanceFill,
-          borderDash: [5, 5],
-          fill: false,
-          yAxisID: 'y1',
-        },
       ],
-    };
-  }, [months, principals, interests, balances, schedule, aggregateByYear, t]);
+    }),
+    [months, principals, interests, t, colors]
+  );
 
-  const lineChartExtraPaymentInfo = useMemo(() => {
-    if (!aggregateByYear) return extraPaymentInfo;
-    const byYear: { hasExtraPayment: boolean; amount: number; type: string; isRegular: boolean }[] = [];
-    let currentYear = '';
-    let yearExtra = 0;
-    let yearExtraType = '';
-    let yearExtraRegular = false;
-    for (let i = 0; i < schedule.length; i++) {
-      const item = schedule[i];
-      const date = new Date(item.date);
-      const y = date.getFullYear().toString();
-      if (y !== currentYear) {
-        if (currentYear !== '') {
-          byYear.push({
-            hasExtraPayment: yearExtra > 0,
-            amount: yearExtra,
-            type: yearExtraType,
-            isRegular: yearExtraRegular,
-          });
-        }
-        currentYear = y;
-        yearExtra = 0;
-        yearExtraType = '';
-        yearExtraRegular = false;
-      }
-      if (item.extraPayment && item.extraPayment > 0) {
-        yearExtra += item.extraPayment;
-        yearExtraType = item.extraPaymentType || '';
-        yearExtraRegular = yearExtraRegular || !!item.inRecurringOverpaymentPeriod;
-      }
-    }
-    if (currentYear !== '') {
-      byYear.push({
-        hasExtraPayment: yearExtra > 0,
-        amount: yearExtra,
-        type: yearExtraType,
-        isRegular: yearExtraRegular,
+  const hasEarlyPayments = useMemo(
+    () => schedule.some((item) => item.extraPayment && item.extraPayment > 0),
+    [schedule]
+  );
+
+  const plannedBalances = useMemo(() => {
+    if (!hasEarlyPayments || !loanDetails) return null;
+    const planned = generateAmortizationSchedule({
+      loanAmount: loanDetails.loanAmount,
+      interestRate: loanDetails.interestRate,
+      loanTerm: loanDetails.loanTerm,
+      startDate: loanDetails.startDate,
+      paymentType: loanDetails.paymentType,
+      paymentDay: loanDetails.paymentDay,
+      earlyPayments: [],
+      regularPayments: [],
+    });
+    return schedule.map((_, i) => planned.schedule[i]?.balance ?? 0);
+  }, [hasEarlyPayments, loanDetails, schedule.length]);
+
+  const balanceChartData = useMemo(() => {
+    const datasets: {
+      label: string;
+      data: number[];
+      borderColor: string;
+      backgroundColor: string;
+      fill?: boolean;
+      yAxisID?: string;
+      borderDash?: number[];
+      pointRadius?: number | number[];
+      pointBackgroundColor?: string;
+      showLine?: boolean;
+    }[] = [];
+
+    if (plannedBalances && plannedBalances.length > 0) {
+      datasets.push({
+        label: t('chartBalancePlanned'),
+        data: plannedBalances,
+        borderColor: colors.balancePlanned,
+        backgroundColor: colors.balancePlanned,
+        borderDash: [4, 4],
+        fill: false,
+        yAxisID: 'y',
       });
     }
-    return byYear;
-  }, [aggregateByYear, schedule, extraPaymentInfo]);
+
+    datasets.push({
+      label: plannedBalances ? t('chartBalanceActual') : t('balance'),
+      data: balances,
+      borderColor: colors.balance,
+      backgroundColor: colors.balanceFill,
+      borderDash: [5, 5],
+      fill: true,
+      yAxisID: 'y',
+    });
+
+    if (hasEarlyPayments) {
+      datasets.push({
+        label: t('chartBalanceExtraMarkers'),
+        data: balances,
+        borderColor: colors.extraPayment,
+        backgroundColor: colors.extraPayment,
+        fill: false,
+        showLine: false,
+        pointRadius: schedule.map((item) =>
+          item.extraPayment && item.extraPayment > 0 ? 6 : 0
+        ),
+        pointBackgroundColor: colors.extraPayment,
+        yAxisID: 'y',
+      });
+    }
+
+    return { labels: months, datasets };
+  }, [
+    months,
+    balances,
+    plannedBalances,
+    hasEarlyPayments,
+    schedule,
+    t,
+    colors,
+  ]);
+
+  const lineChartExtraPaymentInfo = extraPaymentInfo;
 
   const comparisonPieChartData = useMemo(() => {
     if (!schedule.some((item) => item.extraPayment && item.extraPayment > 0)) {
@@ -266,11 +213,6 @@ const ChartsContainer = memo(function ChartsContainer() {
     };
   }, [principals, amortizationResult, t]);
 
-  const hasEarlyPayments = useMemo(
-    () => schedule.some((item) => item.extraPayment && item.extraPayment > 0),
-    [schedule]
-  );
-
   const hasReducePayment = useMemo(
     () => schedule.some((item) => item.extraPaymentType === 'reducePayment'),
     [schedule]
@@ -278,44 +220,12 @@ const ChartsContainer = memo(function ChartsContainer() {
 
   const monthlyPaymentLineData = useMemo(() => {
     if (!hasEarlyPayments || !hasReducePayment) return null;
-    if (!aggregateByYear) {
-      return {
-        labels: months,
-        datasets: [
-          {
-            label: t('monthlyPayment'),
-            data: schedule.map((item) => item.payment),
-            borderColor: colors.principal,
-            backgroundColor: colors.principalFill,
-            fill: true,
-            yAxisID: 'y',
-          },
-        ],
-      };
-    }
-    const years: string[] = [];
-    const paymentByYear: number[] = [];
-    let currentYear = '';
-    for (let i = 0; i < schedule.length; i++) {
-      const y = new Date(schedule[i].date).getFullYear().toString();
-      if (y !== currentYear) {
-        if (currentYear !== '') {
-          years.push(currentYear);
-          paymentByYear.push(schedule[i - 1].payment);
-        }
-        currentYear = y;
-      }
-    }
-    if (currentYear !== '') {
-      years.push(currentYear);
-      paymentByYear.push(schedule[schedule.length - 1].payment);
-    }
     return {
-      labels: years,
+      labels: months,
       datasets: [
         {
           label: t('monthlyPayment'),
-          data: paymentByYear,
+          data: schedule.map((item) => item.payment),
           borderColor: colors.principal,
           backgroundColor: colors.principalFill,
           fill: true,
@@ -323,16 +233,7 @@ const ChartsContainer = memo(function ChartsContainer() {
         },
       ],
     };
-  }, [
-    hasEarlyPayments,
-    hasReducePayment,
-    aggregateByYear,
-    months,
-    schedule,
-    t,
-    colors.principal,
-    colors.principalFill,
-  ]);
+  }, [hasEarlyPayments, hasReducePayment, months, schedule, t, colors.principal, colors.principalFill]);
 
   const comparisonBarTermData = useMemo(() => {
     if (!hasEarlyPayments) return null;
@@ -368,9 +269,17 @@ const ChartsContainer = memo(function ChartsContainer() {
     <>
       <Suspense fallback={<Skeleton visible />}>
         <LineChart
-          data={lineChartData}
-          title={t('amortizationSchedule')}
+          data={paymentStructureChartData}
+          title={t('chartPaymentStructure')}
           extraPaymentInfo={lineChartExtraPaymentInfo}
+        />
+      </Suspense>
+      <Suspense fallback={<Skeleton visible />}>
+        <LineChart
+          data={balanceChartData}
+          title={t('chartBalanceDecrease')}
+          singleYAxis
+          leftAxisTitle={t('balance')}
         />
       </Suspense>
 

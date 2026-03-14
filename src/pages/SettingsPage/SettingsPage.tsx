@@ -1,9 +1,7 @@
 import { memo } from 'react';
-import { List, Section, Cell, Text, Switch } from '@telegram-apps/telegram-ui';
+import { List, Section, Cell, Text } from '@telegram-apps/telegram-ui';
 import {
   addToHomeScreen,
-  viewport,
-  useSignal,
   retrieveLaunchParams,
 } from '@telegram-apps/sdk-react';
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
@@ -17,24 +15,11 @@ import { hapticSelection } from '@/utils/haptic';
 const SettingsPage = memo(function SettingsPage() {
   const { t } = useLocalization();
   const { themeMode } = useTheme();
-  const isFullscreen = useSignal(viewport.isFullscreen);
-  const fullscreenAvailable =
-    viewport.requestFullscreen?.isAvailable?.() &&
-    viewport.exitFullscreen?.isAvailable?.();
 
   const platform = retrieveLaunchParams().tgWebAppPlatform;
   const isMobilePlatform = platform === 'android' || platform === 'ios';
   const showAddToHomeScreen =
     addToHomeScreen.isAvailable?.() && isMobilePlatform;
-
-  const handleFullscreenToggle = () => {
-    hapticSelection();
-    if (isFullscreen) {
-      void viewport.exitFullscreen?.();
-    } else {
-      void viewport.requestFullscreen?.();
-    }
-  };
 
   return (
     <Page>
@@ -42,35 +27,18 @@ const SettingsPage = memo(function SettingsPage() {
         <Section header={t('language')}>
           <LanguageSwitcher />
         </Section>
-        {(fullscreenAvailable || showAddToHomeScreen) && (
+        {showAddToHomeScreen && (
           <Section header={t('settings')}>
-            {fullscreenAvailable && (
-              <Cell
-                subtitle={isFullscreen ? t('fullscreenOn') : t('fullscreenOff')}
-                after={
-                  <Switch
-                    checked={isFullscreen}
-                    onChange={handleFullscreenToggle}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                }
-                onClick={handleFullscreenToggle}
-              >
-                <Text>{t('fullscreen')}</Text>
-              </Cell>
-            )}
-            {showAddToHomeScreen && (
-              <Cell
-                subtitle={t('addToHomeScreenSubtitle')}
-                after={<Icon24ChevronRight />}
-                onClick={() => {
-                  hapticSelection();
-                  addToHomeScreen();
-                }}
-              >
-                <Text>{t('addToHomeScreen')}</Text>
-              </Cell>
-            )}
+            <Cell
+              subtitle={t('addToHomeScreenSubtitle')}
+              after={<Icon24ChevronRight />}
+              onClick={() => {
+                hapticSelection();
+                addToHomeScreen();
+              }}
+            >
+              <Text>{t('addToHomeScreen')}</Text>
+            </Cell>
           </Section>
         )}
         <Section header={t('about')}>
