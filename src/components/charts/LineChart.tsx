@@ -1,8 +1,7 @@
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 
 import { Line } from 'react-chartjs-2';
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { useChartResize } from '@/hooks/useChartResize';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -57,12 +56,6 @@ interface LineChartProps {
   }[];
 }
 
-const chartWrapperStyle = {
-  position: 'relative' as const,
-  width: '100%',
-  minHeight: 260,
-};
-
 const LineChart = ({
   data,
   title,
@@ -71,13 +64,10 @@ const LineChart = ({
   extraPaymentInfo,
 }: LineChartProps) => {
   const { formatCurrency, t } = useLocalization();
-  const containerRef = useRef<HTMLDivElement>(null);
-  useChartResize(containerRef);
   const yTitle = leftAxisTitle ?? t('paymentAmount');
 
   return (
     <Section header={title}>
-      <div ref={containerRef} style={chartWrapperStyle}>
       <Line
         data={data}
         options={{
@@ -165,7 +155,6 @@ const LineChart = ({
           },
         }}
       />
-      </div>
     </Section>
   );
 };

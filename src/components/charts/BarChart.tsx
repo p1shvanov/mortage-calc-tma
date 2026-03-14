@@ -1,8 +1,7 @@
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 
 import { Bar } from 'react-chartjs-2';
 import { useLocalization } from '@/providers/LocalizationProvider';
-import { useChartResize } from '@/hooks/useChartResize';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -41,21 +40,12 @@ interface BarChartProps {
   valueFormatter?: (value: number) => string;
 }
 
-const chartWrapperStyle = {
-  position: 'relative' as const,
-  width: '100%',
-  minHeight: 220,
-};
-
 const BarChart = ({ data, title, stacked = false, valueFormatter }: BarChartProps) => {
   const { formatCurrency, t } = useLocalization();
   const formatValue = valueFormatter ?? ((v: number) => formatCurrency(v));
-  const containerRef = useRef<HTMLDivElement>(null);
-  useChartResize(containerRef);
 
   return (
     <Section header={title}>
-      <div ref={containerRef} style={chartWrapperStyle}>
       <Bar
         data={data}
         options={{
@@ -98,7 +88,6 @@ const BarChart = ({ data, title, stacked = false, valueFormatter }: BarChartProp
           },
         }}
       />
-      </div>
     </Section>
   );
 };

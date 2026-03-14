@@ -1,7 +1,7 @@
 {
   "name": "mortage-calc-tma",
   "private": true,
-  "version": "0.0.20",
+  "version": "0.0.22",
   "type": "module",
   "homepage": "https://github.com/p1shvanov/mortage-calc-tma",
   "scripts": {
