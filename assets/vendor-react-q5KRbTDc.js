@@ -1,4 +1,4 @@
-import{r as e,R as t}from"./vendor-telegram-Cz9x-d9S.js";
+import{r as e,R as t}from"./vendor-telegram-DzRIV7u4.js";
 /**
  * @remix-run/router v1.23.2
  *
