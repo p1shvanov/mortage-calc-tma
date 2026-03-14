@@ -5,6 +5,7 @@ import {
   type SupportedLanguage,
   getLocaleFromTelegram,
   LOCALE_INTL,
+  LOCALE_CURRENCY,
 } from '@/localization/locales';
 
 export type { SupportedLanguage };
@@ -17,6 +18,8 @@ interface LocalizationContextType {
   formatCurrency: (value: number) => string;
   formatNumber: (value: number) => string;
   formatDate: (date: Date | string) => string;
+  /** Format term in months as "X years" or "X years Y months" (months omitted when 0). */
+  formatLoanTerm: (totalMonths: number) => string;
 }
 
 // Create the context
@@ -67,7 +70,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const formatCurrency = useCallback(
     (value: number): string => {
-      const currency = language === 'ru' ? 'RUB' : 'USD';
+      const currency = LOCALE_CURRENCY[language];
       return new Intl.NumberFormat(intlLocale, {
         style: 'currency',
         currency,
@@ -93,6 +96,17 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [intlLocale]
   );
 
+  const formatLoanTerm = useCallback(
+    (totalMonths: number): string => {
+      const years = Math.floor(totalMonths / 12);
+      const months = totalMonths % 12;
+      const yearsPart = `${years} ${t('years')}`;
+      if (months === 0) return yearsPart;
+      return `${yearsPart} ${months} ${t('months')}`;
+    },
+    [t]
+  );
+
   const value = useMemo(
     () => ({
       language,
@@ -101,8 +115,9 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       formatCurrency,
       formatNumber,
       formatDate,
+      formatLoanTerm,
     }),
-    [language, t, formatCurrency, formatNumber, formatDate]
+    [language, t, formatCurrency, formatNumber, formatDate, formatLoanTerm]
   );
 
   return (

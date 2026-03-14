@@ -12,7 +12,7 @@ const BarChart = lazy(() => import('@/components/charts/BarChart'));
 const DoughnutChart = lazy(() => import('@/components/charts/DoughnutChart'));
 
 const ChartsContainer = memo(function ChartsContainer() {
-  const { t } = useLocalization();
+  const { t, formatLoanTerm } = useLocalization();
   const { tgPalette } = useTheme();
   const { amortizationResult } = useMortgage();
   const colors = getChartColors(tgPalette);
@@ -227,8 +227,8 @@ const ChartsContainer = memo(function ChartsContainer() {
       datasets: [
         {
           data: [newInterest, interestSaved],
-          backgroundColor: [colors.balance, colors.principal],
-          borderColor: [colors.balance, colors.principal],
+          backgroundColor: [colors.interest, colors.principal],
+          borderColor: [colors.interest, colors.principal],
           borderWidth: 1,
         },
       ],
@@ -271,6 +271,69 @@ const ChartsContainer = memo(function ChartsContainer() {
     [schedule]
   );
 
+  const hasReducePayment = useMemo(
+    () => schedule.some((item) => item.extraPaymentType === 'reducePayment'),
+    [schedule]
+  );
+
+  const monthlyPaymentLineData = useMemo(() => {
+    if (!hasEarlyPayments || !hasReducePayment) return null;
+    if (!aggregateByYear) {
+      return {
+        labels: months,
+        datasets: [
+          {
+            label: t('monthlyPayment'),
+            data: schedule.map((item) => item.payment),
+            borderColor: colors.principal,
+            backgroundColor: colors.principalFill,
+            fill: true,
+            yAxisID: 'y',
+          },
+        ],
+      };
+    }
+    const years: string[] = [];
+    const paymentByYear: number[] = [];
+    let currentYear = '';
+    for (let i = 0; i < schedule.length; i++) {
+      const y = new Date(schedule[i].date).getFullYear().toString();
+      if (y !== currentYear) {
+        if (currentYear !== '') {
+          years.push(currentYear);
+          paymentByYear.push(schedule[i - 1].payment);
+        }
+        currentYear = y;
+      }
+    }
+    if (currentYear !== '') {
+      years.push(currentYear);
+      paymentByYear.push(schedule[schedule.length - 1].payment);
+    }
+    return {
+      labels: years,
+      datasets: [
+        {
+          label: t('monthlyPayment'),
+          data: paymentByYear,
+          borderColor: colors.principal,
+          backgroundColor: colors.principalFill,
+          fill: true,
+          yAxisID: 'y',
+        },
+      ],
+    };
+  }, [
+    hasEarlyPayments,
+    hasReducePayment,
+    aggregateByYear,
+    months,
+    schedule,
+    t,
+    colors.principal,
+    colors.principalFill,
+  ]);
+
   const comparisonBarTermData = useMemo(() => {
     if (!hasEarlyPayments) return null;
     const s = amortizationResult.summary;
@@ -301,21 +364,6 @@ const ChartsContainer = memo(function ChartsContainer() {
     };
   }, [amortizationResult.summary, hasEarlyPayments, t]);
 
-  const comparisonBarPaymentData = useMemo(() => {
-    if (!hasEarlyPayments) return null;
-    const s = amortizationResult.summary;
-    return {
-      labels: [t('original'), t('withEarlyPayments')],
-      datasets: [
-        {
-          label: t('monthlyPayment'),
-          data: [s.originalMonthlyPayment, s.finalMonthlyPayment],
-          backgroundColor: [colors.original, colors.withEarlyPayments],
-        },
-      ],
-    };
-  }, [amortizationResult.summary, hasEarlyPayments, t]);
-
   return (
     <>
       <Suspense fallback={<Skeleton visible />}>
@@ -333,15 +381,13 @@ const ChartsContainer = memo(function ChartsContainer() {
         />
       </Suspense>
 
-      {comparisonBarTermData && comparisonBarInterestData && comparisonBarPaymentData && (
+      {comparisonBarTermData && comparisonBarInterestData && (
         <>
           <Suspense fallback={<Skeleton visible />}>
             <BarChart
               data={comparisonBarTermData}
               title={t('mortgageComparison')}
-              valueFormatter={(value) =>
-                `${Math.floor(value / 12)} ${t('years')} ${value % 12} ${t('months')}`
-              }
+              valueFormatter={(value) => formatLoanTerm(value)}
             />
           </Suspense>
           <Suspense fallback={<Skeleton visible />}>
@@ -350,12 +396,15 @@ const ChartsContainer = memo(function ChartsContainer() {
               title={t('totalInterest')}
             />
           </Suspense>
-          <Suspense fallback={<Skeleton visible />}>
-            <BarChart
-              data={comparisonBarPaymentData}
-              title={t('monthlyPayment')}
-            />
-          </Suspense>
+          {monthlyPaymentLineData && (
+            <Suspense fallback={<Skeleton visible />}>
+              <LineChart
+                data={monthlyPaymentLineData}
+                title={t('monthlyPayment')}
+                extraPaymentInfo={lineChartExtraPaymentInfo}
+              />
+            </Suspense>
+          )}
         </>
       )}
 

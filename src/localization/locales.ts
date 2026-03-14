@@ -1,5 +1,6 @@
 /**
  * Supported app locales. Add new locale code here and in translations.
+ * Locale = language + region; it drives currency, number/date formats, and UI language.
  */
 export const SUPPORTED_LOCALES = [
   'en',
@@ -35,7 +36,10 @@ const TELEGRAM_TO_LOCALE: Record<string, SupportedLanguage> = {
   tr: 'tr',
 };
 
-/** Intl locale for number/date formatting (e.g. de-DE, zh-CN). */
+/**
+ * Locale-specific configuration (region-driven).
+ * Intl locale for number/date/currency formatting (e.g. en-US, ru-RU, uk-UA).
+ */
 export const LOCALE_INTL: Record<SupportedLanguage, string> = {
   en: 'en-US',
   ru: 'ru-RU',
@@ -47,6 +51,22 @@ export const LOCALE_INTL: Record<SupportedLanguage, string> = {
   it: 'it-IT',
   uk: 'uk-UA',
   tr: 'tr-TR',
+};
+
+/**
+ * Default currency (ISO 4217) for each locale. Matches the region of LOCALE_INTL.
+ */
+export const LOCALE_CURRENCY: Record<SupportedLanguage, string> = {
+  en: 'USD',
+  ru: 'RUB',
+  es: 'EUR',
+  de: 'EUR',
+  fr: 'EUR',
+  pt: 'BRL',
+  zh: 'CNY',
+  it: 'EUR',
+  uk: 'UAH',
+  tr: 'TRY',
 };
 
 /** Locales that use comma as decimal separator in form inputs. */

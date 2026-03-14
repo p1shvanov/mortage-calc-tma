@@ -8,7 +8,7 @@ import { useMortgage } from '@/providers/MortgageProvider';
 const accentStyle = { color: 'var(--tg-theme-link-color)' };
 
 const ResultsDisplay = memo(function ResultsDisplay() {
-  const { t, formatCurrency, formatDate } = useLocalization();
+  const { t, formatCurrency, formatDate, formatLoanTerm } = useLocalization();
   const { mortgageResults, amortizationResult } = useMortgage();
 
   const hasEarlyPayments = useMemo(() => {
@@ -75,7 +75,21 @@ const ResultsDisplay = memo(function ResultsDisplay() {
         )}
       </Cell>
 
-      <Cell subhead={t('accruedInterest')} before="📈" readOnly>
+      <Cell
+        subhead={t('accruedInterest')}
+        before="📈"
+        readOnly
+        subtitle={
+          hasEarlyPayments && amortizationResult ? (
+            <>
+              {t('totalSavings')}:{' '}
+              <Caption style={accentStyle}>
+                {formatCurrency(amortizationResult.summary.totalSavings)}
+              </Caption>
+            </>
+          ) : undefined
+        }
+      >
         {hasEarlyPayments && amortizationResult ? (
           <>
             <Text>
@@ -122,36 +136,35 @@ const ResultsDisplay = memo(function ResultsDisplay() {
         )}
       </Cell>
 
-      {hasEarlyPayments && amortizationResult && (
-        <Cell subhead={t('totalSavings')} before="💙" readOnly>
-          <Text style={accentStyle}>
-            {formatCurrency(amortizationResult.summary.totalSavings)}
-          </Text>
-        </Cell>
-      )}
-
-      <Cell subhead={t('loanTerm')} before="⏱️" readOnly>
+      <Cell
+        subhead={t('loanTerm')}
+        before="⏱️"
+        readOnly
+        subtitle={
+          hasEarlyPayments && amortizationResult ? (
+            <>
+              {t('monthsSaved')}:{' '}
+              <Caption style={accentStyle}>
+                {formatLoanTerm(
+                  amortizationResult.summary.originalTerm -
+                    amortizationResult.summary.newTerm,
+                )}
+              </Caption>
+            </>
+          ) : undefined
+        }
+      >
         {hasEarlyPayments && amortizationResult ? (
           <>
-            <Text>
-              {Math.floor(amortizationResult.summary.originalTerm / 12)}{' '}
-              {t('years')} {amortizationResult.summary.originalTerm % 12}{' '}
-              {t('months')}
-            </Text>
+            <Text>{formatLoanTerm(amortizationResult.summary.originalTerm)}</Text>
             <Text> → </Text>
             <Text style={accentStyle}>
-              {Math.floor(amortizationResult.summary.newTerm / 12)} {t('years')}{' '}
-              {amortizationResult.summary.newTerm % 12} {t('months')}
+              {formatLoanTerm(amortizationResult.summary.newTerm)}
             </Text>
-            <Caption style={accentStyle}>
-              {t('monthsSaved')}:{' '}
-              {amortizationResult.summary.originalTerm -
-                amortizationResult.summary.newTerm}
-            </Caption>
           </>
         ) : (
           <Text>
-            {Math.floor(mortgageResults.loanTerm)} {t('years')}
+            {formatLoanTerm(Math.round(mortgageResults.loanTerm * 12))}
           </Text>
         )}
       </Cell>

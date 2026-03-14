@@ -7,21 +7,26 @@ import {
   Pagination,
   Placeholder,
   Text,
+  Caption,
 } from '@telegram-apps/telegram-ui';
-import { Icon28Stats } from '@telegram-apps/telegram-ui/dist/icons/28/stats';
+import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 import { mainButton } from '@telegram-apps/sdk-react';
 
+import { getChartColors } from '@/config/chartsTheme';
 import { SCHEDULE_ITEMS_PER_PAGE } from '@/config/constants';
 import { useSwipePagination } from '@/hooks/useSwipePagination';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useMortgage } from '@/providers/MortgageProvider';
+import { useTheme } from '@/providers/ThemeProvider';
 import { hapticSelection } from '@/utils/haptic';
 
 import PaymentDetailModal from './PaymentDetailModal';
 
 const PaymentSchedule = memo(function PaymentSchedule() {
   const { t, formatCurrency, formatDate } = useLocalization();
+  const { tgPalette } = useTheme();
   const { amortizationResult } = useMortgage();
+  const colors = getChartColors(tgPalette);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(
     null,
@@ -110,17 +115,24 @@ const PaymentSchedule = memo(function PaymentSchedule() {
           : item.inRecurringOverpaymentPeriod && item.regularPaymentMessage
             ? t('insufficientPayment')
             : null;
+        const principalStyle = { color: colors.principal };
+        const interestStyle = { color: colors.interest };
         return (
           <Cell
             key={item.month}
             onClick={() => handleCellClick(globalIndex)}
             subhead={formatDate(item.date)}
             subtitle={
-              extraLabel
-                ? `${t('principal')}: ${formatCurrency(item.principal)} · ${extraLabel}`
-                : `${t('principal')}: ${formatCurrency(item.principal)}`
+              <Caption style={principalStyle}>
+                {t('principal')}: {formatCurrency(item.principal)}
+                {extraLabel ? ` · ${extraLabel}` : ''}
+              </Caption>
             }
-            description={`${t('interest')}: ${formatCurrency(item.interest)}`}
+            description={
+              <Caption style={interestStyle}>
+                {t('interest')}: {formatCurrency(item.interest)}
+              </Caption>
+            }
             after={
               <IconButton
                 size="s"
@@ -130,7 +142,7 @@ const PaymentSchedule = memo(function PaymentSchedule() {
                 }}
                 aria-label={t('paymentBreakdown')}
               >
-                <Icon28Stats />
+                <Icon24ChevronRight />
               </IconButton>
             }
           >
