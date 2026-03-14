@@ -83,12 +83,6 @@ export interface IMortgageService {
   calculateBase(params: BaseCalculationParams): Promise<MortgageCalculationResults>;
 
   /**
-   * Calculate mortgage results based on input parameters.
-   * @deprecated Prefer calculateBase for base-only results.
-   */
-  calculateMortgage(params: MortgageCalculationParams): Promise<MortgageCalculationResults>;
-
-  /**
    * Generate amortization schedule (base if no overpayments, extended if overpayments provided).
    */
   generateAmortizationSchedule(params: MortgageCalculationParams): Promise<AmortizationScheduleResults>;

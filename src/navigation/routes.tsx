@@ -1,6 +1,6 @@
 import type { ComponentType, JSX } from 'react';
 
-import { MortageResult } from '@/pages/MortageResult';
+import { MortgageResult } from '@/pages/MortgageResult';
 import { LoanForm } from '@/pages/LoanForm';
 import { HomePage } from '@/pages/HomePage';
 import { SettingsPage } from '@/pages/SettingsPage';
@@ -16,5 +16,5 @@ export const routes: Route[] = [
   { path: '/', Component: HomePage },
   { path: '/settings', Component: SettingsPage },
   { path: '/calculator', Component: LoanForm },
-  { path: '/result', Component: MortageResult, title: 'Mortage Result' },
+  { path: '/result', Component: MortgageResult, title: 'Mortgage Result' },
 ];

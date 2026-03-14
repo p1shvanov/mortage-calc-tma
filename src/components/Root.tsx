@@ -7,7 +7,6 @@ import {
 } from '@/components/shared';
 
 import { LocalizationProvider } from '@/providers/LocalizationProvider';
-import { MortgageProvider } from '@/providers/MortgageProvider';
 import { ThemeProvider } from '@/providers/ThemeProvider';
 
 const Root = () => {
@@ -15,9 +14,7 @@ const Root = () => {
     <ErrorBoundary fallback={ErrorBoundaryFallback}>
       <LocalizationProvider>
         <ThemeProvider>
-          <MortgageProvider>
-            <App />
-          </MortgageProvider>
+          <App />
         </ThemeProvider>
       </LocalizationProvider>
     </ErrorBoundary>

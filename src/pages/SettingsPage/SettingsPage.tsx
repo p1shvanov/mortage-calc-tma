@@ -14,7 +14,7 @@ import { useLocalization } from '@/providers/LocalizationProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { hapticSelection } from '@/utils/haptic';
 
-const SettingsPage = () => {
+const SettingsPage = memo(function SettingsPage() {
   const { t } = useLocalization();
   const { themeMode } = useTheme();
   const isFullscreen = useSignal(viewport.isFullscreen);
@@ -42,36 +42,35 @@ const SettingsPage = () => {
         <Section header={t('language')}>
           <LanguageSwitcher />
         </Section>
-        <Section header={t('settings')}>
-          {fullscreenAvailable && (
-            <Cell
-              subtitle={isFullscreen ? t('fullscreenOn') : t('fullscreenOff')}
-              after={
-                <Switch
-                  checked={isFullscreen}
-                  onChange={handleFullscreenToggle}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              }
-              onClick={handleFullscreenToggle}
-            >
-              <Text>{t('fullscreen')}</Text>
-            </Cell>
-          )}
-        </Section>
-
-        {showAddToHomeScreen && (
-          <Section header={t('addToHomeScreen')}>
-            <Cell
-              subtitle={t('addToHomeScreenSubtitle')}
-              after={<Icon24ChevronRight />}
-              onClick={() => {
-                hapticSelection();
-                addToHomeScreen();
-              }}
-            >
-              <Text>{t('addToHomeScreen')}</Text>
-            </Cell>
+        {(fullscreenAvailable || showAddToHomeScreen) && (
+          <Section header={t('settings')}>
+            {fullscreenAvailable && (
+              <Cell
+                subtitle={isFullscreen ? t('fullscreenOn') : t('fullscreenOff')}
+                after={
+                  <Switch
+                    checked={isFullscreen}
+                    onChange={handleFullscreenToggle}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                }
+                onClick={handleFullscreenToggle}
+              >
+                <Text>{t('fullscreen')}</Text>
+              </Cell>
+            )}
+            {showAddToHomeScreen && (
+              <Cell
+                subtitle={t('addToHomeScreenSubtitle')}
+                after={<Icon24ChevronRight />}
+                onClick={() => {
+                  hapticSelection();
+                  addToHomeScreen();
+                }}
+              >
+                <Text>{t('addToHomeScreen')}</Text>
+              </Cell>
+            )}
           </Section>
         )}
         <Section header={t('about')}>
@@ -87,6 +86,6 @@ const SettingsPage = () => {
       </List>
     </Page>
   );
-};
+});
 
-export default memo(SettingsPage);
+export default SettingsPage;

@@ -1,4 +1,6 @@
 export * from './IMortgageService';
 export * from './LocalMortgageService';
-export * from './ServerMortgageService';
-export * from './MortgageServiceFactory';
+import { LocalMortgageService } from './LocalMortgageService';
+
+/** Single mortgage service instance (local calculations only). */
+export const mortgageService = new LocalMortgageService();

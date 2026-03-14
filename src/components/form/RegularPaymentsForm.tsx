@@ -6,8 +6,7 @@ import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import { popup } from '@telegram-apps/sdk-react';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
-import { regularPaymentSchema } from '@/schemas/regularPayment';
-import { loanDetailsSchema } from '@/schemas/loanDetails';
+import { useLocalizedFormSchemas } from '@/schemas/localizedSchemas';
 import {
   hapticButton,
   hapticSuccess,
@@ -28,7 +27,8 @@ function isRegularPaymentItemValid(
     endMonth?: string;
     type?: string;
     id?: string;
-  } | null
+  } | null,
+  regularPaymentSchema: { safeParse: (v: unknown) => { success: boolean } },
 ): boolean {
   if (!item) return false;
   const result = regularPaymentSchema.safeParse({
@@ -51,6 +51,7 @@ const RegularPaymentsForm = withForm({
     const [sectionOpen, setSectionOpen] = useState(true);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const { t, formatCurrency, formatDate } = useLocalization();
+    const { loanDetailsSchema, regularPaymentSchema } = useLocalizedFormSchemas();
 
     return (
       <form.Subscribe
@@ -99,7 +100,7 @@ const RegularPaymentsForm = withForm({
                 {(field) => {
                   const expandedItem =
                     expandedIndex !== null ? field.state.value[expandedIndex] ?? null : null;
-                  const isExpandedItemValid = isRegularPaymentItemValid(expandedItem);
+                  const isExpandedItemValid = isRegularPaymentItemValid(expandedItem, regularPaymentSchema);
                   const canAdd =
                     isLoanDetailsValid &&
                     (expandedIndex === null || isExpandedItemValid);
@@ -136,7 +137,7 @@ const RegularPaymentsForm = withForm({
                 const startStr = item?.startMonth ?? '';
                 const endStr = item?.endMonth ?? '';
                 const typeStr = item?.type ?? 'reduceTerm';
-                const isItemValid = isRegularPaymentItemValid(item);
+                const isItemValid = isRegularPaymentItemValid(item, regularPaymentSchema);
 
                 return (
                   <Fragment key={item?.id ?? i}>

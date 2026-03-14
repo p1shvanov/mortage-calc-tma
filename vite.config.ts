@@ -58,13 +58,12 @@ export default defineConfig({
         },
       },
     },
-    // Enable source maps for production build
-    sourcemap: true,
+    sourcemap: false, // Set to true when debugging production issues
     // Minify the output
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: false, // Keep console logs for debugging
+        drop_console: true, // Smaller bundle, no debug leaks in production
         drop_debugger: true,
       },
     },
