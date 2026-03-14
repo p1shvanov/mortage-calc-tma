@@ -13,7 +13,7 @@ exports[`generateAmortizationSchedule > reference / golden (замороженн
 }
 `;
 
-exports[`generateAmortizationSchedule > reference / golden (замороженные эталоны для верификации) > сценарий с досрочкой «сократить срок»: сводка совпадает с эталоном 1`] = `
+exports[`generateAmortizationSchedule > reference / golden (замороженные эталоны для верификации) > сценарий с досрочным погашением «сократить срок»: сводка совпадает с эталоном 1`] = `
 {
   "finalMonthlyPayment": 11122.22,
   "newTerm": 54,

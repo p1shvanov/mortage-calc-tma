@@ -177,7 +177,9 @@ export function generateAmortizationSchedule(
   
   // Track if we've had a reducePayment type early payment
   let hadReducePaymentType = false;
-  
+  /** When reducePayment is used, store the recalculated annuity so summary shows it (not the last row which may be a partial payoff). */
+  let lastRecalculatedPaymentForReduce = originalMonthlyPayment;
+
   let currentDate = new Date(startDateObj);
   let month = 1;
   let remainingTerm = numberOfPayments; // Used as hint for reduceTerm; we exit when balance is paid off
@@ -213,6 +215,8 @@ export function generateAmortizationSchedule(
     let interest: number;
     let extraPayment = 0;
     let extraPaymentType: 'reduceTerm' | 'reducePayment' | undefined;
+    /** Balance at payment date (after any in-period early payments); used to cap principal and for reducePayment recalc. */
+    let balanceAtPaymentDate = balance;
 
     if (inPeriod.length === 0) {
       interest = calculateInterestForPeriod(
@@ -252,6 +256,7 @@ export function generateAmortizationSchedule(
         paymentDate,
         interestCalculationMethod
       );
+      balanceAtPaymentDate = runningBalance;
     }
     
     // Calculate principal and payment based on payment type
@@ -274,20 +279,20 @@ export function generateAmortizationSchedule(
       payment = principal + interest;
     }
 
-    // Cap principal at remaining balance so we never overpay (last payment / small balance)
-    principal = Math.min(principal, balance);
+    // Cap principal at balance at payment date (after in-period early payments) so we never overpay
+    principal = Math.min(principal, balanceAtPaymentDate);
     // At or past scheduled term, or negligible remainder: close out in this row to avoid extra payments from rounding
-    const remainder = balance - principal;
+    const remainder = balanceAtPaymentDate - principal;
     const isLastPayment =
-      balance > 0 &&
+      balanceAtPaymentDate > 0 &&
       (month >= numberOfPayments || (remainder >= 0 && remainder < 0.02));
-    if (isLastPayment) principal = balance;
+    if (isLastPayment) principal = balanceAtPaymentDate;
     payment = principal + interest;
 
-    // Update the balance (use rounded principal to avoid drift; last payment pays off exactly)
+    // Update the balance: apply principal to balance at payment date; one-time extras already reduced balance in-period
     const principalR = isLastPayment ? principal : roundMoney(principal);
     const interestR = roundMoney(interest);
-    let newBalance = isLastPayment ? 0 : roundMoney(balance - principalR);
+    let newBalance = isLastPayment ? 0 : roundMoney(balanceAtPaymentDate - principalR);
 
     let inRecurringOverpaymentPeriod = false;
 
@@ -314,28 +319,30 @@ export function generateAmortizationSchedule(
       }
     }
     
-    // Apply extra payment
+    // Apply extra payment (when not already in balanceAtPaymentDate, i.e. when not in-period)
     if (extraPayment > 0) {
-      newBalance = roundMoney(newBalance - extraPayment);
+      if (inPeriod.length === 0) {
+        newBalance = roundMoney(newBalance - extraPayment);
+      }
+      // else: extra already reflected in balanceAtPaymentDate (runningBalance)
       
       if (newBalance > 0) {
         // If payment type is to reduce payment, recalculate the monthly payment
         // but keep the original term
         if (extraPaymentType === 'reducePayment') {
-          // Mark that we've had a reducePayment type
-          hadReducePaymentType = true;
-          
-          // For reducePayment, we need to calculate the remaining term from the current month
-          // (after this month we have numberOfPayments - month payments left)
           const remainingMonths = Math.max(1, numberOfPayments - month);
-          
-          // Update the remaining term
-          remainingTerm = remainingMonths;
-          
-          // Recalculate monthly payment for the remaining term
-          currentMonthlyPayment = 
-            (newBalance * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths)) / 
-            (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+          // Only recalculate when there is more than one payment left; otherwise we're effectively paying off
+          if (remainingMonths > 1) {
+            hadReducePaymentType = true;
+            remainingTerm = remainingMonths;
+            const recalculated =
+              (newBalance * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths)) /
+              (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+            // Cap to original: "reduce payment" must never show or use a higher payment than original
+            const capped = Math.min(recalculated, originalMonthlyPayment);
+            currentMonthlyPayment = capped;
+            lastRecalculatedPaymentForReduce = capped;
+          }
         }
         // If payment type is to reduce term, keep the same monthly payment
         // which will naturally reduce the term as the balance decreases faster
@@ -400,11 +407,19 @@ export function generateAmortizationSchedule(
   const newTerm = schedule.length;
   const newTotalInterestR = roundMoney(totalInterest);
   // For "reduce term" the monthly payment is unchanged; only the last payment can be smaller (final payoff).
-  // For "reduce payment" we recalculated currentMonthlyPayment, so the last row reflects the new amount.
-  const finalMonthlyPayment =
-    hadReducePaymentType && schedule.length > 0
-      ? schedule[schedule.length - 1].payment
-      : roundMoney(originalMonthlyPayment);
+  // For "reduce payment" take the payment from the first row after a reducePayment row so the summary matches the chart.
+  // (Values in schedule are already capped to original in the loop, so no extra min here.)
+  let rawFinal: number;
+  if (hadReducePaymentType && schedule.length > 0) {
+    const lastReduceIdx = schedule.map((r) => r.extraPaymentType).lastIndexOf('reducePayment');
+    rawFinal =
+      lastReduceIdx >= 0 && lastReduceIdx + 1 < schedule.length
+        ? roundMoney(schedule[lastReduceIdx + 1].payment)
+        : roundMoney(lastRecalculatedPaymentForReduce);
+  } else {
+    rawFinal = roundMoney(originalMonthlyPayment);
+  }
+  const finalMonthlyPayment = rawFinal;
 
   const totalSavings = roundMoney(originalTotalInterest - newTotalInterestR);
 
