@@ -1,1 +1,0 @@
-import{s as e,c as t,r as n}from"./vendor-telegram-Cz9x-d9S.js";function r(){window.dispatchEvent(new Event("resize"))}function s(s){const c=e(t.height),o=e(t.width);n.useEffect(()=>{const e=s.current;if(!e)return;const t=new ResizeObserver(r);return t.observe(e),()=>t.disconnect()},[s]),n.useEffect(()=>{r()},[c,o])}export{s as u};
