@@ -8,8 +8,8 @@ import {
 } from '@telegram-apps/sdk-react';
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 
-import Page from '@/components/Page';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { Page } from '@/components/layout';
+import { LanguageSwitcher } from '@/components/shared';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { useTheme } from '@/providers/ThemeProvider';
 import { hapticSelection } from '@/utils/haptic';

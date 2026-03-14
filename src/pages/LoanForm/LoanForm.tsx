@@ -1,69 +1,71 @@
 import { FC, memo, useMemo, useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { List, Section, Button, Snackbar, Placeholder } from '@telegram-apps/telegram-ui';
-import { mainButton } from '@telegram-apps/sdk-react';
+import { List, Section, Button, Snackbar } from '@telegram-apps/telegram-ui';
 
+import {
+  BackButton,
+  BreadcrumbsNav,
+  Page,
+} from '@/components/layout';
 import LoanDetailsForm from '@/components/form/LoanDetailsForm';
-
-import { useLocalization } from '@/providers/LocalizationProvider';
+import {
+  CalculationPlaceholder,
+  ValidationSnackbarSync,
+} from '@/components/shared';
+import {
+  useBackButtonAvailable,
+  useMainButtonAvailable,
+} from '@/hooks/useTelegramButtonsAvailable';
 import { useLoanForm } from '@/hooks/useLoanForm';
-import { useMainButtonAvailable, useBackButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
+import { useMainButton } from '@/hooks/useMainButton';
+import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
+import type { SavedCalculation } from '@/domain';
 import { payloadToFormValues } from '@/utils/payloadToFormValues';
 import { hapticButton, hapticSuccess, hapticError } from '@/utils/haptic';
-import Page from '@/components/Page';
-import BackButton from '@/components/BackButton';
-import BreadcrumbsNav from '@/components/BreadcrumbsNav';
-import type { SavedCalculation } from '@/types/storage';
 
-function MainButtonSync({
+function LoanFormMainButton({
   form,
-}: {
-  form: ReturnType<typeof useLoanForm>;
-}) {
-  return (
-    <form.Subscribe selector={(s) => s.canSubmit}>
-      {(canSubmit) => <MainButtonEnabled canSubmit={canSubmit} />}
-    </form.Subscribe>
-  );
-}
-
-function MainButtonEnabled({ canSubmit }: { canSubmit: boolean }) {
-  useEffect(() => {
-    mainButton.setParams({ isEnabled: canSubmit });
-  }, [canSubmit]);
-  return null;
-}
-
-function ValidationSnackbarSync({
-  form,
-  setSnackbarOpen,
-  setSnackbarMessage,
   t,
 }: {
   form: ReturnType<typeof useLoanForm>;
-  setSnackbarOpen: (open: boolean) => void;
-  setSnackbarMessage: (msg: string) => void;
   t: (key: string) => string;
 }) {
-  const prevAttemptsRef = useRef(0);
   return (
     <form.Subscribe
-      selector={(s) => ({ submissionAttempts: s.submissionAttempts, canSubmit: s.canSubmit })}
+      selector={(s) => ({ canSubmit: s.canSubmit, isSubmitting: s.isSubmitting })}
     >
-      {({ submissionAttempts, canSubmit }) => {
-        if (submissionAttempts > prevAttemptsRef.current && !canSubmit) {
-          prevAttemptsRef.current = submissionAttempts;
-          hapticError();
-          setSnackbarMessage(t('fixFormErrors'));
-          setSnackbarOpen(true);
-        } else {
-          prevAttemptsRef.current = submissionAttempts;
-        }
-        return null;
-      }}
+      {({ canSubmit, isSubmitting }) => (
+        <LoanFormMainButtonInner
+          form={form}
+          t={t}
+          canSubmit={canSubmit}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </form.Subscribe>
   );
+}
+
+function LoanFormMainButtonInner({
+  form,
+  t,
+  canSubmit,
+  isSubmitting,
+}: {
+  form: ReturnType<typeof useLoanForm>;
+  t: (key: string) => string;
+  canSubmit: boolean;
+  isSubmitting: boolean;
+}) {
+  useMainButton({
+    text: t('calculate'),
+    isEnabled: canSubmit,
+    hasShineEffect: true,
+    isLoading: isSubmitting,
+    onClick: () => form.handleSubmit(),
+  });
+  return null;
 }
 
 const LoanForm: FC = () => {
@@ -71,12 +73,14 @@ const LoanForm: FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('id');
-  const mainButtonAvailable = useMainButtonAvailable();
   const backButtonAvailable = useBackButtonAvailable();
+  const mainButtonAvailable = useMainButtonAvailable();
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [loadingEdit, setLoadingEdit] = useState(false);
-  const [loadedForEdit, setLoadedForEdit] = useState<SavedCalculation | null>(null);
+  const [loadedForEdit, setLoadedForEdit] = useState<SavedCalculation | null>(
+    null,
+  );
   const loadedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -108,9 +112,6 @@ const LoanForm: FC = () => {
   const form = useLoanForm({
     defaultValues,
     onSubmit: async (payload) => {
-      if (mainButtonAvailable) {
-        mainButton.setParams({ isLoaderVisible: true });
-      }
       try {
         hapticSuccess();
         const storage = getCalculationsStorage();
@@ -127,64 +128,35 @@ const LoanForm: FC = () => {
         hapticError();
         setSnackbarMessage(t('saveError'));
         setSnackbarOpen(true);
-      } finally {
-        if (mainButtonAvailable) {
-          mainButton.setParams({ isLoaderVisible: false });
-        }
       }
     },
   });
 
-  useEffect(() => {
-    if (!mainButtonAvailable) return;
-    mainButton.setParams({ text: t('calculate'), isVisible: true, isEnabled: form.state.canSubmit, hasShineEffect: true });
-    const off = mainButton.onClick(() => {
-      hapticButton();
-      form.handleSubmit();
-    });
-    return () => {
-      mainButton.setParams({ isVisible: false });
-      off();
-    };
-  }, [t, mainButtonAvailable]);
-
   if (editId && loadingEdit) {
     return (
-      <Page>
-        <List>
-          <Placeholder header={t('loading')} description={t('loadingCalculation')} />
-        </List>
-      </Page>
+      <CalculationPlaceholder
+        state="loading"
+        t={t}
+      />
     );
   }
 
   if (editId && !loadingEdit && !loadedForEdit) {
     return (
-      <Page>
-        <List>
-          <Placeholder
-            header={t('calculationNotFound')}
-            description={t('goToCalculator')}
-            action={
-              <Button
-                size="m"
-                onClick={() => {
-                  hapticButton();
-                  navigate('/');
-                }}
-              >
-                {t('goToHome')}
-              </Button>
-            }
-          />
-        </List>
-      </Page>
+      <CalculationPlaceholder
+        state="notFound"
+        t={t}
+        notFoundAction={{
+          label: t('goToHome'),
+          onClick: () => navigate('/'),
+        }}
+      />
     );
   }
 
   return (
     <Page>
-      {mainButtonAvailable && <MainButtonSync form={form} />}
+      {mainButtonAvailable && <LoanFormMainButton form={form} t={t} />}
       <ValidationSnackbarSync
         form={form}
         setSnackbarOpen={setSnackbarOpen}

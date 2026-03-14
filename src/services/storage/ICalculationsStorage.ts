@@ -1,4 +1,4 @@
-import type { SavedCalculation, CalculationData } from '@/types/storage';
+import type { SavedCalculation, CalculationData } from '@/domain';
 
 export interface ICalculationsStorage {
   getList(): Promise<SavedCalculation[]>;

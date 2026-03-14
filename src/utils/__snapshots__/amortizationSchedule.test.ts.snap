@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generateAmortizationSchedule > reference / golden (замороженные эталоны для верификации) > базовый сценарий: 100k, 12%, 1 год — сводка совпадает с эталоном 1`] = `
+{
+  "finalMonthlyPayment": 8884.88,
+  "newTerm": 12,
+  "newTotalInterest": 6603.16,
+  "originalMonthlyPayment": 8884.88,
+  "originalTerm": 12,
+  "originalTotalInterest": 6618.55,
+  "paymentType": "annuity",
+  "totalSavings": 15.39,
+}
+`;
+
+exports[`generateAmortizationSchedule > reference / golden (замороженные эталоны для верификации) > сценарий с досрочкой «сократить срок»: сводка совпадает с эталоном 1`] = `
+{
+  "finalMonthlyPayment": 11122.22,
+  "newTerm": 54,
+  "newTotalInterest": 142606.8,
+  "originalMonthlyPayment": 11122.22,
+  "originalTerm": 60,
+  "originalTotalInterest": 167141.85,
+  "paymentType": "annuity",
+  "totalSavings": 24535.05,
+}
+`;

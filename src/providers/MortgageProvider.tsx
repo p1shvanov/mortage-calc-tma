@@ -26,14 +26,21 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
   const [mortgageResults, setMortgageResults] = useState<MortgageCalculationResults | null>(null);
   const [amortizationResult, setAmortizationResult] = useState<AmortizationScheduleResults | null>(null);
 
-  // Single effect: base summary (loan only) + schedule (loan + overpayments)
+  // Single effect: base summary (loan only) + schedule (loan + overpayments).
+  // Ignore results if inputs change before promises resolve (avoid stale state).
   useEffect(() => {
     if (!loanDetails) return;
 
+    let cancelled = false;
+
     mortgageService
       .calculateBase(loanDetails)
-      .then(setMortgageResults)
-      .catch((err) => console.error('Error calculating mortgage results:', err));
+      .then((results) => {
+        if (!cancelled) setMortgageResults(results);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Error calculating mortgage results:', err);
+      });
 
     mortgageService
       .generateAmortizationSchedule({
@@ -41,23 +48,41 @@ export function MortgageProvider({ children }: { children: React.ReactNode }) {
         earlyPayments,
         regularPayments,
       })
-      .then(setAmortizationResult)
-      .catch((err) => console.error('Error generating amortization schedule:', err));
+      .then((results) => {
+        if (!cancelled) setAmortizationResult(results);
+      })
+      .catch((err) => {
+        if (!cancelled)
+          console.error('Error generating amortization schedule:', err);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [loanDetails, earlyPayments, regularPayments]);
 
+  const value = React.useMemo(
+    () => ({
+      loanDetails,
+      setLoanDetails,
+      earlyPayments,
+      setEarlyPayments,
+      regularPayments,
+      setRegularPayments,
+      mortgageResults,
+      amortizationResult,
+    }),
+    [
+      loanDetails,
+      earlyPayments,
+      regularPayments,
+      mortgageResults,
+      amortizationResult,
+    ]
+  );
+
   return (
-    <MortgageContext.Provider
-      value={{
-        loanDetails,
-        setLoanDetails,
-        earlyPayments,
-        setEarlyPayments,
-        regularPayments,
-        setRegularPayments,
-        mortgageResults,
-        amortizationResult,
-      }}
-    >
+    <MortgageContext.Provider value={value}>
       {children}
     </MortgageContext.Provider>
   );

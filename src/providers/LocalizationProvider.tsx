@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { translations } from '@/localization/translations';
 
@@ -46,64 +46,70 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Initialize language state
   const [language, setLanguage] = useState<SupportedLanguage>(getUserLanguage());
 
-  // Translation function
-  const t = (key: string, params?: Record<string, string | number>): string => {
-    // Type assertion to allow string indexing
-    const langTranslations = translations[language] as Record<string, string>;
-    const enTranslations = translations.en as Record<string, string>;
-    
-    const translation = langTranslations[key] || enTranslations[key] || key;
-    
-    if (params) {
-      return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
-        return acc.replace(`{${paramKey}}`, String(paramValue));
-      }, translation);
-    }
-    
-    return translation;
-  };
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      const langTranslations = translations[language] as Record<string, string>;
+      const enTranslations = translations.en as Record<string, string>;
+      const translation = langTranslations[key] || enTranslations[key] || key;
+      if (params) {
+        return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+          return acc.replace(`{${paramKey}}`, String(paramValue));
+        }, translation);
+      }
+      return translation;
+    },
+    [language]
+  );
 
-  // Format currency based on language
-  const formatCurrency = (value: number): string => {
-    if (language === 'ru') {
-      return new Intl.NumberFormat('ru-RU', {
+  const formatCurrency = useCallback(
+    (value: number): string => {
+      if (language === 'ru') {
+        return new Intl.NumberFormat('ru-RU', {
+          style: 'currency',
+          currency: 'RUB',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(value);
+      }
+      return new Intl.NumberFormat('en-US', {
         style: 'currency',
-        currency: 'RUB',
+        currency: 'USD',
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       }).format(value);
-    }
-    
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  };
+    },
+    [language]
+  );
 
-  // Format number based on language
-  const formatNumber = (value: number): string => {
-    return new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US').format(value);
-  };
+  const formatNumber = useCallback(
+    (value: number): string => {
+      return new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US').format(value);
+    },
+    [language]
+  );
 
-  // Format date based on language
-  const formatDate = (date: Date | string): string => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US');
-  };
+  const formatDate = useCallback(
+    (date: Date | string): string => {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US');
+    },
+    [language]
+  );
+
+  const value = useMemo(
+    () => ({
+      language,
+      setLanguage,
+      t,
+      formatCurrency,
+      formatNumber,
+      formatDate,
+    }),
+    [language, t, formatCurrency, formatNumber, formatDate]
+  );
 
   return (
-    <LocalizationContext.Provider
-      value={{
-        language,
-        setLanguage,
-        t,
-        formatCurrency,
-        formatNumber,
-        formatDate
-      }}
-    >
+    <LocalizationContext.Provider value={value}>
       {children}
     </LocalizationContext.Provider>
   );

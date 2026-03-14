@@ -1,8 +1,10 @@
 import { memo } from 'react';
 
-import ErrorBoundaryFallback from '@/components/ErrorBoundaryFallback';
-import ErrorBoundary from '@/components/ErrorBoundary.tsx';
-import App from '@/components/App.tsx';
+import App from '@/components/App';
+import {
+  ErrorBoundary,
+  ErrorBoundaryFallback,
+} from '@/components/shared';
 
 import { LocalizationProvider } from '@/providers/LocalizationProvider';
 import { MortgageProvider } from '@/providers/MortgageProvider';
