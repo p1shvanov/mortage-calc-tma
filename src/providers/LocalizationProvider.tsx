@@ -1,9 +1,13 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { translations } from '@/localization/translations';
+import {
+  type SupportedLanguage,
+  getLocaleFromTelegram,
+  LOCALE_INTL,
+} from '@/localization/locales';
 
-// Define supported languages
-export type SupportedLanguage = 'en' | 'ru';
+export type { SupportedLanguage };
 
 // Define the context interface
 interface LocalizationContextType {
@@ -33,10 +37,8 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const getUserLanguage = (): SupportedLanguage => {
     try {
       const launchParams = retrieveLaunchParams();
-      const userLang = launchParams.tgWebAppData?.user?.language_code || 'en';
-      
-      // Check if the language is supported, otherwise fallback to English
-      return userLang === 'ru' ? 'ru' : 'en';
+      const userLang = launchParams.tgWebAppData?.user?.language_code;
+      return getLocaleFromTelegram(userLang);
     } catch (error) {
       console.error('Error retrieving user language:', error);
       return 'en';
@@ -61,39 +63,34 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [language]
   );
 
+  const intlLocale = LOCALE_INTL[language];
+
   const formatCurrency = useCallback(
     (value: number): string => {
-      if (language === 'ru') {
-        return new Intl.NumberFormat('ru-RU', {
-          style: 'currency',
-          currency: 'RUB',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(value);
-      }
-      return new Intl.NumberFormat('en-US', {
+      const currency = language === 'ru' ? 'RUB' : 'USD';
+      return new Intl.NumberFormat(intlLocale, {
         style: 'currency',
-        currency: 'USD',
+        currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }).format(value);
     },
-    [language]
+    [language, intlLocale]
   );
 
   const formatNumber = useCallback(
     (value: number): string => {
-      return new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US').format(value);
+      return new Intl.NumberFormat(intlLocale).format(value);
     },
-    [language]
+    [intlLocale]
   );
 
   const formatDate = useCallback(
     (date: Date | string): string => {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleDateString(language === 'ru' ? 'ru-RU' : 'en-US');
+      return dateObj.toLocaleDateString(intlLocale);
     },
-    [language]
+    [intlLocale]
   );
 
   const value = useMemo(
