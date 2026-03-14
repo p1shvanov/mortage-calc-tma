@@ -15,8 +15,10 @@ export interface AmortizationScheduleItem {
   balance: number;
   extraPayment?: number;
   extraPaymentType?: 'reduceTerm' | 'reducePayment';
-  isRegularPayment?: boolean; // Flag to indicate if this is a regular early payment
-  regularPaymentMessage?: string; // Message for regular payments that don't result in early repayment
+  /** True if this month falls within a recurring overpayment rule (regularPayments) date range */
+  inRecurringOverpaymentPeriod?: boolean;
+  /** Shown when inRecurringOverpaymentPeriod but no excess over monthly payment (no actual early repayment) */
+  regularPaymentMessage?: string;
 }
 
 export interface AmortizationScheduleParams {
@@ -287,42 +289,28 @@ export function generateAmortizationSchedule(
     const interestR = roundMoney(interest);
     let newBalance = isLastPayment ? 0 : roundMoney(balance - principalR);
 
-    let isRegularPayment = false;
+    let inRecurringOverpaymentPeriod = false;
 
-    // Check if this date falls within any regular payment ranges
+    // Check if this date falls within any recurring overpayment (regularPayments) ranges
     const currentPaymentDate = new Date(dateStr);
-    
-    // Process all regular payments
     for (const regularPayment of regularPayments) {
       const startMonth = new Date(regularPayment.startMonth);
       const endMonth = regularPayment.endMonth ? new Date(regularPayment.endMonth) : null;
-      
-      // Check if the current date is within the regular payment range
       const isAfterStart = currentPaymentDate >= startMonth;
       const isBeforeEnd = !endMonth || currentPaymentDate <= endMonth;
-      
+
       if (isAfterStart && isBeforeEnd) {
-        // Regular payment should first cover the monthly payment
-        // Any remaining amount goes towards early repayment
-        
-        // Calculate the excess amount (if any) after covering the monthly payment
         const excessAmount = regularPayment.amount - currentMonthlyPayment;
-        
-        // If the regular payment is greater than the monthly payment,
-        // use the excess for early repayment
         if (excessAmount > 0) {
-          // If there's already an early payment for this date, add the excess amount
           if (extraPayment > 0) {
             extraPayment += excessAmount;
-            // Use the regular payment type as it takes precedence
             extraPaymentType = regularPayment.type;
           } else {
             extraPayment = excessAmount;
             extraPaymentType = regularPayment.type;
           }
         }
-        // Even if there's no excess, mark this as a regular payment
-        isRegularPayment = true;
+        inRecurringOverpaymentPeriod = true;
       }
     }
     
@@ -338,7 +326,8 @@ export function generateAmortizationSchedule(
           hadReducePaymentType = true;
           
           // For reducePayment, we need to calculate the remaining term from the current month
-          const remainingMonths = numberOfPayments - month + 1;
+          // (after this month we have numberOfPayments - month payments left)
+          const remainingMonths = Math.max(1, numberOfPayments - month);
           
           // Update the remaining term
           remainingTerm = remainingMonths;
@@ -392,11 +381,11 @@ export function generateAmortizationSchedule(
       balance: roundMoney(newBalance),
       extraPayment: extraPayment > 0 ? roundMoney(extraPayment) : undefined,
       extraPaymentType: extraPayment > 0 ? extraPaymentType : undefined,
-      isRegularPayment: isRegularPayment,
-      // Add a message if this is a regular payment but no early repayment occurred
-      regularPaymentMessage: isRegularPayment && extraPayment <= 0 ?
-        'The specified total payment is less than the monthly payment amount, so early repayment did not occur.' :
-        undefined
+      inRecurringOverpaymentPeriod: inRecurringOverpaymentPeriod || undefined,
+      regularPaymentMessage:
+        inRecurringOverpaymentPeriod && extraPayment <= 0
+          ? 'The specified total payment is less than the monthly payment amount, so early repayment did not occur.'
+          : undefined,
     });
 
     // Update balance for next iteration
@@ -410,7 +399,12 @@ export function generateAmortizationSchedule(
   // Calculate summary statistics (rounded for consistency)
   const newTerm = schedule.length;
   const newTotalInterestR = roundMoney(totalInterest);
-  const finalMonthlyPayment = schedule.length > 0 ? schedule[schedule.length - 1].payment : 0;
+  // For "reduce term" the monthly payment is unchanged; only the last payment can be smaller (final payoff).
+  // For "reduce payment" we recalculated currentMonthlyPayment, so the last row reflects the new amount.
+  const finalMonthlyPayment =
+    hadReducePaymentType && schedule.length > 0
+      ? schedule[schedule.length - 1].payment
+      : roundMoney(originalMonthlyPayment);
 
   const totalSavings = roundMoney(originalTotalInterest - newTotalInterestR);
 

@@ -1,5 +1,5 @@
 import type { ICalculationsStorage } from './ICalculationsStorage';
-import type { SavedCalculation, CalculationData } from '@/types/storage';
+import type { SavedCalculation, CalculationData } from '@/domain';
 import { generateCalculationId } from '@/domain';
 
 const STORAGE_KEY = 'mortage-calc-calculations';

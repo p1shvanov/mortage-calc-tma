@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom/client';
 import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
 
 import Root from '@/components/Root';
-import EnvUnsupported from '@/components/EnvUnsupported';
+import { EnvUnsupported } from '@/components/shared';
 import { init } from '@/init';
 
 // Mock the environment in case, we are outside Telegram.

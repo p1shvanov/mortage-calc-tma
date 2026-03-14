@@ -1,30 +1,29 @@
-import { useEffect, useState, useRef } from 'react';
+import { memo, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { List, Button, Placeholder, Section } from '@telegram-apps/telegram-ui';
-import { mainButton } from '@telegram-apps/sdk-react';
+import { List, Button, Section } from '@telegram-apps/telegram-ui';
 
+import {
+  BackButton,
+  BreadcrumbsNav,
+  Page,
+} from '@/components/layout';
+import {
+  ChartsContainer,
+  EarlyPaymentsModal,
+  PaymentSchedule,
+  ResultsDisplay,
+  TabView,
+} from '@/components/result';
+import { CalculationPlaceholder } from '@/components/shared';
+import { useMainButton } from '@/hooks/useMainButton';
 import { useMainButtonAvailable } from '@/hooks/useTelegramButtonsAvailable';
-import BackButton from '@/components/BackButton';
-import BreadcrumbsNav from '@/components/BreadcrumbsNav';
-import ChartsContainer from '@/components/ChartsContainer';
-import EarlyPaymentsModal from '@/components/EarlyPaymentsModal';
-import PaymentSchedule from '@/components/PaymentSchedule';
-import ResultsDisplay from '@/components/ResultsDisplay';
-import TabPanel from '@/components/TabPanel';
-import TabView from '@/components/TabView';
-import Page from '@/components/Page';
 import { useMortgage } from '@/providers/MortgageProvider';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { getCalculationsStorage } from '@/services/storage';
 import { hapticButton } from '@/utils/haptic';
 
-const tabs = [
-  { id: 'charts', icon: '📊' },
-  { id: 'schedule', icon: '📅' },
-];
-
 /** Result page: id in URL required. All data is loaded from storage (single source of truth). */
-const MortageResult = () => {
+const MortageResult = memo(function MortageResult() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const mainButtonAvailable = useMainButtonAvailable();
@@ -89,6 +88,25 @@ const MortageResult = () => {
   const hasPayload = idFromUrl && loanDetails !== null && !calculationNotFound;
   const canEditEarlyPayments = hasPayload && !!loanDetails;
 
+  const resultTabPanels = useMemo(
+    () => [
+      { id: 'charts', icon: '📊' as const, content: <ChartsContainer /> },
+      { id: 'schedule', icon: '📅' as const, content: <PaymentSchedule /> },
+    ],
+    []
+  );
+
+  useMainButton(
+    canEditEarlyPayments && !earlyPaymentsModalOpen
+      ? {
+          text: mainButtonLabel,
+          isEnabled: true,
+          hasShineEffect: true,
+          onClick: () => setEarlyPaymentsModalOpen(true),
+        }
+      : null
+  );
+
   useEffect(() => {
     if (!savedId || !loanDetails) return;
     getCalculationsStorage()
@@ -96,101 +114,33 @@ const MortageResult = () => {
       .catch(() => {});
   }, [savedId, loanDetails, earlyPayments, regularPayments]);
 
-  useEffect(() => {
-    if (!canEditEarlyPayments || !mainButtonAvailable || earlyPaymentsModalOpen) return;
-    mainButton.setParams({
-      text: mainButtonLabel,
-      isVisible: true,
-      isEnabled: true,
-      hasShineEffect: true,
-    });
-    const off = mainButton.onClick(() => {
-      hapticButton();
-      setEarlyPaymentsModalOpen(true);
-    });
-    return () => {
-      mainButton.setParams({ isVisible: false });
-      off();
-    };
-  }, [
-    canEditEarlyPayments,
-    mainButtonAvailable,
-    t,
-    mainButtonLabel,
-    earlyPaymentsModalOpen,
-  ]);
-
-  useEffect(() => {
-    if (!earlyPaymentsModalOpen && canEditEarlyPayments && mainButtonAvailable) {
-      mainButton.setParams({
-        text: mainButtonLabel,
-        isVisible: true,
-        isEnabled: true,
-        hasShineEffect: true,
-      });
-    }
-  }, [
-    earlyPaymentsModalOpen,
-    canEditEarlyPayments,
-    mainButtonAvailable,
-    mainButtonLabel,
-  ]);
-
   if (idFromUrl && loadingById) {
-    return (
-      <Page>
-        <List>
-          <Placeholder header={t('loading')} description={t('loadingCalculation')} />
-        </List>
-      </Page>
-    );
+    return <CalculationPlaceholder state="loading" t={t} />;
   }
 
   if (idFromUrl && calculationNotFound) {
     return (
-      <Page>
-        <List>
-          <Placeholder
-            header={t('calculationNotFound')}
-            description={t('goToCalculator')}
-            action={
-              <Button
-                size='m'
-                onClick={() => {
-                  hapticButton();
-                  navigate('/');
-                }}
-              >
-                {t('goToHome')}
-              </Button>
-            }
-          />
-        </List>
-      </Page>
+      <CalculationPlaceholder
+        state="notFound"
+        t={t}
+        notFoundAction={{
+          label: t('goToHome'),
+          onClick: () => navigate('/'),
+        }}
+      />
     );
   }
 
   if (!idFromUrl || !hasPayload) {
     return (
-      <Page>
-        <List>
-          <Placeholder
-            header={t('noCalculationsYet')}
-            description={t('goToCalculator')}
-            action={
-              <Button
-                size="m"
-                onClick={() => {
-                  hapticButton();
-                  navigate('/calculator');
-                }}
-              >
-                {t('goToCalculator')}
-              </Button>
-            }
-          />
-        </List>
-      </Page>
+      <CalculationPlaceholder
+        state="empty"
+        t={t}
+        emptyAction={{
+          label: t('goToCalculator'),
+          onClick: () => navigate('/calculator'),
+        }}
+      />
     );
   }
 
@@ -235,17 +185,10 @@ const MortageResult = () => {
           open={earlyPaymentsModalOpen}
           onOpenChange={setEarlyPaymentsModalOpen}
         />
-        <TabView tabs={tabs} defaultTab='charts'>
-          <TabPanel id='charts'>
-            <ChartsContainer />
-          </TabPanel>
-          <TabPanel id='schedule'>
-            <PaymentSchedule />
-          </TabPanel>
-        </TabView>
+        <TabView panels={resultTabPanels} defaultTab='charts' />
       </List>
     </Page>
   );
-};
+});
 
 export default MortageResult;

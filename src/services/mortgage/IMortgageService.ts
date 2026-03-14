@@ -49,8 +49,8 @@ export interface AmortizationScheduleItem {
   balance: number;
   extraPayment?: number;
   extraPaymentType?: 'reduceTerm' | 'reducePayment';
-  isRegularPayment?: boolean;
-  regularPaymentMessage?: string; // Message for regular payments that don't result in early repayment
+  inRecurringOverpaymentPeriod?: boolean;
+  regularPaymentMessage?: string;
 }
 
 /**
