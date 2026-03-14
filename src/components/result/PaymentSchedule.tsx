@@ -12,7 +12,7 @@ import {
 import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 import { mainButton } from '@telegram-apps/sdk-react';
 
-import { getChartColors } from '@/config/chartsTheme';
+import { getThemeColors } from '@/config/themeColors';
 import { SCHEDULE_ITEMS_PER_PAGE } from '@/config/constants';
 import { useSwipePagination } from '@/hooks/useSwipePagination';
 import { useLocalization } from '@/providers/LocalizationProvider';
@@ -26,7 +26,7 @@ const PaymentSchedule = memo(function PaymentSchedule() {
   const { t, formatCurrency, formatDate } = useLocalization();
   const { tgPalette } = useTheme();
   const { amortizationResult } = useMortgage();
-  const colors = getChartColors(tgPalette);
+  const colors = getThemeColors(tgPalette);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(
     null,

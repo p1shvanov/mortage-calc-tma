@@ -91,19 +91,38 @@ export function getTelegramPalette(): TelegramPalette {
 }
 
 /**
- * Derive chart colors from Telegram palette.
- * Can be reused anywhere; pass explicit palette or use current one.
+ * Semantic app colors derived from Telegram palette.
+ * Single source for UI/charts: principal, interest, balance, extraPayment, etc.
+ * extraPayment uses hint so it stays distinct from principal (link/button often match).
  */
-export function getChartColors(palette: TelegramPalette = getTelegramPalette()) {
+export function getThemeColors(palette: TelegramPalette = getTelegramPalette()) {
   return {
     principal: palette.link,
     principalFill: `${palette.link}33`,
     interest: palette.destructiveText,
     interestFill: `${palette.destructiveText}33`,
-    balance: palette.accentText,
-    balanceFill: `${palette.accentText}33`,
-    extraPayment: palette.button,
+    balance: palette.text,
+    balanceFill: `${palette.text}33`,
+    balancePlanned: palette.subtitleText,
+    extraPayment: palette.hint,
     original: palette.destructiveText,
     withEarlyPayments: palette.accentText,
   } as const;
 }
+
+export type AppThemeColors = ReturnType<typeof getThemeColors>;
+
+/** Human-readable labels for palette keys (e.g. for theme preview in settings). */
+export const PALETTE_LABELS: Record<keyof TelegramPalette, string> = {
+  link: 'Link',
+  accentText: 'Accent text',
+  destructiveText: 'Destructive text',
+  bg: 'Background',
+  secondaryBg: 'Secondary background',
+  sectionBg: 'Section background',
+  text: 'Text',
+  subtitleText: 'Subtitle text',
+  hint: 'Hint',
+  button: 'Button',
+  buttonText: 'Button text',
+};

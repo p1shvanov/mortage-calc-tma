@@ -2,7 +2,7 @@ import { memo, useState, Fragment } from 'react';
 import { Accordion, Badge, Button, Cell, List, Section, Text } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import InputNumberFormat from '@/components/ui/InputNumberFormat';
-import Select from '@/components/ui/Select';
+import TypeRadioGroup from '@/components/ui/TypeRadioGroup';
 import Input from '@/components/ui/Input';
 import { popup } from '@telegram-apps/sdk-react';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
@@ -180,9 +180,9 @@ const RegularPaymentsForm = withForm({
                         <form.Field
                           name={`regularPayments[${i}].type`}
                           children={(f) => (
-                            <Select
-                              header={t('earlyPaymentType')}
+                            <TypeRadioGroup
                               field={f}
+                              header={t('earlyPaymentType')}
                               options={[
                                 { label: t('typeReduceTerm'), value: 'reduceTerm' },
                                 { label: t('typeReducePayment'), value: 'reducePayment' },
@@ -191,28 +191,30 @@ const RegularPaymentsForm = withForm({
                           )}
                         />
                         <List>
-                          <Button
-                            size='s'
-                            mode='outline'
-                            disabled={!isItemValid}
-                            onClick={() => {
-                              hapticSuccess();
-                              setExpandedIndex(null);
-                            }}
-                          >
-                            {t('done')}
-                          </Button>
-                          <Button
-                            size='s'
-                            mode='outline'
-                            onClick={() => {
-                              hapticDestructive();
-                              field.removeValue(i);
-                              setExpandedIndex(null);
-                            }}
-                          >
-                            {t('remove')}
-                          </Button>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <Button
+                              size='s'
+                              mode='filled'
+                              disabled={!isItemValid}
+                              onClick={() => {
+                                hapticSuccess();
+                                setExpandedIndex(null);
+                              }}
+                            >
+                              {t('done')}
+                            </Button>
+                            <Button
+                              size='s'
+                              mode='outline'
+                              onClick={() => {
+                                hapticDestructive();
+                                field.removeValue(i);
+                                setExpandedIndex(null);
+                              }}
+                            >
+                              {t('remove')}
+                            </Button>
+                          </div>
                         </List>
                       </List>
                     ) : (

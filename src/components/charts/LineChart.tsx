@@ -16,8 +16,6 @@ import {
 } from 'chart.js';
 import { Section } from '@telegram-apps/telegram-ui';
 
-
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,9 +38,17 @@ interface LineChartProps {
       fill?: boolean;
       yAxisID?: string;
       borderDash?: number[];
+      /** Per-point radius (e.g. markers at extra payment months). */
+      pointRadius?: number | number[];
+      pointBackgroundColor?: string;
+      showLine?: boolean;
     }[];
   };
   title?: string;
+  /** When true, only left Y-axis is shown (e.g. for balance-only chart). */
+  singleYAxis?: boolean;
+  /** Left axis title. Default: paymentAmount. Used as only axis title when singleYAxis. */
+  leftAxisTitle?: string;
   extraPaymentInfo?: {
     hasExtraPayment: boolean;
     amount: number;
@@ -57,10 +63,17 @@ const chartWrapperStyle = {
   minHeight: 260,
 };
 
-const LineChart = ({ data, title, extraPaymentInfo }: LineChartProps) => {
+const LineChart = ({
+  data,
+  title,
+  singleYAxis = false,
+  leftAxisTitle,
+  extraPaymentInfo,
+}: LineChartProps) => {
   const { formatCurrency, t } = useLocalization();
   const containerRef = useRef<HTMLDivElement>(null);
   useChartResize(containerRef);
+  const yTitle = leftAxisTitle ?? t('paymentAmount');
 
   return (
     <Section header={title}>
@@ -128,23 +141,27 @@ const LineChart = ({ data, title, extraPaymentInfo }: LineChartProps) => {
               position: 'left',
               title: {
                 display: true,
-                text: t('paymentAmount'),
+                text: yTitle,
               },
               beginAtZero: true,
             },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              title: {
-                display: true,
-                text: t('balance'),
-              },
-              beginAtZero: true,
-              grid: {
-                drawOnChartArea: false,
-              },
-            },
+            ...(singleYAxis
+              ? {}
+              : {
+                  y1: {
+                    type: 'linear' as const,
+                    display: true,
+                    position: 'right' as const,
+                    title: {
+                      display: true,
+                      text: t('balance'),
+                    },
+                    beginAtZero: true,
+                    grid: {
+                      drawOnChartArea: false,
+                    },
+                  },
+                }),
           },
         }}
       />
