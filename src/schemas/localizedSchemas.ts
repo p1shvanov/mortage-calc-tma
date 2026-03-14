@@ -1,13 +1,15 @@
 import { z } from 'zod';
 import { useLocalizedSchemas } from '@/hooks/useLocalizedSchemas';
+import { useLocalization } from '@/providers/LocalizationProvider';
 
 /**
  * Hook that provides localized schemas for form validation
  * @returns Object with localized schemas
  */
 export const useLocalizedFormSchemas = () => {
+  const { t } = useLocalization();
   const schemas = useLocalizedSchemas();
-  
+
   // Loan details schema
   const loanDetailsSchema = z.object({
     loanAmount: schemas.createNumberSchema({
@@ -15,29 +17,29 @@ export const useLocalizedFormSchemas = () => {
       min: 0,
       max: 1000000000
     }),
-    
+
     interestRate: schemas.createNumberSchema({
       fieldName: 'interestRate',
       min: 0,
       max: 100
     }),
-    
+
     loanTerm: schemas.createNumberSchema({
       fieldName: 'loanTerm',
       min: 0,
       max: 50
     }),
-    
+
     startDate: schemas.createDateSchema({
       fieldName: 'startDate'
     }),
-    
+
     paymentType: z.enum(['annuity', 'differentiated']),
-    
+
     paymentDay: z.string()
       .transform((val) => parseInt(val))
-      .refine((val) => !isNaN(val), 'validation.mustBeNumber')
-      .refine((val) => val >= 1 && val <= 31, 'validation.dayOfMonth'),
+      .refine((val) => !isNaN(val), t('mustBeNumber', { field: t('paymentDay') }))
+      .refine((val) => val >= 1 && val <= 31, t('dayOfMonth')),
   });
   
   // Early payment schema

@@ -1,12 +1,14 @@
 import type { LoanDetailsType } from '@/types/form';
 import type { CalculationData } from '@/domain';
+import type { SupportedLanguage } from '@/localization/locales';
+import { isCommaDecimalLocale } from '@/localization/locales';
 
-export type FormValuesLocale = 'en' | 'ru';
+export type FormValuesLocale = SupportedLanguage;
 
 /**
  * Number string for form inputs using the correct decimal separator for the locale.
  * Percent and number inputs (e.g. @react-input/number-format with format='percent') expect
- * the value to match the locale (comma for ru, dot for en).
+ * the value to match the locale (comma for many EU locales, dot for en/zh).
  */
 function toLocalizedNumberString(
   value: number | undefined | null,
@@ -14,7 +16,7 @@ function toLocalizedNumberString(
 ): string {
   if (value == null || Number.isNaN(Number(value))) return '';
   const s = String(Number(value));
-  return locale === 'ru' ? s.replace('.', ',') : s;
+  return isCommaDecimalLocale(locale) ? s.replace('.', ',') : s;
 }
 
 /**

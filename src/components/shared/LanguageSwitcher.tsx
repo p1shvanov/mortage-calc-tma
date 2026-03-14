@@ -3,14 +3,25 @@ import { Cell, Checkbox, Text } from '@telegram-apps/telegram-ui';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { hapticSelection } from '@/utils/haptic';
 import type { SupportedLanguage } from '@/providers/LocalizationProvider';
+import { SUPPORTED_LOCALES } from '@/localization/locales';
 
-export const LANGUAGES: {
-  value: SupportedLanguage;
-  labelKey: 'languageEnglish' | 'languageRussian';
-}[] = [
-  { value: 'en', labelKey: 'languageEnglish' },
-  { value: 'ru', labelKey: 'languageRussian' },
-];
+const LANGUAGE_LABEL_KEYS: Record<SupportedLanguage, string> = {
+  en: 'languageEnglish',
+  ru: 'languageRussian',
+  es: 'languageSpanish',
+  de: 'languageGerman',
+  fr: 'languageFrench',
+  pt: 'languagePortuguese',
+  zh: 'languageChinese',
+  it: 'languageItalian',
+  uk: 'languageUkrainian',
+  tr: 'languageTurkish',
+};
+
+export const LANGUAGES = SUPPORTED_LOCALES.map((value) => ({
+  value,
+  labelKey: LANGUAGE_LABEL_KEYS[value],
+}));
 
 const LanguageSwitcher = memo(function LanguageSwitcher() {
   const { language, setLanguage, t } = useLocalization();
