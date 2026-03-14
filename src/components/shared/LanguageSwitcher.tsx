@@ -1,5 +1,6 @@
-import { memo } from 'react';
-import { Cell, Checkbox, Text } from '@telegram-apps/telegram-ui';
+import { memo, useState } from 'react';
+import { Cell, Checkbox, Text, Modal, List, Section } from '@telegram-apps/telegram-ui';
+import { Icon24ChevronRight } from '@telegram-apps/telegram-ui/dist/icons/24/chevron_right';
 import { useLocalization } from '@/providers/LocalizationProvider';
 import { hapticSelection } from '@/utils/haptic';
 import type { SupportedLanguage } from '@/providers/LocalizationProvider';
@@ -25,21 +26,40 @@ export const LANGUAGES = SUPPORTED_LOCALES.map((value) => ({
 
 const LanguageSwitcher = memo(function LanguageSwitcher() {
   const { language, setLanguage, t } = useLocalization();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const handleSelect = (value: SupportedLanguage) => {
+    hapticSelection();
+    setLanguage(value);
+    setModalOpen(false);
+  };
 
   return (
     <>
-      {LANGUAGES.map(({ value, labelKey }) => (
-        <Cell
-          key={value}
-          after={language === value ? <Checkbox checked disabled /> : undefined}
-          onClick={() => {
-            hapticSelection();
-            setLanguage(value);
-          }}
-        >
-          <Text>{t(labelKey)}</Text>
-        </Cell>
-      ))}
+      <Cell
+        after={<Icon24ChevronRight />}
+        onClick={() => {
+          hapticSelection();
+          setModalOpen(true);
+        }}
+      >
+        <Text>{t(LANGUAGE_LABEL_KEYS[language])}</Text>
+      </Cell>
+      <Modal open={modalOpen} onOpenChange={setModalOpen}>
+        <List>
+          <Section>
+            {LANGUAGES.map(({ value, labelKey }) => (
+              <Cell
+                key={value}
+                after={language === value ? <Checkbox checked disabled /> : undefined}
+                onClick={() => handleSelect(value)}
+              >
+                <Text>{t(labelKey)}</Text>
+              </Cell>
+            ))}
+          </Section>
+        </List>
+      </Modal>
     </>
   );
 });

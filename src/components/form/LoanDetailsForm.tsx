@@ -54,6 +54,8 @@ const LoanDetailsForm = withForm({
                   field={field}
                   inputMode='numeric'
                   maximumIntegerDigits={2}
+                  maximumFractionDigits={0}
+                  minimumFractionDigits={0}
                 />
               )}
             />
