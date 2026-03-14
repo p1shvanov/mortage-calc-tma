@@ -17,25 +17,26 @@ The application follows a modular architecture with clear separation of concerns
 
 ```
 src/
-├── components/     # UI components
+├── components/     # UI components (including form components in components/form/)
 ├── config/         # Configuration files
-├── forms/          # Form components
 ├── hooks/          # Custom React hooks
 ├── localization/   # Translations and localization utilities
 ├── navigation/     # Routing and navigation
+├── pages/          # Page-level components
 ├── providers/      # Context providers
 ├── schemas/        # Form validation schemas
 ├── services/       # Business logic services
 ├── types/          # TypeScript type definitions
+├── validation/     # Schema factories and validation helpers
 └── utils/          # Utility functions
 ```
 
 ### Key Components
 
-- **MortgageProvider**: Manages the mortgage data and calculations
-- **MortgageService**: Handles the mortgage calculations (local or server-based)
-- **LoanForm**: Collects loan details, early payments, and regular payments
-- **MortageResult**: Displays the calculation results with charts and payment schedule
+- **Storage** (Telegram Cloud / mock): Source of truth for saved calculations. Home and LoanForm read/write via `getCalculationsStorage()`.
+- **MortgageResult**: Loads a calculation by `id` from storage via `useCalculationWithResults(id)`; provides result state to the page via `MortgageContextProvider` (no global app context).
+- **MortgageService**: Handles mortgage calculations (local or server-based).
+- **LoanForm**: Collects loan details and payments, saves to storage, then navigates to `/result?id=...`.
 
 ## Financial Core
 
@@ -70,9 +71,7 @@ The financial core can be used either locally (in the browser) or remotely (on a
 
 ## Configuration
 
-The application can be configured in the `src/config` directory:
-
-- `mortgage.ts`: Configure the mortgage service (local or server-based)
+The application can be configured in the `src/config` directory (constants, chart theme, etc.). Mortgage calculations run locally in the browser.
 
 ## Recent Refactoring
 
@@ -81,12 +80,10 @@ The codebase has recently undergone refactoring to improve its architecture and 
 1. **Removed Dead Code**: Removed unused `homeValue` and `downPayment` fields
 2. **Service Layer**: Added a service layer for mortgage calculations
 3. **SOLID Principles**: Restructured the financial core to follow SOLID principles
-4. **Preparation for Server-Side**: Added infrastructure for server-side calculations
-5. **Configuration**: Added configuration options for easy switching between local and server implementations
+4. **Service layer**: Mortgage calculations behind `IMortgageService` / `mortgageService`.
 
 ## Future Improvements
 
-- Add server-side implementation for mortgage calculations
 - Implement caching for calculation results
 - Add export functionality for payment schedules
 - Improve mobile UI/UX

@@ -20,16 +20,26 @@ const ResultsDisplay = memo(function ResultsDisplay() {
     return false;
   }, [amortizationResult]);
 
+  const principal = useMemo(() => {
+    if (!mortgageResults) return 0;
+    return mortgageResults.totalCost - mortgageResults.totalInterest;
+  }, [mortgageResults]);
+
   const overpaymentPercent = useMemo(() => {
-    if (!mortgageResults) return null;
+    if (!mortgageResults || principal <= 0) return null;
     const interest =
       hasEarlyPayments && amortizationResult
         ? amortizationResult.summary.newTotalInterest
         : mortgageResults.totalInterest;
-    const loanAmount = mortgageResults.totalCost - mortgageResults.totalInterest;
-    if (loanAmount <= 0) return null;
-    return Math.round((interest / loanAmount) * 100);
-  }, [mortgageResults, hasEarlyPayments, amortizationResult]);
+    return Math.round((interest / principal) * 100);
+  }, [mortgageResults, hasEarlyPayments, amortizationResult, principal]);
+
+  const originalOverpaymentPercent = useMemo(() => {
+    if (!mortgageResults || !amortizationResult || principal <= 0) return null;
+    return Math.round(
+      (amortizationResult.summary.originalTotalInterest / principal) * 100,
+    );
+  }, [mortgageResults, amortizationResult, principal]);
 
   const totalPayout = useMemo(() => {
     if (amortizationResult?.schedule?.length) {
@@ -83,16 +93,37 @@ const ResultsDisplay = memo(function ResultsDisplay() {
 
       {overpaymentPercent != null && (
         <Cell subhead={t('overpaymentPercent')} before="📊" readOnly>
-          <Text>{overpaymentPercent}%</Text>
+          {hasEarlyPayments &&
+          amortizationResult &&
+          originalOverpaymentPercent != null &&
+          originalOverpaymentPercent !== overpaymentPercent ? (
+            <>
+              <Text>{originalOverpaymentPercent}%</Text>
+              <Text> → </Text>
+              <Text style={accentStyle}>{overpaymentPercent}%</Text>
+            </>
+          ) : (
+            <Text>{overpaymentPercent}%</Text>
+          )}
         </Cell>
       )}
 
       <Cell subhead={t('totalPayout')} before="💳" readOnly>
-        <Text>{formatCurrency(totalPayout)}</Text>
+        {hasEarlyPayments &&
+        amortizationResult &&
+        totalPayout !== mortgageResults.totalCost ? (
+          <>
+            <Text>{formatCurrency(mortgageResults.totalCost)}</Text>
+            <Text> → </Text>
+            <Text style={accentStyle}>{formatCurrency(totalPayout)}</Text>
+          </>
+        ) : (
+          <Text>{formatCurrency(totalPayout)}</Text>
+        )}
       </Cell>
 
       {hasEarlyPayments && amortizationResult && (
-        <Cell subhead={t('totalSavings')} before="💚" readOnly>
+        <Cell subhead={t('totalSavings')} before="💙" readOnly>
           <Text style={accentStyle}>
             {formatCurrency(amortizationResult.summary.totalSavings)}
           </Text>

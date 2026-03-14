@@ -37,13 +37,6 @@ export class LocalMortgageService implements IMortgageService {
   }
 
   /**
-   * @deprecated Use calculateBase for base-only results.
-   */
-  async calculateMortgage(params: MortgageCalculationParams): Promise<MortgageCalculationResults> {
-    return this.calculateBase(params);
-  }
-
-  /**
    * Generate an amortization schedule for a loan
    * @param params Mortgage calculation parameters
    * @returns Amortization schedule results

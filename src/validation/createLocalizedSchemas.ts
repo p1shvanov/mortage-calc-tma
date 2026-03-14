@@ -9,35 +9,11 @@ type TranslationFunction = (key: string, params?: Record<string, string | number
  * @param t Translation function
  * @returns Object with schema creation functions
  */
+/**
+ * Creates localized schema factory functions.
+ * All messages are passed explicitly via refine(); no global z.setErrorMap to avoid side effects.
+ */
 export const createLocalizedSchemas = (t: TranslationFunction) => {
-  // Create a custom error map for Zod
-  const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
-    // Use the default error map as fallback
-    const defaultError = z.defaultErrorMap(issue, ctx);
-    
-    // Return localized error messages based on error code
-    switch (issue.code) {
-      case z.ZodIssueCode.invalid_type:
-        if (issue.expected === 'number') {
-          return { message: t('invalidNumber') };
-        }
-        break;
-      case z.ZodIssueCode.too_small:
-        if (issue.type === 'number' && issue.minimum === 0) {
-          return { message: t('mustBePositive') };
-        }
-        break;
-      // Add more cases as needed
-    }
-    
-    // Fallback to default error message
-    return defaultError;
-  };
-
-  // Set the error map for this instance
-  z.setErrorMap(customErrorMap);
-
-  // Factory functions for common schema patterns
   return {
     /**
      * Creates a localized number schema with common validations

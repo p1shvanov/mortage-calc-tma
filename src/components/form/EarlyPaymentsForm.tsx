@@ -1,4 +1,5 @@
 import { memo, useState, Fragment } from 'react';
+import { z } from 'zod';
 import {
   Accordion,
   Badge,
@@ -14,8 +15,7 @@ import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import { popup } from '@telegram-apps/sdk-react';
 import { formOpts, withForm } from '@/hooks/useLoanForm';
-import { earlyPaymentSchema } from '@/schemas/earlyPayment';
-import { loanDetailsSchema } from '@/schemas/loanDetails';
+import { useLocalizedFormSchemas } from '@/schemas/localizedSchemas';
 import {
   hapticButton,
   hapticSuccess,
@@ -30,10 +30,12 @@ const typeLabels: Record<string, string> = {
 };
 
 function isEarlyPaymentItemValid(
-  item: { amount?: string; date?: string; type?: string } | null,
+  item: { amount?: string; date?: string; type?: string; id?: string } | null,
+  earlyPaymentSchemaWithId: z.ZodType<unknown>,
 ): boolean {
   if (!item) return false;
-  const result = earlyPaymentSchema.safeParse({
+  const result = earlyPaymentSchemaWithId.safeParse({
+    id: item.id ?? '',
     amount: item.amount ?? '',
     date: item.date ?? '',
     type: item.type ?? 'reduceTerm',
@@ -47,6 +49,8 @@ const EarlyPaymentsForm = withForm({
     const [sectionOpen, setSectionOpen] = useState(true);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const { t, formatCurrency, formatDate } = useLocalization();
+    const { loanDetailsSchema, earlyPaymentSchema } = useLocalizedFormSchemas();
+    const earlyPaymentSchemaWithId = earlyPaymentSchema.extend({ id: z.string() });
 
     return (
       <form.Subscribe
@@ -100,7 +104,7 @@ const EarlyPaymentsForm = withForm({
                           ? (field.state.value[expandedIndex] ?? null)
                           : null;
                       const isExpandedItemValid =
-                        isEarlyPaymentItemValid(expandedItem);
+                        isEarlyPaymentItemValid(expandedItem, earlyPaymentSchemaWithId);
                       const canAdd =
                         isLoanDetailsValid &&
                         (expandedIndex === null || isExpandedItemValid);
@@ -134,7 +138,7 @@ const EarlyPaymentsForm = withForm({
                             );
                             const dateStr = item?.date ?? '';
                             const typeStr = item?.type ?? 'reduceTerm';
-                            const isItemValid = isEarlyPaymentItemValid(item);
+                            const isItemValid = isEarlyPaymentItemValid(item, earlyPaymentSchemaWithId);
 
                             return (
                               <Fragment key={item?.id ?? i}>
