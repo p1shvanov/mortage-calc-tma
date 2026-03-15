@@ -2,7 +2,7 @@ import type { ICalculationsStorage } from './ICalculationsStorage';
 import type { SavedCalculation, CalculationData } from '@/domain';
 import { generateCalculationId } from '@/domain';
 
-const STORAGE_KEY = 'mortage-calc-calculations';
+const STORAGE_KEY = 'tma-mortgage-calculator-storage';
 
 export class MockStorageAdapter implements ICalculationsStorage {
   private getListFromStorage(): SavedCalculation[] {

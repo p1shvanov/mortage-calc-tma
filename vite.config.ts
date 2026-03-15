@@ -10,7 +10,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/mortage-calc-tma/',
+  base: '/tma-mortgage-calculator/',
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
