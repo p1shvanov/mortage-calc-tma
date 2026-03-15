@@ -1,9 +1,9 @@
 {
-  "name": "mortage-calc-tma",
+  "name": "tma-mortgage-calculator",
   "private": true,
-  "version": "0.0.22",
+  "version": "0.1.0",
   "type": "module",
-  "homepage": "https://github.com/p1shvanov/mortage-calc-tma",
+  "homepage": "https://github.com/p1shvanov/tma-mortgage-calculator",
   "scripts": {
     "version:bump": "npm version patch --no-git-tag-version",
     "deploy": "gh-pages -d dist",
