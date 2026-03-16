@@ -1,7 +1,7 @@
 {
   "name": "tma-mortgage-calculator",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.9",
   "type": "module",
   "homepage": "https://github.com/p1shvanov/tma-mortgage-calculator",
   "scripts": {
@@ -20,6 +20,7 @@
   "dependencies": {
     "@react-input/number-format": "^2.0.3",
     "@tanstack/react-form": "^1.28.4",
+    "@telegram-apps/analytics": "^1.6.4",
     "@telegram-apps/sdk-react": "^3.3.9",
     "@telegram-apps/telegram-ui": "^2.1.13",
     "@tonconnect/ui-react": "^2.4.2",

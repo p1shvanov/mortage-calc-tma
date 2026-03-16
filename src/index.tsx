@@ -3,6 +3,7 @@ import '@telegram-apps/telegram-ui/dist/styles.css';
 
 import ReactDOM from 'react-dom/client';
 import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
+import telegramAnalytics from '@telegram-apps/analytics';
 
 import Root from '@/components/Root';
 import { EnvUnsupported } from '@/components/shared';
@@ -28,6 +29,16 @@ try {
       (debug && ['ios', 'android', 'macos'].includes(platform ?? '')),
     mockForMacOS: platform === 'macos',
   });
+
+  const analyticsToken = import.meta.env.VITE_ANALYTICS_TOKEN;
+  const analyticsAppName = import.meta.env.VITE_ANALYTICS_APP_NAME;
+  if (analyticsToken && analyticsAppName) {
+    telegramAnalytics.init({
+      token: analyticsToken,
+      appName: analyticsAppName,
+    });
+  }
+
   root.render(<Root />);
 } catch (e) {
   console.error('Bootstrap error:', e);
