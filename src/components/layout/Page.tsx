@@ -7,11 +7,16 @@ import { hapticButton } from '@/utils/haptic';
 const Page = ({
   children,
   back = true,
+  onBack,
 }: PropsWithChildren<{
   /**
    * True if it is allowed to go back from this page.
    */
   back?: boolean;
+  /**
+   * Custom handler for back button. When provided, used instead of navigate(-1).
+   */
+  onBack?: () => void;
 }>) => {
   const navigate = useNavigate();
 
@@ -24,11 +29,15 @@ const Page = ({
       backButton.show();
       return backButton.onClick(() => {
         hapticButton();
-        navigate(-1);
+        if (onBack) {
+          onBack();
+        } else {
+          navigate(-1);
+        }
       });
     }
     backButton.hide();
-  }, [back, navigate]);
+  }, [back, navigate, onBack]);
 
   return (
     <div
