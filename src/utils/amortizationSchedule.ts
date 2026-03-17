@@ -265,8 +265,7 @@ export function generateAmortizationSchedule(
     
     if (paymentType === 'differentiated') {
       // For differentiated payments, recalculate the payment for each month
-      // The principal portion is fixed, and the interest portion decreases over time
-      const numberOfPayments = loanTerm * 12;
+      // The principal portion is fixed, and the interest portion decreases over time (use outer integer numberOfPayments)
       const fixedPrincipalPortion = loanAmount / numberOfPayments;
       principal = fixedPrincipalPortion;
       payment = principal + interest;
@@ -352,20 +351,26 @@ export function generateAmortizationSchedule(
           
           // Estimate the new remaining term based on the new balance and current payment
           // This is an approximation to help with the loop termination condition
-          const estimatedRemainingPayments = Math.ceil(
-            Math.log(currentMonthlyPayment / (currentMonthlyPayment - newBalance * monthlyRate)) / 
-            Math.log(1 + monthlyRate)
-          );
-          
+          const denominator = currentMonthlyPayment - newBalance * monthlyRate;
+          const estimatedRemainingPayments = denominator > 0
+            ? Math.ceil(
+                Math.log(currentMonthlyPayment / denominator) /
+                  Math.log(1 + monthlyRate)
+              )
+            : 1;
+          const safeEstimated = Number.isFinite(estimatedRemainingPayments)
+            ? Math.max(1, estimatedRemainingPayments)
+            : 1;
+
           // Update the remaining term (reduce it)
           // If we've had a reducePayment type before, we need to make sure we're using
           // the correct remaining term calculation
           if (hadReducePaymentType) {
             // We've already reduced the payment, now we're reducing the term
-            remainingTerm = Math.min(remainingTerm, estimatedRemainingPayments);
+            remainingTerm = Math.min(remainingTerm, safeEstimated);
           } else {
             // We're just reducing the term
-            remainingTerm = Math.min(remainingTerm, month + estimatedRemainingPayments);
+            remainingTerm = Math.min(remainingTerm, month + safeEstimated);
           }
         }
       }

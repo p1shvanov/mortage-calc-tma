@@ -9,7 +9,7 @@ import { formOpts, withForm } from '@/hooks/useLoanForm';
 const LoanDetailsForm = withForm({
   ...formOpts,
   render: function Render({ form }) {
-    const { t, language } = useLocalization();
+    const { t, intlLocale } = useLocalization();
     const [additionalOpen, setAdditionalOpen] = useState(false);
 
     return (
@@ -36,7 +36,7 @@ const LoanDetailsForm = withForm({
                   placeholder={t('interestRate')}
                   field={field}
                   format='percent'
-                  locales={language}
+                  locales={intlLocale}
                   inputMode='decimal'
                   maximumFractionDigits={2}
                 />
@@ -48,7 +48,7 @@ const LoanDetailsForm = withForm({
                 <InputNumberFormat
                   format='unit'
                   unit='year'
-                  locales={language}
+                  locales={intlLocale}
                   header={t('loanTerm')}
                   placeholder={t('loanTerm')}
                   field={field}

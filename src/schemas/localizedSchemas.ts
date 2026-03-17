@@ -56,7 +56,7 @@ export const useLocalizedFormSchemas = () => {
     type: z.enum(['reduceTerm', 'reducePayment']),
   });
   
-  // Regular payment schema
+  // Regular payment schema (endMonth optional: "End Month (Optional)" in UI and domain)
   const regularPaymentSchema = z.object({
     id: z.string(),
     
@@ -69,19 +69,23 @@ export const useLocalizedFormSchemas = () => {
       fieldName: 'startMonth'
     }),
     
-    endMonth: schemas.createDateSchema({
-      fieldName: 'endMonth'
-    }),
+    endMonth: z
+      .union([
+        schemas.createDateSchema({ fieldName: 'endMonth' }),
+        z.literal(''),
+      ])
+      .optional(),
     
     type: z.enum(['reduceTerm', 'reducePayment']),
   }).refine(
     schemas.createDateRangeRefinement({
       startField: 'startMonth',
-      endField: 'endMonth'
+      endField: 'endMonth',
+      endIsOptional: true,
     }),
     schemas.getDateRangeErrorMessage({
       startField: 'startMonth',
-      endField: 'endMonth'
+      endField: 'endMonth',
     })
   );
   

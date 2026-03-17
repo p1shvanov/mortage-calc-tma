@@ -8,7 +8,8 @@ import { useMortgage } from '@/providers/MortgageProvider';
 const accentStyle = { color: 'var(--tg-theme-link-color)' };
 
 const ResultsDisplay = memo(function ResultsDisplay() {
-  const { t, formatCurrency, formatDate, formatLoanTerm } = useLocalization();
+  const { t, formatCurrency, formatDate, formatLoanTerm, formatPercent } =
+    useLocalization();
   const { mortgageResults, amortizationResult } = useMortgage();
 
   const hasEarlyPayments = useMemo(() => {
@@ -112,12 +113,12 @@ const ResultsDisplay = memo(function ResultsDisplay() {
           originalOverpaymentPercent != null &&
           originalOverpaymentPercent !== overpaymentPercent ? (
             <>
-              <Text>{originalOverpaymentPercent}%</Text>
+              <Text>{formatPercent(originalOverpaymentPercent, { maximumFractionDigits: 0 })}</Text>
               <Text> → </Text>
-              <Text style={accentStyle}>{overpaymentPercent}%</Text>
+              <Text style={accentStyle}>{formatPercent(overpaymentPercent, { maximumFractionDigits: 0 })}</Text>
             </>
           ) : (
-            <Text>{overpaymentPercent}%</Text>
+            <Text>{formatPercent(overpaymentPercent, { maximumFractionDigits: 0 })}</Text>
           )}
         </Cell>
       )}

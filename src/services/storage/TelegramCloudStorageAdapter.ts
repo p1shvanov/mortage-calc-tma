@@ -33,7 +33,9 @@ export class TelegramCloudStorageAdapter implements ICalculationsStorage {
 
   async getList(): Promise<SavedCalculation[]> {
     const list = await this.getListFromStorage();
-    return list.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
+    return list.sort((a, b) =>
+      b.createdAt > a.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+    );
   }
 
   async getById(id: string): Promise<SavedCalculation | null> {

@@ -12,15 +12,15 @@ import { ThemeProvider } from '@/providers/ThemeProvider';
 
 const Root = () => {
   return (
-    <ErrorBoundary fallback={ErrorBoundaryFallback}>
-      <TonConnectUIProvider manifestUrl={publicUrl('tonconnect-manifest.json')}>
-        <LocalizationProvider>
+    <TonConnectUIProvider manifestUrl={publicUrl('tonconnect-manifest.json')}>
+      <LocalizationProvider>
+        <ErrorBoundary fallback={ErrorBoundaryFallback}>
           <ThemeProvider>
             <App />
           </ThemeProvider>
-        </LocalizationProvider>
-      </TonConnectUIProvider>
-    </ErrorBoundary>
+        </ErrorBoundary>
+      </LocalizationProvider>
+    </TonConnectUIProvider>
   );
 };
 

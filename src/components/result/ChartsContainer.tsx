@@ -13,7 +13,7 @@ const BarChart = lazy(() => import('@/components/charts/BarChart'));
 const DoughnutChart = lazy(() => import('@/components/charts/DoughnutChart'));
 
 const ChartsContainer = memo(function ChartsContainer() {
-  const { t, formatLoanTerm } = useLocalization();
+  const { t, formatLoanTerm, intlLocale } = useLocalization();
   const { tgPalette } = useTheme();
   const { amortizationResult, loanDetails } = useMortgage();
   const colors = getThemeColors(tgPalette);
@@ -29,15 +29,21 @@ const ChartsContainer = memo(function ChartsContainer() {
 
   const schedule = amortizationResult.schedule;
 
+  const monthFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(intlLocale, {
+        month: 'short',
+        year: '2-digit',
+      }),
+    [intlLocale]
+  );
+
   const months = useMemo(() => {
     return schedule.map((item) => {
       const date = new Date(item.date);
-      return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date
-        .getFullYear()
-        .toString()
-        .slice(2)}`;
+      return monthFormatter.format(date);
     });
-  }, [schedule]);
+  }, [schedule, monthFormatter]);
 
   const principals = useMemo(() => schedule.map((item) => item.principal), [schedule]);
   const interests = useMemo(() => schedule.map((item) => item.interest), [schedule]);
@@ -95,7 +101,7 @@ const ChartsContainer = memo(function ChartsContainer() {
       regularPayments: [],
     });
     return schedule.map((_, i) => planned.schedule[i]?.balance ?? 0);
-  }, [hasEarlyPayments, loanDetails, schedule.length]);
+  }, [hasEarlyPayments, loanDetails, schedule]);
 
   const balanceChartData = useMemo(() => {
     const datasets: {
