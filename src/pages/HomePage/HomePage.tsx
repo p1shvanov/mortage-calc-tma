@@ -21,7 +21,7 @@ import {
 const PAGINATION_VISIBLE_PAGES = 5;
 
 const HomePage: FC = () => {
-  const { t, formatCurrency, formatDate } = useLocalization();
+  const { t, formatCurrency, formatNumber, formatDate } = useLocalization();
   const navigate = useNavigate();
   const initData = useSignal(initDataState);
 
@@ -166,6 +166,7 @@ const HomePage: FC = () => {
           onRetry={loadCalculations}
           t={t}
           formatCurrency={formatCurrency}
+          formatNumber={formatNumber}
           formatDate={formatDate}
         />
       </List>

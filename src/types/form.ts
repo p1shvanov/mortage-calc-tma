@@ -30,7 +30,7 @@ export const defaultLoanDetails: LoanDetailsType = {
   loanTerm: '',
   startDate: new Date().toISOString().split('T')[0],
   paymentType: 'annuity',
-  paymentDay: new Date().getDate().toLocaleString(),
+  paymentDay: String(new Date().getDate()),
   earlyPayments: [],
   regularPayments: [],
 };

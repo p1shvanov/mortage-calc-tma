@@ -2,7 +2,10 @@ import { memo } from 'react';
 
 import { Caption, List, Section } from '@telegram-apps/telegram-ui';
 
+import { useLocalization } from '@/providers/LocalizationProvider';
+
 const ErrorBoundaryFallback = ({ error }: { error: unknown }) => {
+  const { t } = useLocalization();
   const message =
     error instanceof Error
       ? error.message
@@ -12,7 +15,7 @@ const ErrorBoundaryFallback = ({ error }: { error: unknown }) => {
 
   return (
     <List>
-      <Section header="Произошла ошибка">
+      <Section header={t('errorOccurred')}>
         <Caption style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
           {message}
         </Caption>

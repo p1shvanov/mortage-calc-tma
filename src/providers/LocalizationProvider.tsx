@@ -13,10 +13,14 @@ export type { SupportedLanguage };
 // Define the context interface
 interface LocalizationContextType {
   language: SupportedLanguage;
+  /** Full BCP 47 locale for Intl (e.g. 'ru-RU'). Use for form inputs and number/date formatting. */
+  intlLocale: string;
   setLanguage: (lang: SupportedLanguage) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
   formatCurrency: (value: number) => string;
   formatNumber: (value: number) => string;
+  /** Format a display percentage (0–100) with locale-appropriate decimal separator and % symbol. */
+  formatPercent: (value: number, options?: { maximumFractionDigits?: number }) => string;
   formatDate: (date: Date | string) => string;
   /** Format term in months as "X years" or "X years Y months" (months omitted when 0). */
   formatLoanTerm: (totalMonths: number) => string;
@@ -88,10 +92,25 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [intlLocale]
   );
 
+  const formatPercent = useCallback(
+    (value: number, options?: { maximumFractionDigits?: number }): string => {
+      return new Intl.NumberFormat(intlLocale, {
+        style: 'percent',
+        maximumFractionDigits: options?.maximumFractionDigits ?? 1,
+        minimumFractionDigits: 0,
+      }).format(value / 100);
+    },
+    [intlLocale]
+  );
+
   const formatDate = useCallback(
     (date: Date | string): string => {
       const dateObj = typeof date === 'string' ? new Date(date) : date;
-      return dateObj.toLocaleDateString(intlLocale);
+      return dateObj.toLocaleDateString(intlLocale, {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
     },
     [intlLocale]
   );
@@ -100,24 +119,35 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     (totalMonths: number): string => {
       const years = Math.floor(totalMonths / 12);
       const months = totalMonths % 12;
-      const yearsPart = `${years} ${t('years')}`;
+      const yearsPart = `${formatNumber(years)} ${t('years')}`;
       if (months === 0) return yearsPart;
-      return `${yearsPart} ${months} ${t('months')}`;
+      return `${yearsPart} ${formatNumber(months)} ${t('months')}`;
     },
-    [t]
+    [t, formatNumber]
   );
 
   const value = useMemo(
     () => ({
       language,
+      intlLocale,
       setLanguage,
       t,
       formatCurrency,
       formatNumber,
+      formatPercent,
       formatDate,
       formatLoanTerm,
     }),
-    [language, t, formatCurrency, formatNumber, formatDate, formatLoanTerm]
+    [
+      language,
+      intlLocale,
+      t,
+      formatCurrency,
+      formatNumber,
+      formatPercent,
+      formatDate,
+      formatLoanTerm,
+    ]
   );
 
   return (

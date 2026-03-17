@@ -24,7 +24,7 @@ interface DoughnutChartProps {
 }
 
 const DoughnutChart = ({ data, title }: DoughnutChartProps) => {
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatPercent } = useLocalization();
 
   return (
     <Section header={title}>
@@ -43,15 +43,18 @@ const DoughnutChart = ({ data, title }: DoughnutChartProps) => {
             },
             tooltip: {
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.label || '';
                   const value = context.raw as number;
-                  const total = context.dataset.data.reduce((a, b) => (a as number) + (b as number), 0);
-                  const percentage = ((value / total) * 100).toFixed(1);
-                  return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-                }
-              }
-            }
+                  const total = context.dataset.data.reduce(
+                    (a, b) => (a as number) + (b as number),
+                    0
+                  );
+                  const pct = total > 0 ? (value / total) * 100 : 0;
+                  return `${label}: ${formatCurrency(value)} (${formatPercent(pct)})`;
+                },
+              },
+            },
           },
         }}
       />

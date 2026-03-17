@@ -22,7 +22,7 @@ interface PieChartProps {
 }
 
 const PieChart = ({ data, title }: PieChartProps) => {
-  const { formatCurrency } = useLocalization();
+  const { formatCurrency, formatPercent } = useLocalization();
 
   return (
     <Section header={title}>
@@ -31,7 +31,6 @@ const PieChart = ({ data, title }: PieChartProps) => {
         options={{
           responsive: true,
           maintainAspectRatio: true,
-          // aspectRatio: width / height,
           plugins: {
             legend: {
               position: 'bottom',
@@ -41,15 +40,18 @@ const PieChart = ({ data, title }: PieChartProps) => {
             },
             tooltip: {
               callbacks: {
-                label: function(context) {
+                label: function (context) {
                   const label = context.label || '';
                   const value = context.raw as number;
-                  const total = context.dataset.data.reduce((a, b) => (a as number) + (b as number), 0);
-                  const percentage = ((value / total) * 100).toFixed(1);
-                  return `${label}: ${formatCurrency(value)} (${percentage}%)`;
-                }
-              }
-            }
+                  const total = context.dataset.data.reduce(
+                    (a, b) => (a as number) + (b as number),
+                    0
+                  );
+                  const pct = total > 0 ? (value / total) * 100 : 0;
+                  return `${label}: ${formatCurrency(value)} (${formatPercent(pct)})`;
+                },
+              },
+            },
           },
         }}
       />

@@ -37,6 +37,7 @@ export interface CalculationListSectionProps {
   onRetry: () => void;
   t: (key: string) => string;
   formatCurrency: (value: number) => string;
+  formatNumber: (value: number) => string;
   formatDate: (date: Date | string) => string;
 }
 
@@ -55,6 +56,7 @@ const CalculationListSection = memo(function CalculationListSection({
   onRetry,
   t,
   formatCurrency,
+  formatNumber,
   formatDate,
 }: CalculationListSectionProps) {
   const navigate = useNavigate();
@@ -146,7 +148,7 @@ const CalculationListSection = memo(function CalculationListSection({
           <Cell
             key={calc.id}
             onClick={() => onOpen(calc)}
-            subtitle={`${calc.loanDetails.interestRate}% · ${calc.loanDetails.loanTerm} ${t('years')}`}
+            subtitle={`${formatNumber(calc.loanDetails.interestRate)}% · ${calc.loanDetails.loanTerm} ${t('years')}`}
             after={
               <InlineButtons>
                 <IconButton
